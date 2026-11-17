@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprintly — Thiết kế màn hình Android</title>
+<style>
+:root{color-scheme:light;--canvas:#eeefeb;--paper:#fff;--mist:#f5f6f3;--ink:#171a17;--muted:#555b54;--line:#e4e6e1;--outline:#787e75;--lime:#a4ed65;--lime-text:#172413;--violet:#4736c5;--violet-soft:#eeebff;--mint:#c6eed7;--mint-ink:#21583c;--amber:#ffe7b1;--amber-ink:#684515;--blue:#d9ecfa;--blue-ink:#284b68;--rose:#fce1df;--rose-ink:#842b2a;--avatar-sheet:linear-gradient(45deg,#f2d1bd,#c5daf6);font-family:Roboto,"Segoe UI",sans-serif;color:var(--ink);background:var(--canvas);font-synthesis:none}
+*,*::before,*::after{box-sizing:border-box}body{margin:0}h1,h2,h3,p,dl,dd{margin:0}button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}button:disabled{opacity:.6;cursor:default}svg{display:block;width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}a{color:var(--violet);text-underline-offset:4px}a:hover{text-decoration-thickness:2px}:focus-visible{outline:2px solid var(--violet);outline-offset:2px}input,textarea,select{min-width:0}textarea{resize:vertical}small{font-size:.77em}[hidden]{display:none!important}.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.shell{width:min(1280px,100% - 48px);margin:auto}.design-head{margin:0 auto;display:flex;justify-content:space-between;align-items:end;gap:20px;padding:32px 0 24px;border-bottom:1px solid #d9ddd5}.design-id{display:flex;gap:14px;align-items:center}.design-id h1{font-size:2.15rem;line-height:1;letter-spacing:-.066em}.design-id p{margin-top:6px;color:var(--muted);font-size:.94rem}.design-id .brand{width:50px;height:50px;border-radius:16px}.design-id .brand svg{width:30px;height:30px}.design-head a{font-size:.88rem;font-weight:650;white-space:nowrap}.gallery-tools{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 16px;margin:16px 0 24px}.gallery-tools p{font-size:.82rem;color:var(--muted)}.gallery-groups{display:flex;flex-wrap:wrap;gap:4px}.gallery-groups button{min-height:44px;border:1px solid transparent;border-radius:999px;background:transparent;padding:0 13px;font-size:.85rem;font-weight:650}.gallery-groups button[aria-pressed=true]{background:var(--paper);border-color:#d9ddd5}.gallery-groups button:hover{background:var(--mist)}.gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:35px 24px;align-items:start}.frame{width:100%;max-width:390px;justify-self:center;min-width:0;scroll-margin-top:20px}.frame-heading{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:.89rem;font-weight:700;padding:0 9px 10px}.frame-heading a{color:inherit;text-decoration:none}.frame-heading a:hover{text-decoration:underline}.frame-heading small{font-size:.7rem;line-height:1.55;padding:0 6px;background:#dfe8d8;border-radius:999px;color:#3b5034}.phone{container-type:inline-size;display:flex;flex-direction:column;isolation:isolate;position:relative;background:var(--paper);border:5px solid #fafbf9;border-radius:32px;height:780px;width:100%;box-shadow:0 19px 42px #343b2b15,0 0 0 1px #dce0d8;overflow:hidden}.frame:target .phone,.frame.recent .phone{box-shadow:0 0 0 2px #6c5bdd,0 19px 42px #343b2b15}.device-status{display:flex;justify-content:space-between;align-items:center;padding:9px 17px 4px;font-size:.76rem;font-weight:700;min-height:30px;flex:none}.signals{display:flex;align-items:center;gap:5px}.signals svg{width:14px;height:14px}.device-content{display:flex;flex-direction:column;flex:1;min-height:0}.gesture{display:flex;align-items:center;justify-content:center;height:19px;background:var(--paper);flex:none}.gesture::after{content:"";width:100px;height:4px;border-radius:999px;background:#141514}.design-footer{display:grid;gap:14px;padding:24px 0 40px;margin-top:34px;border-top:1px solid #d9ddd5}.design-footer h2{font-size:1rem}.tokens{display:flex;flex-wrap:wrap;gap:9px 18px}.tokens span{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:.84rem}.tokens i{display:inline-block;width:18px;height:18px;border-radius:6px;border:1px solid #151a171c}.design-footer p{font-size:.875rem;color:var(--muted);line-height:1.45;max-width:74ch}
+.brand{width:36px;height:36px;border-radius:11px;background:#22351e;color:var(--lime);display:inline-grid;place-items:center;flex:none}.brand svg{width:24px;height:24px;stroke-width:2}.ptop{display:flex;align-items:center;gap:9px;min-height:57px;padding:0 12px 0 16px;flex:none}.ptop:has(>button:first-child){padding-left:8px}.ptop h2{font-size:1.1rem;line-height:1.24;letter-spacing:-.025em;overflow-wrap:anywhere}.ptop-copy{flex:1;min-width:0}.ptop-actions{display:flex;align-items:center;gap:1px;flex:none}.ptop small{display:block;font-size:.71rem;line-height:1.2;color:var(--muted);margin-bottom:3px}.pbody{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:9px 16px 16px}.pbody.scrollless{overflow:hidden}.pbody.flush{padding-inline:0}.stack{display:grid;gap:10px;min-width:0}.cluster,.between{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.between{justify-content:space-between}.nowrap{flex-wrap:nowrap}.center{text-align:center;justify-items:center}.full{width:100%}.caption,.muted{color:var(--muted);line-height:1.4}.caption{font-size:.8rem}.title{font-size:1.62rem;letter-spacing:-.051em;line-height:1.14;overflow-wrap:anywhere}.sect-title{font-size:1.04rem;font-weight:720;line-height:1.3;letter-spacing:-.024em}.card{background:var(--paper);border:1px solid var(--line);border-radius:15px;padding:12px}.section{display:grid;gap:10px;margin-top:20px}.section+.section{padding-top:15px;border-top:1px solid var(--line)}.rule{border:0;border-top:1px solid var(--line);margin:0}.fill{flex:1;min-width:0}.bbtn{border:1px solid transparent;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:48px;background:var(--lime);color:var(--lime-text);text-align:center;font-size:.86rem;font-weight:710;padding:7px 13px;line-height:1.2;white-space:normal}.bbtn svg{width:18px;height:18px}.bbtn:hover{filter:brightness(.95)}.bbtn.secondary,.bbtn.ghost,.bbtn.outline{background:var(--paper);color:var(--ink);border-color:var(--line)}.bbtn.text{background:transparent;color:var(--violet);font-weight:680;padding-inline:7px}.bbtn.danger{background:var(--rose);color:var(--rose-ink)}.bbtn.dark,.bbtn.black{background:#1f2920;color:white}.bbtn.full{width:100%}.iconbtn{display:inline-grid;place-items:center;width:48px;min-height:48px;flex:none;border:0;border-radius:15px;background:transparent;color:var(--ink);position:relative;padding:0}.iconbtn svg{width:21px;height:21px}.iconbtn:hover,.nav-item:hover{background:var(--mist)}.iconbtn.circular{border-radius:999px}.action-footer{display:flex;align-items:center;gap:8px;justify-content:flex-end;min-height:56px;padding:6px 16px 8px;border-top:1px solid var(--line);background:var(--paper);flex:none}.action-footer.split{justify-content:space-between}.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:#f1f2ef;color:#3f473e;padding:4px 8px;min-height:22px;font-size:.71rem;font-weight:650;line-height:1.25;max-width:100%;white-space:normal}.pill.violet{background:var(--violet-soft);color:var(--violet)}.pill.green{background:var(--mint);color:var(--mint-ink)}.pill.yellow{background:var(--amber);color:var(--amber-ink)}.pill.blue{background:var(--blue);color:var(--blue-ink)}.pill.red{background:var(--rose);color:var(--rose-ink)}.pill.neutral{background:#f0f2ee;color:#364036}.pill svg{width:13px;height:13px}.pic{width:var(--pic-size,32px);height:var(--pic-size,32px);display:inline-block;flex:none;border-radius:50%;background-image:var(--avatar-sheet);background-size:200% 200%;background-repeat:no-repeat;vertical-align:middle}.pic.MA{background-position:0 0}.pic.QK{background-position:100% 0}.pic.TV{background-position:0 100%}.pic.HN{background-position:100% 100%}.pics{display:flex;align-items:center;padding-left:0}.pics .pic{border:2px solid white;margin-left:-8px}.pics .pic:first-child{margin-left:0}.avatar-action{width:48px;height:48px;padding:0;border:0;border-radius:50%;background:none;display:grid;place-items:center;position:relative}.avatar-action::after{content:"";position:absolute;right:8px;bottom:8px;width:10px;height:10px;border:2px solid white;border-radius:50%;background:#70bb42}.nav{display:grid;grid-template-columns:1fr 1fr 1.1fr 1fr 1fr;align-items:end;background:var(--paper);border-top:1px solid var(--line);padding:0 8px 1px;flex:none;position:relative;min-height:55px}.nav-item{display:grid;place-items:center;align-content:center;gap:4px;min-height:53px;border:0;border-top:2px solid transparent;background:transparent;color:var(--muted);font-size:.65rem;line-height:1.05;padding:5px 1px}.nav-item svg{width:19px;height:19px}.nav-item[aria-current=page]{color:var(--violet);border-top-color:var(--violet);font-weight:700}.nav-add{width:52px;height:52px;min-height:52px;padding:0;border:0;border-radius:16px;background:var(--lime);color:var(--lime-text);display:grid;place-items:center;align-self:start;margin:-11px auto 0}.nav-add svg{width:25px;height:25px}.filter-row{display:flex;align-items:center;gap:7px;flex:none;padding:0 16px 7px}.filter-row .find,.filter-row .filter{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;background:white;min-height:46px;color:var(--muted);font-size:.79rem;text-align:left;padding:0 10px}.filter-row .find{flex:1;min-width:0}.filter-row .filter{font-weight:700;color:var(--ink);flex:none}.filter-row svg{width:17px;height:17px}.filter-row button:hover,.row-link:hover,.col-chip:hover{background:var(--mist)}.tabs{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding:0 16px;flex:none}.tabs button{font-size:.82rem;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:3px 3px;border:0;border-bottom:2px solid transparent;background:none;color:var(--muted);font-weight:650}.tabs button svg{width:17px;height:17px}.tabs button[aria-current=page]{color:var(--violet);border-bottom-color:var(--violet)}.field{display:grid;gap:5px;font-size:.84rem;font-weight:650;min-width:0}.field input,.field select,.field textarea,.text-input{width:100%;background:var(--paper);border:1px solid var(--outline);border-radius:11px;line-height:1.35;padding:10px 12px;min-height:48px;font-size:1rem;font-weight:400}.field textarea{min-height:92px}.field input::placeholder,.field textarea::placeholder,.text-input::placeholder{color:#62695f}.field .optional{font-weight:400;color:var(--muted)}
+.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:7px}.metric{display:grid;gap:5px;align-content:start;padding:9px;background:var(--mist);border:1px solid var(--line);border-radius:14px;min-height:86px;min-width:0;font-size:.7rem;color:var(--muted)}.metric svg{width:17px;height:17px;color:var(--ink)}.metric strong{color:var(--ink);font-size:1.1rem;line-height:1.12;letter-spacing:-.04em}.metric span{line-height:1.18}.day-title{display:grid;gap:4px;margin:7px 0 2px}.ring-layout{display:grid;grid-template-columns:minmax(104px,44%) minmax(0,1fr);gap:9px;align-items:center;padding:5px 0}.ring{position:relative;width:100%;max-width:148px;aspect-ratio:1;border-radius:50%;background:conic-gradient(#acd6f1 0 32%,#fff 32% 34%,#f3ce75 34% 73.5%,#fff 73.5% 75.5%,#89d6aa 75.5% 98%,#fff 98%);display:grid;place-items:center}.ring::before{position:absolute;content:"";inset:17%;border-radius:50%;background:#fff}.ring-center{z-index:1;display:grid;justify-items:center;gap:1px}.ring-center strong{font-size:1.65rem;line-height:1;letter-spacing:-.07em}.ring-center span{font-size:.7rem;color:var(--muted)}.legend{display:grid;gap:7px}.legend-row{min-width:0;display:grid;grid-template-columns:10px minmax(0,1fr) auto;align-items:center;gap:5px;font-size:.75rem;line-height:1.2}.legend-row i{width:9px;height:9px;border-radius:3px;background:var(--swatch)}.legend-row strong{font-variant-numeric:tabular-nums}.today-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.today-card{display:grid;gap:7px;text-align:left;align-content:start;min-height:128px;min-width:0;cursor:pointer}.today-card h3,.kan-card h3{font-size:.865rem;line-height:1.25;overflow-wrap:anywhere}.today-card .caption,.kan-card .caption{font-size:.72rem;display:flex;gap:4px;align-items:center}.today-card .caption svg,.kan-card .caption svg{width:13px;height:13px}.thinbar{width:100%;height:5px;background:var(--mist);border-radius:999px;overflow:hidden}.thinbar i{display:block;height:100%;width:var(--fill);border-radius:inherit;background:var(--bar,var(--lime))}
+.grid-table{border:1px solid var(--line);border-radius:14px;overflow:hidden}.grid-head,.proj-row{display:grid;grid-template-columns:minmax(0,1fr) 77px 68px;align-items:center;gap:6px;min-height:52px;padding:5px 9px;text-align:left}.grid-head{font-size:.72rem;color:var(--muted);background:var(--mist);min-height:37px}.proj-row{width:100%;border:0;border-top:1px solid var(--line);background:var(--paper);color:inherit}.proj-row:hover{background:var(--mist)}.proj-row .project-label{display:grid;gap:3px;min-width:0;overflow-wrap:anywhere}.project-label strong{font-size:.82rem;line-height:1.2}.project-label span,.proj-row aside{font-size:.72rem;line-height:1.15;color:var(--muted)}.proj-row aside{display:grid;gap:4px}.proj-row aside strong{font-weight:670;color:var(--ink)}.group-head{display:flex;justify-content:space-between;align-items:center;gap:4px;min-height:42px}.group-head h3{font-size:.91rem}.rows{display:grid;gap:7px}.person-row{display:flex;align-items:center;gap:9px;padding:9px 8px;border:1px solid var(--line);border-radius:14px;min-height:60px}.person-row .pcopy{display:grid;gap:3px;flex:1;min-width:0;font-size:.84rem;overflow-wrap:anywhere}.person-row .caption{font-size:.72rem}.person-row .iconbtn{width:40px;min-height:48px}.members-feature{border-color:#dcd4fa;background:var(--violet-soft);margin-bottom:12px}.members-feature .sect-title{color:#27204b}.members-feature .caption{color:#484366}.members-feature .pics{margin-top:5px}.updater{color:var(--violet);font-weight:670}
+.week-top{display:grid;gap:4px;margin-bottom:13px}.week-top .title{margin-top:4px}.week-controls{display:flex;align-items:center;gap:3px}.week-controls .iconbtn{width:42px;min-height:48px;border-radius:12px}.week-controls .bbtn{padding-inline:8px}.weeks{display:grid;gap:10px;min-width:0}.week-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--mist);border:1px solid var(--line);padding:3px;border-radius:13px}.week-days button{display:grid;align-content:center;justify-items:center;gap:4px;border:0;background:none;min-height:48px;padding:3px 0;border-radius:10px;font-size:.75rem;color:var(--muted)}.week-days button strong{color:var(--ink);font-size:.89rem}.week-days button[aria-pressed=true]{background:#e1f8d1;color:#24521f}.week-track{height:328px;position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:repeating-linear-gradient(to right,#f8f9f7,#f8f9f7 calc(100% / 7 - 1px),#e9ebe6 calc(100% / 7 - 1px),#e9ebe6 calc(100% / 7))}.today-line{position:absolute;left:var(--day-position,21.4%);width:2px;inset-block:0;background:#65af61}.today-line::before{content:"";width:8px;height:8px;position:absolute;top:2px;left:-3px;border-radius:50%;background:#65af61}.event{position:absolute;display:grid;gap:6px;width:48%;border:1px solid var(--event-border);background:color-mix(in srgb,var(--event-bg) 43%,#fff);border-radius:12px;padding:8px;text-align:left;box-shadow:0 4px 8px #2b342c09}.event strong{font-size:.78rem;line-height:1.24;overflow-wrap:anywhere}.event .caption{font-size:.69rem}.event .pill{justify-self:start}.event.first{left:3%;top:23px;--event-bg:var(--mint);--event-border:#9cccae}.event.second{right:3%;top:116px;--event-bg:var(--amber);--event-border:#e5c480}.event.third{left:14%;bottom:13px;--event-bg:var(--blue);--event-border:#a9cfe4}.event:hover{filter:brightness(.97)}
+.board-pbody{display:flex;flex-direction:column;overflow:hidden;padding-top:5px}.board-title{padding:0 16px;display:grid;gap:5px;flex:none}.boards{display:flex;overflow:auto hidden;gap:8px;padding:1px 16px 12px;flex:1;min-height:0;scroll-snap-type:x proximity;scroll-padding-inline:16px;scrollbar-width:thin}.kan-col{flex:0 0 min(88%,310px);min-height:0;display:flex;flex-direction:column;background:var(--mist);border:1px solid var(--line);border-radius:15px;scroll-snap-align:start;padding:7px;gap:8px}.kan-col-title{display:flex;align-items:center;gap:6px;min-height:48px;padding-left:6px}.kan-col-title h3{font-size:.87rem;flex:1;line-height:1.2;overflow-wrap:anywhere}.kan-col-title .iconbtn{width:40px;min-height:48px}.kan-col-title i{width:8px;height:8px;border-radius:50%;background:var(--status)}.kan-stack{display:grid;gap:7px;align-content:start;overflow:auto;min-height:0}.kan-card{padding:9px;display:grid;gap:6px}.kan-card label{font-size:.71rem;color:var(--muted)}.kan-open{display:block;text-align:left;width:100%;min-height:44px;padding:0;background:none;border:0;border-radius:5px}.kan-card .iconbtn{width:42px;min-height:46px}.kan-meta{display:flex;justify-content:space-between;align-items:center;gap:4px;flex-wrap:wrap}.kan-card .between{gap:2px}.kan-add{min-height:48px;flex:none;border-radius:10px;border:1px dashed var(--outline);color:var(--violet);background:transparent;font-size:.78rem;font-weight:680;display:flex;justify-content:center;align-items:center;gap:5px}.kan-add svg{width:16px;height:16px}.col-controls{display:flex;gap:5px;overflow:auto;scrollbar-width:none;padding:7px 16px 8px;flex:none}.col-chip{white-space:nowrap;min-height:48px;line-height:1.15;flex:none;padding:0 10px;border:1px solid var(--line);background:#fff;border-radius:999px;font-size:.78rem;color:var(--muted);font-weight:650}.col-chip[aria-pressed=true]{color:var(--violet);background:var(--violet-soft);border-color:#c9bfef}
+.sheet{width:min(380px,calc(100% - 26px));max-height:calc(100% - 30px);overflow:auto;color:var(--ink);padding:17px 18px 19px;border:1px solid var(--line);border-radius:21px;background:var(--paper);box-shadow:0 20px 75px #323c3537}.sheet::backdrop{background:#111a1670}.sheet h2{font-size:1.23rem;letter-spacing:-.03em}.sheet p{line-height:1.45}.sheet .actions{display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap}.sheet .field{margin-top:5px}.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:-9px -8px 6px 0}.notice{position:fixed;right:14px;bottom:14px;z-index:3;background:#212c23;color:white;border-radius:13px;padding:8px 9px 8px 13px;max-width:calc(100% - 28px);display:flex;gap:9px;align-items:center;font-size:.88rem;box-shadow:0 9px 28px #2b342c2c}.notice button{color:#d2fbb5}.pulse{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--violet);animation:spin .9s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+@container (width < 335px){.pbody{padding-inline:11px}.grid-head,.proj-row{grid-template-columns:minmax(0,1fr) 63px 56px}.ptop{padding-inline:9px;gap:6px}.filter-row,.tabs,.col-controls,.board-title{padding-inline:11px}.today-card{padding:8px}.pic{max-width:100%}.title{font-size:1.46rem}}
+@media(max-width:1080px){.gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 19px}.shell{width:min(824px,100% - 32px)}}
+@media(max-width:680px){.gallery{grid-template-columns:minmax(0,1fr);gap:27px}.shell{width:calc(100% - 22px)}.design-head{padding:20px 0 17px;align-items:center;flex-wrap:wrap}.design-id h1{font-size:1.78rem}.design-id .brand{width:43px;height:43px}.gallery-tools{margin:10px 0 18px}.gallery-groups button{padding-inline:9px;font-size:.8rem}.phone{height:750px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;transition-duration:.001ms!important}}
+@media print{@page{size:A3 landscape;margin:10mm}body{background:white}.shell{width:100%}.gallery{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.frame{break-inside:avoid}.frame[hidden]{display:block!important}.phone{height:753px;box-shadow:none;border:1px solid #bcbfb8;print-color-adjust:exact}.gallery-tools,.notice,.sheet{display:none!important}.design-head{padding-top:0}.design-footer{break-inside:avoid}.pbody{scrollbar-width:none}}
+</style>
+<!-- Avatar atlas: built-in ImageGen. Prompt: Use case: photorealistic-natural. Asset: single 2 × 2 portrait atlas for four fictional Vietnamese software team members in a project management UI. Square canvas, exactly four equally sized square tiles, edge-to-edge grid with no margins or divider, each head centered in its own quadrant for independent circular crop. Top left friendly Vietnamese woman age 29 with shoulder-length black hair, lavender backdrop. Top right Vietnamese man age 30 with short black hair and glasses, pale sky blue backdrop. Bottom left Vietnamese woman age 27 with short dark bob, pastel peach backdrop. Bottom right Vietnamese man age 32 with thick dark hair and a charcoal shirt, pale sage green backdrop. Consistent soft window light, head and shoulders, face framed small enough to leave about 15 percent space on all sides, friendly workplace profile photographs. No text, no watermark, no borders. -->
+<style id="screen-css"></style>
+<style>.overview-body .section{margin-top:15px;gap:8px}.overview-body .section+.section{padding-top:7px}.overview-body .ring{max-width:132px}.overview-body .today-card{min-height:105px}.event{width:44%}.event.third{left:3%}.filter-row .find,.filter-row .filter{min-height:48px}.kan-card .iconbtn,.kan-col-title .iconbtn,.person-row .iconbtn,.week-controls .iconbtn{width:48px;min-height:48px}</style>
+<style>:root{--avatar-sheet:url("data:image/jpeg;base64,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")}.week-empty{position:relative;padding:18px;background:#fff;margin:15px;border:1px solid var(--line);border-radius:12px}.search-empty{padding:15px 0}</style>
+</head>
+<body>
+<header class="design-head shell">
+  <div class="design-id"><span id="design-brand"></span><div><h1>Sprintly</h1><p>Thiết kế màn hình Android</p></div></div>
+  <a href="https://dribbble.com/shots/27250455-Task-Team-Management-Mobile-App-Design" target="_blank" rel="noreferrer">Mẫu tham chiếu Orbix ↗</a>
+</header>
+<main class="shell">
+  <div class="gallery-tools"><nav class="gallery-groups" aria-label="Lọc nhóm màn hình" id="group-nav"></nav><p id="screen-count" aria-live="polite"></p></div>
+  <div class="gallery" id="gallery"></div>
+</main>
+<footer class="design-footer shell">
+  <h2>Bảng màu</h2>
+  <div class="tokens"><span><i style="background:var(--lime)"></i>Thêm mới · #A4ED65</span><span><i style="background:var(--violet)"></i>Đang chọn · #4736C5</span><span><i style="background:var(--blue)"></i>To Do</span><span><i style="background:var(--amber)"></i>In Progress</span><span><i style="background:var(--mint)"></i>Done</span></div>
+  <p>Dữ liệu và avatar trong bản thiết kế là mẫu. Tổng quan lấy số lượng theo cột Kanban. Lịch hiển thị theo hạn của task.</p>
+</footer>
+<dialog class="sheet" id="sheet" aria-labelledby="sheet-heading"></dialog>
+<div class="notice" id="notice" role="status" hidden></div>
+<script>
+'use strict';
+const icons = {
+  layers:'<path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5"/>', plus:'<path d="M12 5v14M5 12h14"/>', users:'<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2M16 5a3 3 0 0 1 0 6m5 9v-2a5 5 0 0 0-4-5"/>', chevron:'<path d="m9 18 6-6-6-6"/>', mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>', eye:'<path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.5"/>', lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', logout:'<path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5m4-13 4 4-4 4m-6-4h13"/>', search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/>', bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-2 7-2 9h16c0-2-2-2-2-9m-8 12a2 2 0 0 0 4 0"/>', settings:'<circle cx="12" cy="12" r="3"/><path d="m10 3-.7 2.4-2 .9L5 5.4 3.5 8 5 9.9v2.4l-1.5 2L5 17l2.3-.6 2 .9L10 20h4l.7-2.7 2-.9 2.3.6 1.5-2.7-1.5-2V10l1.5-1.9L19 5.4l-2.3.9-2-.9L14 3z"/>', home:'<path d="m3 10 9-7 9 7v10H3zM9 20v-6h6v6"/>', calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18"/>', arrow:'<path d="M5 12h14m-7-7 7 7-7 7"/>', back:'<path d="m12 19-7-7 7-7M5 12h14"/>', folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>', edit:'<path d="M4 20l4-1 12-12-3-3L5 16l-1 4Zm10-13 3 3"/>', filter:'<path d="M4 7h16M7 12h10m-7 5h4"/>', move:'<path d="M4 8h16m-4-4 4 4-4 4m4 4H4m4-4-4 4 4 4"/>', more:'<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>', check:'<path d="m5 12 4 4L19 6"/>', chat:'<path d="M4 4h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-9l-5 4v-4H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/>', clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', close:'<path d="m6 6 12 12M18 6 6 18"/>', send:'<path d="m3 4 19 8-19 8 4-8-4-8Zm4 8h15"/>', board:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16m6-16v16"/>', wifi:'<path d="M3 9a15 15 0 0 1 18 0M6 13a9 9 0 0 1 12 0m-8 4a3 3 0 0 1 4 0m-2 4h.01"/>', battery:'<rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4M5 10h11v4H5z"/>', reception:'<path d="M5 18v-3m5 3v-6m5 6V9m5 9V5"/>', grip:'<path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" stroke-width="3"/>', spark:'<path d="M12 2c0 6-4 10-10 10 6 0 10 4 10 10 0-6 4-10 10-10-6 0-10-4-10-10Z"/>', left:'<path d="m15 18-6-6 6-6"/>', trash:'<path d="M4 7h16m-10 4v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3"/>', offline:'<path d="m3 3 18 18M9 6a16 16 0 0 1 12 3M3 9a18 18 0 0 1 3-2m1 6a8 8 0 0 1 4-2m-1 6a3 3 0 0 1 4 0m-2 4h.01"/>'
+};
+icons.date=icons.calendar;
+const h=(value='')=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+const icon=name=>`<svg viewBox="0 0 24 24" aria-hidden="true">${icons[name]||icons.layers}</svg>`;
+const brand=()=>`<span class="brand" aria-hidden="true">${icon('spark')}</span>`;
+const names={MA:'Nguyễn Minh Anh',QK:'Trần Quốc Khoa',TV:'Lê Thảo Vy',HN:'Phạm Hải Nam'};
+const avatar=(id,size=32)=>`<span class="pic ${h(id)}" role="img" aria-label="${h(names[id]||'Ảnh đại diện')}" style="--pic-size:${Number(size)}px"></span>`;
+const pics=(list,size=27)=>`<span class="pics">${list.map(id=>avatar(id,size)).join('')}</span>`;
+const iconbtn=(name,label,attrs='')=>`<button type="button" class="iconbtn" aria-label="${h(label)}" ${attrs}>${icon(name)}</button>`;
+const btn=(label,style='primary',iconName='',attrs='')=>`<button type="button" class="bbtn ${style}" ${attrs}>${iconName?icon(iconName):''}${h(label)}</button>`;
+const profileIcon=()=>`<button type="button" class="avatar-action" aria-label="Mở hồ sơ" data-go="profile">${avatar('MA',33)}</button>`;
+const phoneTop=(title,{back=false,actions='',eyebrow='',branded=false}={})=>`<header class="ptop">${back?iconbtn('back','Quay lại',`data-go="${typeof back==='string'?back:'board'}"`):''}${branded?brand():''}<div class="ptop-copy">${eyebrow?`<small>${h(eyebrow)}</small>`:''}<h2>${h(title)}</h2></div>${actions?`<div class="ptop-actions">${actions}</div>`:''}</header>`;
+const nav=active=>`<nav class="nav" aria-label="Điều hướng chính">${[['overview','home','Tổng quan'],['projects','folder','Dự án'],['task-form','plus','Tạo công việc'],['calendar','calendar','Lịch'],['profile','settings','Hồ sơ']].map(([id,glyph,label])=>id==='task-form'?`<button type="button" class="nav-add" aria-label="${label}" data-go="${id}">${icon(glyph)}</button>`:`<button type="button" class="nav-item" data-go="${id}" ${id===active?'aria-current="page"':''}>${icon(glyph)}<span>${label}</span></button>`).join('')}</nav>`;
+const field=(label,{type='text',placeholder='',value='',optional=false}={})=>`<label class="field"><span>${h(label)}${optional?' <small class="optional">(tùy chọn)</small>':''}</span><input type="${h(type)}" ${type==='email'?'autocomplete="email"':type==='password'?'autocomplete="current-password"':''} placeholder="${h(placeholder)}" value="${h(value)}"></label>`;
+const filterBar=()=>`<div class="filter-row"><button type="button" class="find" data-go="search">${icon('search')}<span>Tìm công việc</span></button><button type="button" class="filter" data-dialog="filters">${icon('filter')}<span>Bộ lọc</span></button></div>`;
+const studioTop=()=>phoneTop('Studio Sprintly',{branded:true,actions:iconbtn('layers','Chọn workspace','data-go="workspaces"')+profileIcon()});
+const pill=(label,tone='neutral')=>`<span class="pill ${tone}">${h(label)}</span>`;
+const defaultDate='17/11/2026';
+const taskData=[
+  {title:'Rà soát luồng đăng nhập',person:'MA',date:'17/11',status:'In Progress',tone:'yellow',stage:'doing',priority:'Cao'},
+  {title:'Kiểm thử Room cache',person:'QK',date:'17/11',status:'To Do',tone:'blue',stage:'todo',priority:'Trung bình'},
+  {title:'Chuẩn bị dữ liệu demo',person:'TV',date:'19/11',status:'In Progress',tone:'yellow',stage:'doing',priority:'Trung bình'},
+  {title:'Chốt cấu trúc workspace',person:'HN',date:'18/11',status:'Done',tone:'green',stage:'done',priority:'Thấp'},
+  {title:'Thiết kế trạng thái ngoại tuyến',person:'MA',date:'20/11',status:'To Do',tone:'blue',stage:'todo',priority:'Cao'},
+  {title:'Rà yêu cầu nghiệp vụ',person:'TV',date:'15/11',status:'Done',tone:'green',stage:'done',priority:'Thấp'},
+  {title:'Rà quyền xem workspace',person:'HN',date:'21/11',status:'To Do',tone:'blue',stage:'todo',priority:'Cao'},
+  {title:'Kiểm tra màn hình khi xoay',person:'QK',date:'22/11',status:'To Do',tone:'blue',stage:'todo',priority:'Trung bình'},
+  {title:'Đồng bộ danh sách thành viên',person:'HN',date:'19/11',status:'In Progress',tone:'yellow',stage:'doing',priority:'Trung bình'},
+  {title:'Bổ sung lọc theo ưu tiên',person:'QK',date:'20/11',status:'In Progress',tone:'yellow',stage:'doing',priority:'Thấp'},
+  {title:'Kiểm thử phiên đăng nhập',person:'MA',date:'20/11',status:'In Progress',tone:'yellow',stage:'doing',priority:'Cao'},
+  {title:'Chốt mô hình dữ liệu',person:'QK',date:'16/11',status:'Done',tone:'green',stage:'done',priority:'Thấp'}
+];
+
+function todayCard(t){
+  return `<button type="button" class="card today-card" data-go="task"><h3>${h(t.title)}</h3><span class="caption">${icon('calendar')}${t.date}</span><div class="between nowrap">${pill(t.status,t.tone)}${avatar(t.person,25)}</div></button>`;
+}
+
+function overview(){
+  const metrics=[['board','12','Công việc'],['folder','3','Dự án'],['clock','2','Đến hạn hôm nay']];
+  return studioTop()+filterBar()+`<div class="pbody overview-body"><div class="day-title"><p class="caption">Thứ Ba, ${defaultDate}</p><h2 class="title">Tổng quan</h2></div><div class="summary-grid">${metrics.map(([glyph,count,label])=>`<div class="metric">${icon(glyph)}<strong>${count}</strong><span>${label}</span></div>`).join('')}</div>
+  <section class="section" aria-labelledby="overview-progress"><div class="between nowrap"><h3 class="sect-title" id="overview-progress">Tiến độ công việc</h3><span class="caption">Android App</span></div><div class="ring-layout"><div class="ring" role="img" aria-label="12 công việc gồm 4 To Do, 5 In Progress và 3 Done"><div class="ring-center" aria-hidden="true"><strong>12</strong><span>Công việc</span></div></div><div class="legend">${[['#acd6f1','To Do',4],['#f3ce75','In Progress',5],['#89d6aa','Done',3]].map(([color,label,value])=>`<div class="legend-row"><i style="--swatch:${color}"></i><span>${label}</span><strong>${value}</strong></div>`).join('')}</div></div></section>
+  <section class="section"><div class="between nowrap"><h3 class="sect-title">Đến hạn hôm nay</h3>${btn('Xem tất cả','text','','data-go="calendar"')}</div><div class="today-cards">${taskData.slice(0,2).map(todayCard).join('')}</div></section></div>`+nav('overview');
+}
+
+function workspaceTabs(active){
+  return `<nav class="tabs" aria-label="Nội dung workspace"><button type="button" data-go="projects" ${active==='projects'?'aria-current="page"':''}>${icon('folder')}Dự án</button><button type="button" data-go="members" ${active==='members'?'aria-current="page"':''}>${icon('users')}Thành viên</button><span class="fill"></span>${iconbtn('more','Thao tác workspace','data-dialog="workspace-actions"')}</nav>`;
+}
+
+function projects(){
+  const data=[
+    {name:'Android App',description:'Ứng dụng quản lý công việc',team:['MA','QK','TV','HN'],done:'3 / 12',width:'25%',color:'#87c76c'},
+    {name:'Hệ thống thiết kế',description:'Thành phần và tài liệu',team:['MA','TV'],done:'5 / 8',width:'62.5%',color:'#9988e9'},
+    {name:'Sprintly API',description:'Workspace và task',team:['HN','QK'],done:'6 / 9',width:'66.7%',color:'#79b7dd'}
+  ];
+  return studioTop()+filterBar()+workspaceTabs('projects')+`<div class="pbody"><div class="between nowrap group-head"><h3>Dự án của nhóm</h3>${btn('Tạo dự án','text','plus','data-dialog="project"')}</div><div class="grid-table"><div class="grid-head"><span>Dự án</span><span>Thành viên</span><span>Hoàn tất</span></div>${data.map((p,i)=>`<button type="button" class="proj-row row-link" ${i===0?'data-go="board"':`data-dialog="project-summary" data-project="${h(p.name)}"`}><span class="project-label"><strong>${h(p.name)}</strong><span>${h(p.description)}</span></span>${pics(p.team,23)}<aside><strong>${p.done}</strong><span class="thinbar" aria-hidden="true"><i style="--fill:${p.width};--bar:${p.color}"></i></span></aside></button>`).join('')}</div><section class="section"><div class="between nowrap"><h3 class="sect-title">Công việc tiếp theo</h3>${btn('Mở bảng','text','arrow','data-go="board"')}</div><div class="today-cards">${[taskData[0],taskData[2]].map(todayCard).join('')}</div></section></div>`+nav('projects');
+}
+
+function members(){
+  const team=[['MA','minh.anh@sprintly.demo','Chủ sở hữu',3],['QK','khoa@sprintly.demo','Thành viên',4],['TV','vy@sprintly.demo','Thành viên',2],['HN','nam@sprintly.demo','Thành viên',3]];
+  return studioTop()+workspaceTabs('members')+`<div class="pbody"><section class="card members-feature stack"><div><h3 class="sect-title">Nhóm Android App</h3><p class="caption">4 thành viên · 12 công việc</p></div><div class="between nowrap">${pics(team.map(([id])=>id),32)}${btn('Thêm người','primary','plus','data-dialog="member"')}</div></section><div class="rows" aria-label="Thành viên workspace">${team.map(([id,email,role,count])=>`<article class="person-row">${avatar(id,39)}<div class="pcopy"><strong>${names[id]}</strong><span class="caption">${email}</span><span class="caption">${count} công việc được giao</span></div>${pill(role,id==='MA'?'violet':'neutral')}${id==='MA'?'':iconbtn('more',`Thao tác cho ${names[id]}`,`data-dialog="member-actions" data-person="${id}"`)}</article>`).join('')}</div></div>`+nav('projects');
+}
+
+function calendar(){
+  const weekdays=['T2','T3','T4','T5','T6','T7','CN'];
+  const events=[[taskData[3],'first'],[taskData[2],'second'],[taskData[4],'third']];
+  return studioTop()+filterBar()+`<div class="pbody"><div class="week-top"><h2 class="title">Lịch công việc</h2><div class="between"><span class="caption" data-week-label>16–22 tháng 11, 2026</span><div class="week-controls">${iconbtn('left','Tuần trước','data-week-step="-1"')}${btn('Hôm nay','secondary','','data-week-today')}${iconbtn('chevron','Tuần sau','data-week-step="1"')}</div></div></div><div class="weeks"><div class="week-days" aria-label="Chọn ngày trong tuần">${weekdays.map((label,i)=>`<button type="button" data-week-day="${i}" aria-pressed="${i===1}"><span>${label}</span><strong>${16+i}</strong></button>`).join('')}</div><div class="week-track" aria-label="Các task đến hạn trong tuần"><span class="today-line" aria-hidden="true"></span>${events.map(([t,position])=>`<button type="button" class="event ${position}" data-go="task"><span class="caption">${t.date} · Android App</span><strong>${h(t.title)}</strong>${pill(t.status,t.tone)}${pics([t.person],24)}</button>`).join('')}</div></div></div>`+nav('calendar');
+}
+
+function kanbanCard(t){
+  return `<article class="card kan-card"><div class="between nowrap"><span class="fill"><button type="button" class="kan-open" data-go="task"><h3>${h(t.title)}</h3></button></span>${iconbtn('grip','Di chuyển công việc','data-dialog="move"')}${iconbtn('more','Thao tác công việc','data-dialog="task-actions"')}</div><div class="kan-meta">${pill(t.priority,t.priority==='Cao'?'yellow':'neutral')}<span class="caption">${icon('calendar')}${t.date}</span>${avatar(t.person,25)}</div></article>`;
+}
+
+function board(){
+  const columns=[['todo','To Do',4,'#a4cce9'],['doing','In Progress',5,'#f1c86f'],['done','Done',3,'#84cda0']];
+  return phoneTop('Bảng Kanban',{eyebrow:'Studio Sprintly',back:'projects',actions:iconbtn('more','Thao tác bảng','data-dialog="board-actions"')})+`<div class="board-title"><h2 class="title">Android App</h2><span class="caption">12 công việc · 4 thành viên</span></div>`+filterBar()+`<nav class="col-controls" aria-label="Chọn cột Kanban">${columns.map(([id,label],i)=>`<button type="button" class="col-chip" data-col-jump="${id}" aria-pressed="${i===0}">${label}</button>`).join('')}</nav><div class="pbody flush board-pbody"><div class="boards">${columns.map(([id,label,count,color])=>`<section class="kan-col" data-column="${id}" aria-label="${label}"><div class="kan-col-title"><i style="--status:${color}" aria-hidden="true"></i><h3>${label}</h3>${pill(String(count))}${iconbtn('more',`Thao tác cột ${label}`,'data-dialog="column-actions"')}</div><div class="kan-stack">${taskData.filter(t=>t.stage===id).map(kanbanCard).join('')}</div><button type="button" class="kan-add" data-go="task-form">${icon('plus')}Thêm công việc</button></section>`).join('')}</div></div><div class="action-footer split">${btn('Thêm cột','text','plus','data-dialog="column"')}${btn('Tạo công việc','primary','plus','data-go="task-form"')}</div>`;
+}
+
+const authArtwork = () => `
+  <div class="support-art" aria-hidden="true">
+    <span class="support-orbit support-orbit-inner"></span>
+    <span class="support-orbit support-orbit-outer"></span>
+    <span class="support-spark support-spark-one"></span>
+    <span class="support-spark support-spark-two"></span>
+    <div class="support-art-card support-art-back"><i></i><span></span></div>
+    <div class="support-art-card support-art-front">
+      <i></i><span><b></b><b></b></span>
+    </div>
+  </div>`;
+
+const authWordmark = () => `<div class="support-wordmark">${brand()}<span>Sprintly</span></div>`;
+
+const authPassword = (label, autocomplete, placeholder) => `
+  <div class="support-password">
+    <label><span>${label}</span>
+      <input type="password" autocomplete="${autocomplete}" placeholder="${placeholder}">
+    </label>
+    <button type="button" data-password aria-pressed="false" aria-label="Hiện ${label.toLowerCase()}">${icon('eye')}</button>
+  </div>`;
+
+const supporting = {
+  session: () => `
+    <div class="pbody support-session">
+      <div class="support-session-main">
+        ${authArtwork()}
+        ${authWordmark()}
+      </div>
+      <div class="support-session-status" role="status">
+        <span class="support-progress" aria-hidden="true"></span>
+        <span>Đang kiểm tra phiên đăng nhập</span>
+      </div>
+    </div>`,
+  login: () => `
+    <div class="pbody support-auth">
+      ${authWordmark()}
+      ${authArtwork()}
+      <div class="support-auth-intro">
+        <h1>Đăng nhập</h1>
+        <p>Truy cập các dự án và công việc của bạn.</p>
+      </div>
+      <div class="support-auth-fields">
+        ${field('Email', {type:'email', placeholder:'ban@vidu.com'})}
+        ${authPassword('Mật khẩu', 'current-password', 'Nhập mật khẩu')}
+        <button type="button" class="support-auth-submit" data-go="workspaces"><span>Đăng nhập</span>${icon('arrow')}</button>
+      </div>
+      <div class="support-auth-footer">Chưa có tài khoản? <button type="button" data-go="register">Đăng ký</button></div>
+    </div>`,
+  register: () => `
+    <div class="pbody support-auth support-register">
+      <div class="support-auth-header">
+        <button type="button" class="support-auth-back" data-go="login" aria-label="Quay lại đăng nhập">${icon('back')}</button>
+        ${authWordmark()}
+      </div>
+      <div class="support-auth-intro">
+        <h1>Tạo tài khoản</h1>
+        <p>Bắt đầu quản lý dự án cùng đội nhóm.</p>
+      </div>
+      <div class="support-auth-fields">
+        ${field('Tên hiển thị',{placeholder:'Nhập tên của bạn'})}
+        ${field('Email',{type:'email',placeholder:'ban@vidu.com'})}
+        ${authPassword('Mật khẩu', 'new-password', 'Nhập mật khẩu')}
+        ${authPassword('Xác nhận mật khẩu', 'new-password', 'Nhập lại mật khẩu')}
+        <button type="button" class="support-auth-submit support-auth-submit-lime" data-go="workspaces"><span>Tạo tài khoản</span>${icon('arrow')}</button>
+      </div>
+      <div class="support-auth-footer">Đã có tài khoản? <button type="button" data-go="login">Đăng nhập</button></div>
+    </div>`,
+  workspaces: () => `
+    ${phoneTop('Không gian làm việc')}
+    <div class="pbody support-workspaces">
+      <div class="support-workspace-list">
+        <button type="button" class="support-workspace" data-go="projects" data-workspace="studio">
+          <span class="support-workspace-head">
+            <span class="support-workspace-mark support-workspace-lime">${icon('layers')}</span>
+            <span class="support-workspace-role">Chủ sở hữu</span>
+          </span>
+          <span class="support-workspace-title">Studio Sprintly ${icon('chevron')}</span>
+          <span class="support-workspace-description">Thiết kế và phát triển sản phẩm</span>
+          <span class="support-workspace-meta">
+            <span class="support-workspace-stat">${icon('folder')} 3 dự án</span>
+            <span class="support-avatars">${avatar('MA',26)}${avatar('QK',26)}${avatar('TV',26)}${avatar('HN',26)}</span>
+          </span>
+        </button>
+        <button type="button" class="support-workspace" data-go="projects" data-workspace="research">
+          <span class="support-workspace-head">
+            <span class="support-workspace-mark support-workspace-purple">${icon('users')}</span>
+            <span class="support-workspace-role">Thành viên</span>
+          </span>
+          <span class="support-workspace-title">Nhóm Nghiên cứu ${icon('chevron')}</span>
+          <span class="support-workspace-description">Khảo sát và phỏng vấn người dùng</span>
+          <span class="support-workspace-meta">
+            <span class="support-workspace-stat">${icon('folder')} 1 dự án</span>
+            <span class="support-avatars">${avatar('QK',26)}${avatar('MA',26)}</span>
+          </span>
+        </button>
+      </div>
+      <button type="button" class="support-workspace-create" data-dialog="workspace">${icon('plus')}<span>Tạo không gian làm việc</span></button>
+    </div>
+    ${nav('workspaces')}`,
+  profile: () => `
+    ${phoneTop('Hồ sơ')}
+    <div class="pbody support-profile">
+      <div class="support-profile-hero">
+        <div class="support-profile-cover" aria-hidden="true"></div>
+        <div class="support-profile-summary">
+          <div class="support-profile-avatar">${avatar('MA',64)}</div>
+          <h2>Nguyễn Minh Anh</h2>
+          <p>minh.anh@sprintly.demo</p>
+        </div>
+      </div>
+      <div class="support-profile-actions">
+        <button type="button" class="support-profile-logout" data-go="login">${icon('logout')} <span>Đăng xuất</span> ${icon('chevron')}</button>
+      </div>
+    </div>
+    ${nav('profile')}`
+};
+
+const supportingCss = `
+  .support-session, .support-auth {
+    background: #fff;
+  }
+  .support-session {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-bottom: 32px;
+  }
+  .support-session-main {
+    margin-block: auto;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    gap: 26px;
+  }
+  .support-session .support-art {
+    width: 100%;
+    max-width: 350px;
+    height: 222px;
+    background-color: transparent;
+    border: 0;
+  }
+  .support-session .support-wordmark { font-size: 33px; }
+  .support-session-status {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    color: #525663;
+    font-size: 12px;
+    font-weight: 550;
+  }
+  .support-progress {
+    position: relative;
+    width: 100px;
+    height: 4px;
+    overflow: hidden;
+    background: #e9e8f3;
+    border-radius: 3px;
+  }
+  .support-progress::before {
+    content: '';
+    position: absolute;
+    width: 44px;
+    height: 100%;
+    border-radius: 3px;
+    background: #4736c5;
+  }
+  .support-auth {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 16px 22px 16px;
+  }
+  .support-wordmark {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: #17181b;
+    font-size: 23px;
+    font-weight: 750;
+    line-height: 1.1;
+    letter-spacing: -.06em;
+  }
+  .support-auth-header { display: flex; align-items: center; gap: 10px; }
+  .support-auth-back {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #e1e3ea;
+    border-radius: 12px;
+    color: #17181b;
+    background: #fff;
+  }
+  .support-art {
+    height: 170px;
+    flex: none;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border: 1px solid #e7e8ec;
+    border-radius: 18px;
+    background:
+      radial-gradient(circle at center, #dbdbe8 1px, transparent 1.3px) 50% 0/14px 14px,
+      #f5f6f9;
+  }
+  .support-art::after {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    content: '';
+    background: linear-gradient(90deg, #f5f6f9, transparent 27% 73%, #f5f6f9);
+  }
+  .support-session .support-art::after {
+    background: linear-gradient(90deg,#fff,transparent 26% 74%,#fff),
+                linear-gradient(0deg,#fff,transparent 20% 80%,#fff);
+  }
+  .support-orbit {
+    position: absolute;
+    z-index: -1;
+    top: 50%;
+    left: 50%;
+    width: 184px;
+    height: 184px;
+    border: 1px solid #dbd9ed;
+    border-radius: 36%;
+    transform: translate(-50%, -50%) rotate(-23deg);
+  }
+  .support-orbit-outer { width: 236px; height: 236px; }
+  .support-spark {
+    position: absolute;
+    z-index: 2;
+    top: 22%;
+    left: 79%;
+    width: 10px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #a4ed65;
+    box-shadow: 0 0 0 4px #edf6e5;
+  }
+  .support-spark-two { top: 73%; left: 17%; width: 7px; background: #9b8ee5; box-shadow: 0 0 0 3px #eae6fa; }
+  .support-art-card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 146px;
+    height: 65px;
+    padding: 12px;
+    border: 1px solid #dce0e4;
+    border-radius: 13px;
+  }
+  .support-art-back {
+    background: #eeeafc;
+    transform: translate(-42%, -65%) rotate(13deg);
+  }
+  .support-art-front {
+    background: #fff;
+    transform: translate(-62%, -36%) rotate(-10deg);
+    box-shadow: 0 8px 15px #20203416;
+  }
+  .support-art-card i {
+    position: relative;
+    width: 29px;
+    height: 29px;
+    flex: none;
+    background: #a4ed65;
+    border-radius: 8px;
+  }
+  .support-art-card i::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    width: 8px;
+    height: 12px;
+    border: solid #17320f;
+    border-width: 0 2px 2px 0;
+    transform: rotate(42deg);
+  }
+  .support-art-back i { background: #d8cef8; }
+  .support-art-back i::before { border-color: #4736c5; }
+  .support-art-card span { display: grid; gap: 6px; }
+  .support-art-card b, .support-art-back span { width: 67px; height: 5px; border-radius: 4px; background: #b5b8c5; }
+  .support-art-card b + b { width: 43px; background: #e3e5ed; }
+  .support-auth-intro h1 {
+    margin: 0;
+    color: #17181b;
+    font-size: 34px;
+    line-height: 1.12;
+    letter-spacing: -.055em;
+  }
+  .support-auth-intro p {
+    margin: 8px 0 0;
+    color: #555967;
+    line-height: 1.45;
+    font-size: 13px;
+  }
+  .support-auth-fields { display: grid; gap: 14px; }
+  .support-auth-fields label { display: grid; gap: 6px; font-size: 13px; font-weight: 620; }
+  .support-auth-fields input {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 12px;
+    border: 1px solid #e0e2e9;
+    border-radius: 10px;
+    background: #f8f9fb;
+    color: #17181b;
+    font-family: inherit; font-size: 14px; font-weight: 400;
+  }
+  .support-auth-fields input::placeholder { color: #606572; }
+  .support-password { position: relative; }
+  .support-password input { padding-right: 50px; }
+  .support-password button {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #5d626f;
+  }
+  .support-auth-submit {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 48px;
+    margin-top: 3px;
+    padding: 0 14px;
+    border: 1px solid #16171b;
+    border-radius: 10px;
+    background: #16171b;
+    color: white;
+    font-size: 14px;
+    font-weight: 650;
+  }
+  .support-auth-submit-lime { background: #a4ed65; border-color: #a4ed65; color: #182213; }
+  .support-auth-footer {
+    margin-top: auto;
+    text-align: center;
+    color: #555967;
+    font-size: 13px;
+  }
+  .support-auth-footer button {
+    min-height: 48px;
+    padding: 0 4px;
+    border: 0;
+    background: transparent;
+    color: #4736c5;
+    font-weight: 700;
+  }
+  .support-register { gap: 22px; }
+  .support-register .support-auth-header { margin-left: -6px; }
+  .support-register .support-auth-intro { margin-top: 10px; }
+  .support-workspace-list { display: grid; gap: 12px; }
+  .support-workspace {
+    display: grid;
+    width: 100%;
+    gap: 13px;
+    padding: 15px;
+    border: 1px solid #e2e4ea;
+    border-radius: 15px;
+    background: white;
+    text-align: left;
+    color: #17181b;
+  }
+  .support-workspace-head, .support-workspace-title, .support-workspace-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .support-workspace-mark {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    color: #27431a;
+  }
+  .support-workspace-lime { background: #e9f9d9; }
+  .support-workspace-purple { background: #eeeafa; color: #4736c5; }
+  .support-workspace-role {
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: #f0edf9;
+    color: #4434a7;
+    font-size: 11px;
+    line-height: 15px;
+    font-weight: 650;
+  }
+  .support-workspace-title { font-size: 19px; line-height: 1.15; letter-spacing: -.04em; font-weight: 730; }
+  .support-workspace-title svg, .support-profile-logout svg:last-child { opacity: .65; }
+  .support-workspace-description { margin-top: -7px; color: #565b69; font-size: 12px; line-height: 1.4; }
+  .support-workspace-meta { border-top: 1px solid #eaebf0; padding-top: 11px; }
+  .support-workspace-stat { display: flex; align-items: center; gap: 7px; color: #505563; font-size: 12px; }
+  .support-workspace-stat svg { width: 16px; height: 16px; }
+  .support-avatars { display: flex; align-items: center; padding-left: 5px; }
+  .support-avatars > * { margin-left: -5px; box-shadow: 0 0 0 2px white; }
+  .support-workspace-create, .support-profile-logout {
+    width: 100%;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px dashed #cbced9;
+    border-radius: 12px;
+    background: #fff;
+    color: #3f4654;
+    font-size: 13px;
+    font-weight: 650;
+  }
+  .support-workspace-create { justify-content: center; margin-top: 12px; }
+  .support-profile-hero {
+    overflow: hidden;
+    border: 1px solid #e2e4ea;
+    border-radius: 16px;
+    background: white;
+  }
+  .support-profile-cover {
+    height: 106px;
+    background:
+      radial-gradient(ellipse at 72% 120%, transparent 0 38%, #d4d0e9 38.5% 39.3%, transparent 39.8% 51%, #d4d0e9 51.5% 52.3%, transparent 52.8% 64%, #dad6ec 64.5% 65.3%, transparent 65.8%),
+      radial-gradient(circle, #dedcea 1px, transparent 1.25px) 0 0/13px 13px,
+      #edeaf7;
+  }
+  .support-profile-summary { position: relative; padding: 46px 17px 20px; }
+  .support-profile-avatar {
+    position: absolute;
+    top: -35px;
+    left: 16px;
+    display: grid;
+    place-items: center;
+    border: 4px solid white;
+    border-radius: 50%;
+  }
+  .support-profile-summary h2 { margin: 0; font-size: 24px; line-height: 1.15; letter-spacing: -.05em; }
+  .support-profile-summary p { margin: 6px 0 0; color: #565b69; font-size: 13px; }
+  .support-profile-actions { margin-top: 16px; }
+  .support-profile-logout {
+    justify-content: flex-start;
+    padding: 0 15px;
+    border: 1px solid #e2e4ea;
+    color: #a4373c;
+  }
+  .support-profile-logout span { flex: 1; text-align: left; }
+  .support-auth button:focus-visible, .support-workspaces button:focus-visible, .support-profile button:focus-visible,
+  .support-auth input:focus-visible {
+    outline: 2px solid #4736c5;
+    outline-offset: 2px;
+  }
+`;
+const taskResult = ({ id, title, date, person, status, tone }) => `
+  <button type="button" class="ot-result" data-go="task" data-task-id="${id}">
+    <span class="ot-result-icon" aria-hidden="true">${icon('check')}</span>
+    <span class="ot-result-content">
+      <strong>${title}</strong>
+      <span class="ot-result-project">Android App <span aria-hidden="true">·</span> ${id}</span>
+      <span class="ot-result-meta">
+        <span class="pill ${tone}">${status}</span>
+        <span class="ot-result-date">${icon('date')} ${date}</span>
+      </span>
+    </span>
+    ${avatar(person, 27)}
+  </button>`;
+
+const taskScreens = {
+  task: () => `
+    ${phoneTop('Chi tiết công việc', {
+      back: 'board',
+      actions: '<button type="button" class="ot-icon-button" data-go="task-form" aria-label="Chỉnh sửa công việc">' + icon('edit') + '</button>'
+    })}
+    <div class="pbody ot-task-page">
+      <section class="ot-task-intro" aria-labelledby="ot-task-title">
+        <div class="ot-context">${icon('folder')} Android App <span aria-hidden="true">/</span> AND-24</div>
+        <h2 id="ot-task-title">Rà soát luồng đăng nhập</h2>
+        <div class="ot-task-tags">
+          <button type="button" class="ot-status-button" data-dialog="move">
+            <span class="ot-status-dot"></span> Đang làm <span class="ot-chevron-down">${icon('chevron')}</span>
+          </button>
+          <span class="pill yellow">Ưu tiên cao</span>
+        </div>
+      </section>
+      <section class="ot-task-fields" aria-label="Thông tin công việc">
+        <div class="ot-task-field">
+          <span class="ot-field-key">${icon('users')} Phụ trách</span>
+          <span class="ot-person">${avatar('MA', 25)} <strong>Nguyễn Minh Anh</strong></span>
+        </div>
+        <div class="ot-task-field">
+          <span class="ot-field-key">${icon('date')} Hạn hoàn thành</span>
+          <strong>17 thg 11, 2026</strong>
+        </div>
+        <div class="ot-task-field">
+          <span class="ot-field-key">${icon('board')} Cột trên bảng</span>
+          <button type="button" class="ot-text-button" data-dialog="move">Đang làm ${icon('chevron')}</button>
+        </div>
+      </section>
+      <section class="ot-task-section" aria-labelledby="ot-description">
+        <h3 id="ot-description">Mô tả</h3>
+        <p>Kiểm tra luồng đăng nhập bằng email trên Android. Ghi lại lỗi xác thực và các trường hợp mất kết nối trước khi bàn giao cho QA.</p>
+      </section>
+      <section class="ot-task-section" aria-labelledby="ot-comments">
+        <div class="ot-section-head">
+          <h3 id="ot-comments">Bình luận <span class="ot-count">2</span></h3>
+          <button type="button" class="ot-text-button" data-dialog="comment">Thêm bình luận</button>
+        </div>
+        <article class="ot-comment">
+          ${avatar('QK', 30)}
+          <div>
+            <div class="ot-comment-head"><strong>Trần Quốc Khoa</strong> <time>10:24</time></div>
+            <p>Mình đã cập nhật thông báo lỗi cho trường hợp nhập sai mật khẩu.</p>
+          </div>
+        </article>
+        <article class="ot-comment">
+          ${avatar('TV', 30)}
+          <div>
+            <div class="ot-comment-head"><strong>Lê Thảo Vy</strong> <time>09:08</time></div>
+            <p>Mình sẽ kiểm tra thêm trên Android 14.</p>
+          </div>
+        </article>
+      </section>
+      <section class="ot-task-section" aria-labelledby="ot-activity">
+        <h3 id="ot-activity">Hoạt động</h3>
+        <div class="ot-activity">
+          <span class="ot-activity-icon">${icon('move')}</span>
+          <div><p><strong>Nguyễn Minh Anh</strong> chuyển sang Đang làm</p><time>Hôm nay, 08:52</time></div>
+        </div>
+        <div class="ot-activity">
+          <span class="ot-activity-icon">${icon('plus')}</span>
+          <div><p><strong>Phạm Hải Nam</strong> đã tạo công việc</p><time>16 thg 11, 15:40</time></div>
+        </div>
+      </section>
+    </div>
+    <div class="ot-task-footer">
+      ${avatar('MA', 31)}
+      <button type="button" class="ot-composer" data-dialog="comment">
+        <span>Viết bình luận...</span><span class="ot-send-icon">${icon('send')}</span>
+      </button>
+    </div>`,
+
+  'task-form': (mode = 'edit') => `
+    ${phoneTop(mode === 'create' ? 'Tạo công việc' : 'Chỉnh sửa công việc', { back: mode === 'create' ? 'board' : 'task' })}
+    <div class="pbody ot-task-form">
+      <div class="ot-form-context">
+        <span class="ot-project-icon">${icon('folder')}</span>
+        <div><strong>Android App</strong><small>Studio Sprintly</small></div>
+      </div>
+      ${field('Tiêu đề', {
+        value: mode === 'create' ? '' : 'Rà soát luồng đăng nhập',
+        placeholder: 'Nhập tiêu đề công việc'
+      })}
+      <label class="ot-form-field ot-form-description">
+        <span>Mô tả <small>Không bắt buộc</small></span>
+        <textarea placeholder="Thêm mô tả cho công việc">${mode === 'create' ? '' : 'Kiểm tra luồng đăng nhập bằng email trên Android. Ghi lại lỗi xác thực và các trường hợp mất kết nối trước khi bàn giao cho QA.'}</textarea>
+      </label>
+      <div class="ot-form-grid">
+        <label class="ot-form-field">
+          <span>Trạng thái</span>
+          <span class="ot-select">
+            <select>
+              <option>Việc cần làm</option>
+              <option ${mode === 'edit' ? 'selected' : ''}>Đang làm</option>
+              <option>Đã hoàn thành</option>
+            </select>
+            ${icon('chevron')}
+          </span>
+        </label>
+        <label class="ot-form-field">
+          <span>Ưu tiên</span>
+          <span class="ot-select">
+            <select>
+              <option>Thấp</option>
+              <option ${mode === 'create' ? 'selected' : ''}>Trung bình</option>
+              <option ${mode === 'edit' ? 'selected' : ''}>Cao</option>
+            </select>
+            ${icon('chevron')}
+          </span>
+        </label>
+      </div>
+      <label class="ot-form-field">
+        <span>Người phụ trách</span>
+        <span class="ot-select ot-select-person">
+          <span>${mode === 'edit' ? avatar('MA', 24) : icon('users')}</span>
+          <select>
+            <option>Chưa phân công</option>
+            <option ${mode === 'edit' ? 'selected' : ''}>Nguyễn Minh Anh</option>
+            <option>Trần Quốc Khoa</option>
+            <option>Lê Thảo Vy</option>
+            <option>Phạm Hải Nam</option>
+          </select>
+          ${icon('chevron')}
+        </span>
+      </label>
+      <label class="ot-form-field">
+        <span>Hạn hoàn thành</span>
+        <input type="date" value="${mode === 'create' ? '' : '2026-11-17'}">
+      </label>
+    </div>
+    <div class="ot-task-footer ot-form-footer">
+      <button class="ot-cancel" type="button" data-go="${mode === 'create' ? 'board' : 'task'}">Hủy</button>
+      <button class="ot-save" type="button" data-task-save data-go="task">${icon('check')} ${mode === 'create' ? 'Tạo công việc' : 'Lưu thay đổi'}</button>
+    </div>`,
+
+  search: () => `
+    ${phoneTop('Tìm kiếm', { back: 'board' })}
+    <div class="pbody ot-search-page">
+      <div class="ot-search-controls">
+        <label class="ot-search-box">
+          ${icon('search')}
+          <input type="search" value="đăng nhập" placeholder="Tên hoặc mã công việc" aria-label="Tìm theo tên hoặc mã công việc" data-task-search>
+        </label>
+        <button class="ot-filter-button" type="button" data-dialog="filters" aria-label="Bộ lọc">${icon('filter')}</button>
+      </div>
+      <div class="ot-search-filters">
+        <button type="button" class="ot-search-filter ot-search-filter-active" data-dialog="filters">Android App <span class="ot-chevron-down">${icon('chevron')}</span></button>
+        <button type="button" class="ot-search-filter" data-dialog="filters">Trạng thái <span class="ot-chevron-down">${icon('chevron')}</span></button>
+        <button type="button" class="ot-search-filter" data-dialog="filters">Phụ trách <span class="ot-chevron-down">${icon('chevron')}</span></button>
+      </div>
+      <div class="ot-section-head ot-result-head">
+        <h2>Kết quả tìm kiếm</h2><span data-task-search-count>3 công việc</span>
+      </div>
+      <div class="ot-results" data-task-search-results>
+        ${taskResult({ id: 'AND-24', title: 'Rà soát luồng đăng nhập', date: '20 thg 11', person: 'MA', status: 'Đang làm', tone: 'violet' })}
+        ${taskResult({ id: 'AND-27', title: 'Sửa lỗi đăng nhập khi mất mạng', date: '21 thg 11', person: 'QK', status: 'Việc cần làm', tone: 'neutral' })}
+        ${taskResult({ id: 'AND-19', title: 'Thiết kế màn hình đăng nhập', date: '16 thg 11', person: 'TV', status: 'Đã hoàn thành', tone: 'green' })}
+      </div>
+    </div>`
+};
+
+const taskScreensCss = `
+  .ot-task-page,.ot-task-form,.ot-search-page{min-height:0}
+  .ot-task-intro{padding:2px 0 14px}
+  .ot-context,.ot-field-key,.ot-person,.ot-risk,.ot-result-date{display:flex;gap:7px;align-items:center}
+  .ot-context{font-size:12px;font-weight:650;color:#616465}
+  .ot-context svg,.ot-field-key svg,.ot-result-date svg{width:15px;height:15px;flex-shrink:0}
+  .ot-context span{color:#999e9a;margin:0 1px}
+  .ot-task-intro h2{font-size:30px;letter-spacing:-.05em;line-height:1.11;margin:10px 0 13px;font-weight:760;max-width:310px}
+  .ot-task-tags{display:flex;align-items:center;gap:8px}
+  .ot-status-button,.ot-search-filter{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-size:12px;font-weight:700;border:0;border-radius:30px;min-height:34px;padding:0 10px}
+  .ot-status-button,.ot-search-filter-active{color:#4736c5;background:#eeeaff}
+  .ot-status-dot{width:7px;height:7px;background:#6552db;border-radius:50%}
+  .ot-chevron-down{display:inline-flex;transform:rotate(90deg)}
+  .ot-chevron-down svg,.ot-text-button svg{width:13px;height:13px}
+  .ot-icon-button{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;border:1px solid #e8ebe6;background:#fff;color:#1c1e19}
+  .ot-icon-button svg{width:18px;height:18px}
+  .ot-task-fields{padding:0 12px;background:#f5f7f3;border:1px solid #e8ebe5;border-radius:14px}
+  .ot-task-field{min-height:42px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px}
+  .ot-task-field+.ot-task-field{border-top:1px solid #e4e8df}
+  .ot-field-key{color:#60665f;font-weight:600}
+  .ot-task-section{padding:13px 0;border-bottom:1px solid #edf0eb}
+  .ot-task-section:last-child{border-bottom:0}
+  .ot-task-section h3,.ot-section-head h2{margin:0;color:#161a15;font-size:16px;letter-spacing:-.02em;line-height:1.25}
+  .ot-task-section p{font-size:13px;line-height:1.47;margin:5px 0 0;color:#565d55}
+  .ot-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .ot-count{display:inline-grid;place-items:center;min-width:19px;height:19px;background:#eff1ee;border-radius:99px;margin-left:4px;color:#5a6059;font-size:11px;vertical-align:1px}
+  .ot-text-button{display:inline-flex;align-items:center;gap:4px;border:0;background:none;color:#4736c5;font-weight:700;font-size:12px;padding:4px 0;white-space:nowrap}
+  .ot-comment,.ot-activity{display:flex;align-items:flex-start;gap:8px;margin-top:10px}
+  .ot-comment-head{display:flex;align-items:center;gap:7px;font-size:12px}
+  .ot-comment-head time,.ot-activity time{color:#677065;font-size:11px}
+  .ot-comment p{margin-top:2px}
+  .ot-activity p{margin:0}
+  .ot-activity-icon,.ot-project-icon,.ot-result-icon{display:grid;place-items:center;flex:none;background:#efebff;color:#4736c5;border-radius:10px}
+  .ot-activity-icon{width:28px;height:28px}
+  .ot-activity-icon svg,.ot-result-icon svg{width:16px;height:16px}
+  .ot-task-footer{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:9px 16px 10px;border-top:1px solid #edf0eb;background:#fff}
+  .ot-composer{width:100%;min-height:42px;display:flex;justify-content:space-between;align-items:center;padding:3px 5px 3px 12px;border-radius:12px;border:1px solid #e7ebe5;background:#f6f8f5;color:#586157;text-align:left;font-size:13px}
+  .ot-send-icon{display:grid;place-items:center;width:33px;height:33px;border-radius:9px;background:#a4ed65;color:#17210f}
+  .ot-send-icon svg,.ot-save svg{width:16px;height:16px}
+  .ot-task-form{display:flex;flex-direction:column;gap:14px}
+  .ot-task-form > *{flex-shrink:0}
+  .ot-form-context{display:flex;align-items:center;gap:10px;background:#f5f7f3;border:1px solid #e8ebe5;border-radius:14px;padding:10px}
+  .ot-project-icon{width:38px;height:38px}
+  .ot-project-icon svg{width:20px;height:20px}
+  .ot-form-context strong,.ot-form-context small{display:block}
+  .ot-form-context strong{font-size:14px}
+  .ot-form-context small{color:#60665f;font-size:12px;margin-top:2px}
+  .ot-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .ot-form-field{display:grid;gap:6px;min-width:0;font-size:13px;font-weight:650}
+  .ot-form-field small{margin-left:5px;color:#60665f;font-size:11px;font-weight:500}
+  .ot-form-field textarea,.ot-form-field select,.ot-form-field input{background:#fff;border:1px solid #e3e7e0;border-radius:11px;min-height:43px;width:100%;box-sizing:border-box;color:#171b16;font:inherit;padding:10px 11px;outline-offset:2px}
+  .ot-form-field textarea{display:block;min-height:89px;resize:vertical;line-height:1.43;font-weight:500}
+  .ot-select{position:relative;display:block;min-width:0}
+  .ot-select select{appearance:none;padding-right:28px;text-overflow:ellipsis}
+  .ot-select>svg:last-child{position:absolute;right:11px;top:50%;transform:translateY(-50%) rotate(90deg);width:14px;height:14px;pointer-events:none;color:#575e55}
+  .ot-select-person>span:first-child{position:absolute;left:10px;top:50%;transform:translateY(-50%);display:flex;pointer-events:none}
+  .ot-select-person>span:first-child>svg{width:22px;height:22px;color:#575e55}
+  .ot-select-person select{padding-left:43px}
+  .ot-form-footer{display:grid;grid-template-columns:1fr 2.15fr}
+  .ot-cancel,.ot-save{display:flex;align-items:center;justify-content:center;gap:7px;border-radius:12px;min-height:45px;font-size:14px;font-weight:730}
+  .ot-cancel{color:#2f352d;background:#fff;border:1px solid #e3e7e0}
+  .ot-save{background:#a4ed65;color:#152011;border:1px solid #a4ed65}
+  .ot-search-controls{display:grid;grid-template-columns:minmax(0,1fr) 47px;gap:8px}
+  .ot-search-box{display:flex;align-items:center;gap:9px;min-width:0;border:1px solid #dedfe7;border-radius:12px;background:#f7f7fa;padding:0 11px;color:#4c4d57}
+  .ot-search-box>svg,.ot-filter-button>svg{width:19px;height:19px;flex:none}
+  .ot-search-box input{min-width:0;width:100%;height:45px;padding:0;border:0;background:transparent;color:#171b16;font:inherit;font-size:14px}
+  .ot-search-box input:focus{outline:0}
+  .ot-search-box:focus-within{outline:2px solid #4736c5;outline-offset:1px}
+  .ot-filter-button{display:grid;place-items:center;min-height:47px;color:#4736c5;background:#eeeaff;border:1px solid #e7e0fe;border-radius:12px}
+  .ot-search-filters{display:flex;flex-wrap:wrap;gap:6px;margin:11px 0 20px}
+  .ot-search-filter{border:1px solid #e8ebe6;background:#fff;color:#555e53;padding:0 9px}
+  .ot-search-filter-active{color:#4736c5;background:#eeeaff;border-color:#e7e0fe}
+  .ot-result-head{margin-bottom:10px}
+  .ot-result-head>span{color:#62695f;font-size:12px}
+  .ot-results{display:grid;gap:8px}
+  .ot-result{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:start;gap:9px;width:100%;background:#fff;border:1px solid #e6eae3;border-radius:14px;color:#151b14;text-align:left;padding:11px;font:inherit}
+  .ot-result-icon{width:34px;height:34px}
+  .ot-result-content{display:grid;gap:4px}
+  .ot-result-content>strong{font-size:14px;line-height:1.3;font-weight:730}
+  .ot-result-project{display:flex;gap:5px;align-items:center;color:#656b62;font-size:11px}
+  .ot-result-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:3px}
+  .ot-result-meta .pill{font-size:10px}
+  .ot-result-date{color:#5f675b;font-size:11px;white-space:nowrap;gap:4px}
+  .ot-result-date svg{width:13px;height:13px}
+`;
+
+const screens={...supporting,...taskScreens,overview,projects,members,calendar,board};
+const screenList=[
+  ['projects','Dự án','workspace'],['overview','Tổng quan','workspace',true],['calendar','Lịch công việc','workspace',true],
+  ['members','Thành viên','workspace'],['board','Bảng Kanban','tasks'],['task','Chi tiết công việc','tasks'],
+  ['task-form','Tạo / sửa công việc','tasks'],['search','Tìm và lọc','tasks'],['workspaces','Danh sách workspace','workspace'],
+  ['login','Đăng nhập','account'],['register','Đăng ký','account'],['profile','Hồ sơ','account'],['session','Khôi phục phiên','account']
+];
+const groups=[['all','Tất cả'],['workspace','Workspace'],['tasks','Công việc'],['account','Tài khoản']];
+const galleryRoot=document.getElementById('gallery');
+const groupNav=document.getElementById('group-nav');
+const sheet=document.getElementById('sheet');
+const notice=document.getElementById('notice');
+const selectedFrames=new Map();
+let activeGroup='all';
+let noticeTimer=0;
+let previewTrigger=null;
+let calendarWeek=0;
+let calendarDay=1;
+
+function frameBody(id,mode) {
+  const screen=screens[id];
+  return id==='task-form'?screen(mode||'create'):screen();
+}
+
+function renderGallery(){
+  document.getElementById('design-brand').innerHTML=brand();
+  document.getElementById('screen-css').textContent=supportingCss+'\n'+taskScreensCss;
+  galleryRoot.innerHTML=screenList.map(([id,title,group,proposal])=>`<article id="${id}" class="frame" data-group="${group}" aria-labelledby="heading-${id}"><h2 class="frame-heading" id="heading-${id}"><a href="#${id}">${h(title)}</a>${proposal?'<small>Đề xuất</small>':''}</h2><div class="phone"><div class="device-status" aria-hidden="true"><span>9:41</span><span class="signals">${icon('reception')}${icon('wifi')}${icon('battery')}</span></div><div class="device-content">${frameBody(id)}</div><div class="gesture" aria-hidden="true"></div></div></article>`).join('');
+  for(const frame of galleryRoot.querySelectorAll('.frame'))selectedFrames.set(frame.id,frame);
+  groupNav.innerHTML=groups.map(([id,label])=>`<button type="button" data-group-filter="${id}" aria-pressed="false">${label}</button>`).join('');
+  showGroup('all');
+}
+
+function showGroup(group){
+  if(!groups.some(([id])=>id===group))return;
+  activeGroup=group;
+  let count=0;
+  for(const frame of selectedFrames.values()){
+    frame.hidden=group!=='all'&&frame.dataset.group!==group;
+    if(!frame.hidden)count++;
+  }
+  groupNav.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.groupFilter===activeGroup)));
+  document.getElementById('screen-count').textContent=`${count} màn hình`;
+}
+
+function navigate(id,trigger){
+  const frame=selectedFrames.get(id);
+  if(!frame)return;
+  if(frame.hidden)showGroup(frame.dataset.group);
+  if(id==='task-form'){
+    const from=trigger?.closest('.frame')?.id;
+    frame.querySelector('.device-content').innerHTML=frameBody(id,from==='task'?'edit':'create');
+  }
+  document.querySelector('.frame.recent')?.classList.remove('recent');
+  frame.classList.add('recent');
+  frame.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  frame.querySelector('.frame-heading a')?.focus({preventScroll:true});
+}
+
+function alertPreview(message){
+  clearTimeout(noticeTimer);
+  notice.innerHTML=`<span>${h(message)}</span>${iconbtn('close','Đóng thông báo','data-hide-notice')}`;
+  notice.hidden=false;
+  noticeTimer=setTimeout(()=>{notice.hidden=true;},3300);
+}
+
+const optionList=values=>values.map(value=>`<option>${h(value)}</option>`).join('');
+const selectField=(label,options)=>`<label class="field"><span>${label}</span><select>${optionList(options)}</select></label>`;
+const textArea=label=>`<label class="field"><span>${label}</span><textarea rows="3"></textarea></label>`;
+const formSheet=(title,content,label='Lưu thay đổi',message='Đã xem thao tác lưu. Dữ liệu mẫu được giữ nguyên.')=>[title,`<div class="stack">${content}<div class="actions">${btn('Hủy','text','','data-close-sheet')}${btn(label,'primary','',`data-sheet-confirm="${h(message)}"`)}</div></div>`];
+const confirmSheet=(title,copy,label)=>[title,`<div class="stack"><p>${h(copy)}</p><div class="actions">${btn('Hủy','text','','data-close-sheet')}${btn(label,'danger','', 'data-sheet-confirm="Đã xem thao tác xác nhận."')}</div></div>`];
+const actionSheet=(title,actions)=>[title,`<div class="stack">${actions.map(([label,glyph,target,style='secondary'])=>btn(label,style,glyph,target)).join('')}</div>`];
+const plainField=(label,value='')=>field(label,{value});
+
+const dialogs={
+  workspace:()=>formSheet('Tạo workspace',plainField('Tên workspace')+textArea('Mô tả (tùy chọn)'),'Tạo workspace'),
+  'workspace-edit':()=>formSheet('Sửa workspace',plainField('Tên workspace','Studio Sprintly')+textArea('Mô tả (tùy chọn)')),
+  'workspace-delete':()=>confirmSheet('Xóa workspace?','Studio Sprintly cùng các dự án, công việc và lịch sử liên quan sẽ bị xóa.','Xóa workspace'),
+  'workspace-actions':()=>actionSheet('Thao tác workspace',[['Sửa workspace','edit','data-dialog="workspace-edit"'],['Xóa workspace','trash','data-dialog="workspace-delete"','danger']]),
+  project:()=>formSheet('Tạo dự án',plainField('Tên dự án')+textArea('Mô tả (tùy chọn)'),'Tạo dự án'),
+  'project-edit':()=>formSheet('Sửa dự án',plainField('Tên dự án','Android App')+textArea('Mô tả (tùy chọn)')),
+  'project-delete':()=>confirmSheet('Xóa dự án?','Các cột, công việc, bình luận và lịch sử của Android App sẽ bị xóa.','Xóa dự án'),
+  'project-summary':trigger=>actionSheet(trigger.dataset.project||'Dự án',[['Xem bảng mẫu','board','data-go="board"'],['Sửa dự án','edit','data-dialog="project-edit"']]),
+  member:()=>['Thêm thành viên',`<div class="stack">${field('Email tài khoản Sprintly',{type:'email',placeholder:'Email chính xác'})}${btn('Tìm tài khoản','secondary','search','data-lookup')}<div class="caption" data-lookup-result role="status"></div></div>`],
+  'member-actions':trigger=>actionSheet(names[trigger.dataset.person]||'Thành viên',[['Gỡ thành viên','users',`data-dialog="member-remove" data-person="${h(trigger.dataset.person||'QK')}"`,'danger']]),
+  'member-remove':trigger=>confirmSheet('Gỡ thành viên?',`${names[trigger.dataset.person]||'Thành viên'} sẽ mất quyền truy cập. Các task được giao sẽ chuyển về chưa phân công.`,'Gỡ thành viên'),
+  'board-actions':()=>actionSheet('Thao tác bảng',[['Thêm cột','plus','data-dialog="column"'],['Sửa dự án','edit','data-dialog="project-edit"'],['Xóa dự án','trash','data-dialog="project-delete"','danger']]),
+  column:()=>formSheet('Thêm cột',plainField('Tên cột'),'Thêm cột'),
+  'column-edit':()=>formSheet('Đổi tên cột',plainField('Tên cột','In Progress')),
+  'column-actions':()=>actionSheet('Thao tác cột',[['Tạo công việc','plus','data-go="task-form"'],['Đổi tên cột','edit','data-dialog="column-edit"']]),
+  'task-actions':()=>actionSheet('Thao tác công việc',[['Di chuyển','move','data-dialog="move"'],['Chỉnh sửa','edit','data-go="task-form"'],['Xóa công việc','trash','data-dialog="task-delete"','danger']]),
+  'task-delete':()=>confirmSheet('Xóa công việc?','Bình luận và lịch sử của công việc này sẽ bị xóa.','Xóa công việc'),
+  filters:()=>formSheet('Bộ lọc công việc',selectField('Cột',['Tất cả cột','To Do','In Progress','Done'])+selectField('Ưu tiên',['Tất cả mức','Khẩn cấp','Cao','Trung bình','Thấp'])+selectField('Người phụ trách',['Tất cả thành viên',...Object.values(names)]),'Áp dụng','Đã xem thao tác áp dụng bộ lọc.'),
+  move:()=>formSheet('Di chuyển công việc',selectField('Cột đích',['To Do','In Progress','Done'])+selectField('Vị trí',['Đầu cột','Cuối cột']),'Di chuyển','Đã xem thao tác di chuyển.'),
+  comment:()=>formSheet('Viết bình luận',textArea('Nội dung'),'Gửi','Đã xem thao tác gửi bình luận.')
+};
+
+function openDialog(key,trigger){
+  if(!Object.hasOwn(dialogs,key))return;
+  if(!sheet.open)previewTrigger=trigger;
+  const [title,content]=dialogs[key](trigger);
+  sheet.innerHTML=`<header class="sheet-head"><h2 id="sheet-heading">${h(title)}</h2>${iconbtn('close','Đóng','data-close-sheet')}</header>${content}`;
+  if(!sheet.open)sheet.showModal();
+  sheet.querySelector('input,select,textarea')?.focus();
+}
+
+function updateWeek(){
+  const frame=selectedFrames.get('calendar');
+  const start=new Date(Date.UTC(2026,10,16+calendarWeek*7));
+  const end=new Date(Date.UTC(2026,10,22+calendarWeek*7));
+  const formatter=new Intl.DateTimeFormat('vi-VN',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});
+  frame.querySelector('[data-week-label]').textContent=calendarWeek===0?'16–22 tháng 11, 2026':`${formatter.format(start)} – ${formatter.format(end)}`;
+  frame.querySelectorAll('[data-week-day]').forEach((button,i)=>{
+    const day=new Date(Date.UTC(2026,10,16+calendarWeek*7+i));
+    button.querySelector('strong').textContent=String(day.getUTCDate());
+    button.setAttribute('aria-pressed',String(i===calendarDay));
+  });
+  const track=frame.querySelector('.week-track');
+  track.style.setProperty('--day-position',`${(calendarDay+.5)*100/7}%`);
+  track.querySelectorAll('.event').forEach(button=>{button.hidden=calendarWeek!==0;});
+  let empty=track.querySelector('.week-empty');
+  if(!empty){empty=document.createElement('p');empty.className='week-empty caption';empty.textContent='Không có công việc đến hạn trong tuần này.';track.append(empty);}
+  empty.hidden=calendarWeek===0;
+}
+
+function updateSearch(input){
+  const frame=selectedFrames.get('search');
+  const keyword=input.value.trim().toLocaleLowerCase('vi');
+  const rows=Array.from(frame.querySelectorAll('[data-task-id]'));
+  let shown=0;
+  for(const row of rows){row.hidden=Boolean(keyword&&!row.textContent.toLocaleLowerCase('vi').includes(keyword));if(!row.hidden)shown++;}
+  const count=frame.querySelector('[data-task-search-count]');
+  if(count)count.textContent=`${shown} công việc`;
+  const results=frame.querySelector('[data-task-search-results]');
+  let empty=results.querySelector('.search-empty');
+  if(!empty){empty=document.createElement('p');empty.className='search-empty caption';empty.textContent='Không có kết quả phù hợp.';results.append(empty);}
+  empty.hidden=shown>0;
+}
+
+document.addEventListener('click',event=>{
+  const button=event.target.closest('button');
+  if(!button)return;
+  if(button.dataset.groupFilter){showGroup(button.dataset.groupFilter);return;}
+  if(button.dataset.dialog){openDialog(button.dataset.dialog,button);return;}
+  if(button.hasAttribute('data-close-sheet')){sheet.close();return;}
+  if(button.dataset.sheetConfirm){sheet.close();alertPreview(button.dataset.sheetConfirm);return;}
+  if(button.hasAttribute('data-lookup')){
+    const email=sheet.querySelector('input[type=email]');
+    sheet.querySelector('[data-lookup-result]').textContent=email.value.trim()&&email.validity.valid?'Tra cứu qua API khi triển khai.':'Nhập email hợp lệ để tìm tài khoản.';
+    return;
+  }
+  if(button.dataset.go){if(sheet.open)sheet.close();navigate(button.dataset.go,button);return;}
+  if(button.dataset.weekStep!==undefined){calendarWeek+=Number(button.dataset.weekStep);updateWeek();return;}
+  if(button.hasAttribute('data-week-today')){calendarWeek=0;calendarDay=1;updateWeek();return;}
+  if(button.dataset.weekDay!==undefined){calendarDay=Number(button.dataset.weekDay);updateWeek();return;}
+  if(button.dataset.colJump){
+    const board=selectedFrames.get('board');
+    board.querySelector(`[data-column="${button.dataset.colJump}"]`)?.scrollIntoView({block:'nearest',inline:'start',behavior:'smooth'});
+    board.querySelectorAll('[data-col-jump]').forEach(chip=>chip.setAttribute('aria-pressed',String(chip===button)));
+    return;
+  }
+  if(button.hasAttribute('data-password')){
+    const input=button.parentElement.querySelector('input');
+    const show=input.type==='password';
+    input.type=show?'text':'password';
+    button.setAttribute('aria-pressed',String(show));
+    button.setAttribute('aria-label',show?'Ẩn mật khẩu':'Hiện mật khẩu');
+    return;
+  }
+  if(button.hasAttribute('data-hide-notice')){notice.hidden=true;return;}
+});
+
+document.addEventListener('input',event=>{if(event.target.hasAttribute('data-task-search'))updateSearch(event.target);});
+sheet.addEventListener('close',()=>{if(previewTrigger?.isConnected)previewTrigger.focus({preventScroll:true});previewTrigger=null;});
+renderGallery();
+if(location.hash)selectedFrames.get(location.hash.slice(1))?.scrollIntoView({block:'start'});
+</script>
+</body>
+</html>
