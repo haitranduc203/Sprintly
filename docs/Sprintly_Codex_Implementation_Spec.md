@@ -5,6 +5,8 @@
 > Mục tiêu: Portfolio ứng tuyển **Fresher Android Developer**; kế hoạch 8 tuần.  
 > Bắt buộc: **Android Native Kotlin + XML truyền thống (KHÔNG dùng Jetpack Compose)**.  
 > Độ khó mục tiêu: ~4.5/5; ưu tiên sản phẩm chạy thực tế, test được, giải thích được khi phỏng vấn.
+>
+> Phạm vi MVP và quy tắc nghiệp vụ đã duyệt ngày 17/11/2026. [Quyết định nghiệp vụ](Sprintly_BA.md#6-quyết-định-đã-duyệt)
 
 ---
 
@@ -42,7 +44,7 @@ Một nhóm phát triển phần mềm nhỏ cần quản lý project và task, 
 
 ### 1.2. Đối tượng và vai trò
 
-- **Owner**: tạo workspace, quản lý thành viên và vai trò, tạo/quản lý project, task.
+- **Owner**: tạo và quản lý workspace, thêm hoặc gỡ thành viên, quản lý project và task.
 - **Member**: xem các project thuộc workspace, tạo/sửa task theo chính sách, cập nhật trạng thái, bình luận.
 - **Người không thuộc workspace**: tuyệt đối không được truy cập tài nguyên của workspace, kể cả đoán được ID qua URL.
 
@@ -51,7 +53,7 @@ Cho MVP, role gồm `OWNER`, `MEMBER`. Chưa cần admin cấp hệ thống hay 
 ### 1.3. Luồng người dùng cốt lõi
 
 1. Đăng ký → đăng nhập → xem workspace.
-2. Tạo workspace → mời/thêm thành viên theo username/email đã đăng ký (P0: thêm người dùng tồn tại; P1: lời mời có trạng thái chờ).
+2. Tạo workspace → Owner tra cứu email khớp chính xác và thêm tài khoản đã đăng ký. Lời mời chờ chấp nhận thuộc P2 (`FR-16`).
 3. Tạo project → tạo 3 cột mặc định `To Do`, `In Progress`, `Done`.
 4. Tạo task có tiêu đề, mô tả, deadline, priority, người phụ trách.
 5. Xem board, kéo task từ cột này sang cột khác → cập nhật server.
@@ -64,13 +66,13 @@ Cho MVP, role gồm `OWNER`, `MEMBER`. Chưa cần admin cấp hệ thống hay 
 | ID | Module | Yêu cầu | Ưu tiên |
 |---|---|---|---|
 | FR-01 | Auth | Đăng ký, đăng nhập, logout, phiên đăng nhập, refresh token | P0 |
-| FR-02 | Workspace | Tạo, danh sách, chi tiết workspace | P0 |
-| FR-03 | Members | Danh sách; Owner thêm/xóa member đã có tài khoản | P0 |
+| FR-02 | Workspace | Tạo, liệt kê và xem workspace. Owner được sửa và xóa workspace. | P0 |
+| FR-03 | Members | Xem thành viên. Owner tra cứu email khớp chính xác, thêm tài khoản đã đăng ký và gỡ thành viên. | P0 |
 | FR-04 | Project | CRUD project trong workspace | P0 |
 | FR-05 | Board | Danh sách cột, 3 cột mặc định, rename/add column | P0 |
 | FR-06 | Task | CRUD; assignee, priority, deadline, description | P0 |
-| FR-07 | Kanban | Kéo thả task sang cột khác; optimistic UI và rollback khi thất bại | P0 |
-| FR-08 | Task detail | Bình luận; lịch sử thay đổi cơ bản | P0 |
+| FR-07 | Kanban | Kéo thả và dùng menu Di chuyển trong hoặc giữa các cột, cập nhật UI dự đoán và phục hồi khi lỗi. | P0 |
+| FR-08 | Task detail | Tạo và xem bình luận, xem lịch sử thay đổi của task đang tồn tại. | P0 |
 | FR-09 | Search & Filter | Tìm keyword; lọc cột/priority/assignee | P0 |
 | FR-10 | Cache | Room cache workspace/project/board/task; xem offline | P0 |
 | FR-11 | State handling | Loading/empty/error/retry, refresh, rotation | P0 |
@@ -84,6 +86,8 @@ Cho MVP, role gồm `OWNER`, `MEMBER`. Chưa cần admin cấp hệ thống hay 
 **Định nghĩa MVP:** FR-01 đến FR-12 đều hoạt động. FR-13 đến FR-17 không được làm hỏng MVP; nếu hết thời gian, ghi lại là backlog.
 
 ### 1.5. Ngoài phạm vi MVP
+
+Hai màn **Tổng quan**, **Lịch công việc** và thanh phần trăm hoàn thành dự án thuộc phạm vi sau P0. Khi triển khai phần trăm hoàn thành, xác định cột hoàn thành bằng ID ổn định và định nghĩa công thức tính.
 
 Không làm payment, chat riêng, calendar tích hợp Google, AI agent, admin web, push notification phức tạp, CRDT, realtime concurrent editing toàn diện, đa tenant trả phí hoặc microservices.
 
@@ -240,8 +244,9 @@ Nếu phát sinh nhu cầu rõ ràng, có thể tách modules `core`, `data`, `d
 - OkHttp Authenticator (hoặc cơ chế equivalent được giải thích) xử lý 401, thực hiện refresh chỉ **một lần tại một thời điểm** (mutex/single-flight), retry request tối đa hợp lý, tránh vòng lặp 401.
 - Refresh API dùng client không tự retry qua cùng Authenticator để tránh recursion.
 - Access token ngắn hạn; refresh token lưu **mã hóa bằng khóa Android Keystore** (không plaintext trong DataStore). Không ghi token vào log.
-- Khi refresh thất bại/refresh revoked: xóa session, xóa dữ liệu cache gắn với account hiện tại hoặc tách DB theo account, điều hướng login một lần.
-- Logout gọi endpoint revoke best-effort, sau đó xóa session local ngay cả khi mạng lỗi.
+- Khi refresh gặp lỗi mạng, timeout hoặc `5xx`, giữ phiên cục bộ và chỉ cho đọc cache của tài khoản hiện tại. Mở lại thao tác ghi sau khi xác thực phiên thành công. Nếu máy chủ đã xoay token nhưng phản hồi bị mất, lần thử sau có thể nhận xác nhận token cũ đã vô hiệu và cần đăng nhập lại.
+- Khi `/auth/refresh` trả `REFRESH_TOKEN_INVALID` vì token hết hạn, bị thu hồi hoặc không hợp lệ, khóa quyền đọc cache ngay, xóa phiên và cache của tài khoản, rồi điều hướng về đăng nhập một lần.
+- Khi logout, giữ token trong bộ nhớ đủ để gửi yêu cầu thu hồi, đồng thời kết thúc phiên cục bộ và khóa cache ngay. Server thu hồi phiên khi xử lý thành công yêu cầu logout. Ràng buộc việc ghi token và cache với đúng lần đăng nhập đã gửi yêu cầu để phản hồi đến muộn không khôi phục phiên hoặc dữ liệu cũ.
 
 ---
 
@@ -255,31 +260,34 @@ Nếu phát sinh nhu cầu rõ ràng, có thể tách modules `core`, `data`, `d
 | `sessions` | `id UUID PK`, `user_id FK`, `refresh_token_hash UNIQUE`, `expires_at`, `revoked_at`, `created_at` | Rotation/revoke |
 | `workspaces` | `id UUID PK`, `name`, `description?`, `created_by FK`, timestamps | Owner có membership OWNER |
 | `workspace_members` | `workspace_id FK`, `user_id FK`, `role OWNER/MEMBER`, `joined_at`; composite unique | Quyền truy cập |
-| `projects` | `id UUID PK`, `workspace_id FK`, `name`, `description?`, timestamps | Thuộc workspace |
+| `projects` | `id UUID PK`, `workspace_id FK`, `name`, `description?`, `board_version`, timestamps | Thuộc workspace, `board_version` bắt đầu từ 1 |
 | `board_columns` | `id UUID PK`, `project_id FK`, `name`, `position INT`, timestamps | Mặc định 3 cột |
 | `tasks` | `id UUID PK`, `project_id FK`, `column_id FK`, `title`, `description?`, `priority`, `assignee_id?`, `due_at?`, `position INT`, `version INT`, `created_by`, timestamps | Optimistic concurrency |
-| `comments` | `id UUID PK`, `task_id FK`, `author_id FK`, `body`, `created_at`, `updated_at` | P0 create/list/delete own (tùy scope) |
-| `task_activities` | `id UUID PK`, `task_id FK`, `actor_id FK`, `action`, `payload JSONB`, `created_at` | Audit append-only |
+| `comments` | `id UUID PK`, `task_id FK`, `author_id FK`, `body`, `created_at`, `updated_at` | P0 tạo và xem |
+| `task_activities` | `id UUID PK`, `task_id FK`, `actor_id FK`, `action`, `payload JSONB`, `created_at` | Chỉ thêm bản ghi trong vòng đời task |
+| `idempotency_requests` | Tài khoản, loại thao tác, tài nguyên cha, khóa yêu cầu, mã băm payload và kết quả | Dùng cho tạo task và gửi bình luận. Xem [ERD](Sprintly_ERD.md). |
 
 Indexes tối thiểu: workspace-members by `user_id`, projects by `workspace_id`, columns by `(project_id,position)`, tasks by `(project_id,column_id,position)`, tasks by `(assignee_id,due_at)`, comments/activities by `(task_id,created_at)`.
 
 ### 4.2. Invariants và validation
 
 - User phải thuộc workspace của project/task mới được đọc dữ liệu.
-- Chỉ Owner được thay đổi membership, tên workspace, xóa workspace. P0 Member được tạo project/task, comment và chỉnh sửa task trong workspace; ghi rõ quy tắc này ở README.
+- Chỉ Owner được sửa hoặc xóa workspace, tra cứu email để thêm người, thêm hoặc gỡ thành viên và xóa project. Owner và Member được tạo/sửa project, thêm/đổi tên cột, tạo/sửa/giao/di chuyển task và bình luận. Owner hoặc người tạo task còn là thành viên được xóa task. Ghi ma trận quyền ở README.
 - `assignee_id` phải là member thuộc workspace; `column_id` phải thuộc cùng `project_id` của task.
 - Workspace phải luôn có ít nhất một OWNER; không cho xóa owner cuối cùng.
+- Khi gỡ thành viên, giữ tài khoản, bình luận và tham chiếu tác giả. Trong cùng giao dịch, gỡ phân công trên các task thuộc workspace, tăng phiên bản task, ghi lịch sử thay đổi người phụ trách với Owner là người thực hiện rồi xóa membership. Tuần tự hóa thao tác này với giao việc.
+- Xóa workspace, project hoặc task là xóa vĩnh viễn cùng dữ liệu con, gồm bình luận và lịch sử của các task bị xóa. UI nêu rõ hệ quả trong hộp thoại xác nhận.
 - Tạo project tạo 3 board columns mặc định trong **cùng transaction**.
 - `title` task 1–150 ký tự, workspace/project name 1–100, comment 1–2000; validate cả client/server.
 - Priority enum: `LOW`, `MEDIUM`, `HIGH`, `URGENT`.
 - Audit activity phải ghi cho create/update/move/assign task, không dựa vào UI tự bịa lịch sử.
 - Các mutating API kiểm tra quyền **server-side**, không chỉ ẩn nút trong Android.
-- Khi concurrent update: dùng `version`, trả `409 CONFLICT` nếu `expectedVersion` cũ; client reload/rollback, không ghi đè âm thầm.
-- Di chuyển task/đổi thứ tự dùng backend transaction, cập nhật `position`, tránh duplicate và preserve ordering. Có thể dùng integer position với rebalance cho MVP; mô tả quyết định trong docs.
+- Trả `409` khi phiên bản task hoặc phiên bản thứ tự board không còn khớp. Client hoàn tác cập nhật dự đoán nếu có, tải lại dữ liệu và để người dùng xác nhận thao tác trên dữ liệu hiện tại.
+- Tạo, xóa hoặc đổi thứ tự task, đổi cột của task và thêm cột phải cập nhật `board_version` trong cùng giao dịch với thay đổi tương ứng. Dùng vị trí nguyên liên tục từ 0 theo từng cột. Tuần tự hóa các thay đổi trước khi kiểm tra phiên bản và cập nhật thứ tự.
 
 ### 4.3. Room cache (P0)
 
-Room entities: `CachedWorkspaceEntity`, `CachedProjectEntity`, `CachedColumnEntity`, `CachedTaskEntity`, `CachedMemberEntity`, `CachedCommentEntity` (comment tùy lượng dữ liệu). Mỗi bản ghi cache có `accountId` hoặc database riêng theo tài khoản. Dữ liệu truy vấn qua Flow; remote refresh lưu DB trong transaction và UI observe DB khi phù hợp.
+Room entities: `CachedWorkspaceEntity`, `CachedProjectEntity`, `CachedColumnEntity`, `CachedTaskEntity`, `CachedMemberEntity`, `CachedCommentEntity` (comment tùy lượng dữ liệu). Mỗi bản ghi cache có `accountId` hoặc database riêng theo tài khoản. Dữ liệu truy vấn qua Flow. Lưu `boardVersion`, cột và thứ tự task của snapshot trong cùng giao dịch khi làm mới board.
 
 **Offline P0 = đọc dữ liệu đã đồng bộ**. Người dùng không được tạo/sửa task offline như thể chắc chắn đã lưu; UI disable action và báo trạng thái offline. Queue ghi offline + conflict resolver là **P2 riêng**, không mô tả P0 như đã hỗ trợ.
 
@@ -313,10 +321,9 @@ Mã HTTP: `400` validation, `401` missing/expired token, `403` forbidden, `404` 
 |---|---|---|---|
 | POST | `/auth/register` | `{email,displayName,password}` | user + tokens |
 | POST | `/auth/login` | `{email,password}` | user + tokens |
-| POST | `/auth/refresh` | `{refreshToken}` | new access + rotated refresh token |
+| POST | `/auth/refresh` | `{refreshToken}` | Trả access token mới và refresh token đã xoay. Trả `401` với `REFRESH_TOKEN_INVALID` khi token hết hạn, bị thu hồi hoặc không hợp lệ. |
 | POST | `/auth/logout` | `{refreshToken}` (authorized session semantics documented) | success, revoke session |
 | GET | `/users/me` | — | current user |
-| GET | `/users/search?email=...` | exact email matching for adding member | minimal user fields; auth required |
 
 Example login:
 
@@ -345,6 +352,7 @@ Example login:
 | PATCH | `/workspaces/:workspaceId` | Owner sửa name/description |
 | DELETE | `/workspaces/:workspaceId` | Owner xóa workspace; explicit confirm UI |
 | GET | `/workspaces/:workspaceId/members` | Danh sách members |
+| GET | `/workspaces/:workspaceId/users/search?email=...` | Owner của workspace tra cứu email khớp chính xác sau khi chuẩn hóa để thêm thành viên. Trả tối đa một kết quả với `id`, `displayName`, `email`. |
 | POST | `/workspaces/:workspaceId/members` | Owner thêm `{userId,role: "MEMBER"}` |
 | DELETE | `/workspaces/:workspaceId/members/:userId` | Owner remove member theo invariants |
 
@@ -355,11 +363,11 @@ Example login:
 | GET | `/workspaces/:workspaceId/projects` | List project |
 | POST | `/workspaces/:workspaceId/projects` | Create project; seed 3 columns |
 | GET | `/projects/:projectId` | Project detail |
-| PATCH | `/projects/:projectId` | Update name/description |
-| DELETE | `/projects/:projectId` | Delete project |
-| GET | `/projects/:projectId/board` | Columns và tasks đã sắp xếp (hoặc columns riêng + tasks riêng) |
-| POST | `/projects/:projectId/columns` | Create column `{name}` |
-| PATCH | `/columns/:columnId` | Rename column `{name}` |
+| PATCH | `/projects/:projectId` | Owner hoặc Member sửa tên và mô tả |
+| DELETE | `/projects/:projectId` | Owner xóa dự án và dữ liệu con |
+| GET | `/projects/:projectId/board` | Trả `boardVersion`, các cột và task đã sắp xếp trong cùng snapshot |
+| POST | `/projects/:projectId/columns` | Owner hoặc Member thêm cột `{name}` |
+| PATCH | `/columns/:columnId` | Owner hoặc Member đổi tên cột `{name}` |
 
 P0 không cần xóa/reorder cột nếu ảnh hưởng đáng kể tới tiến độ. API board response phải bao gồm `version`, `position`, `assignee`, `priority` cho mỗi task để client render.
 
@@ -368,13 +376,13 @@ P0 không cần xóa/reorder cột nếu ảnh hưởng đáng kể tới tiến
 | Method | Path | Ý nghĩa |
 |---|---|---|
 | GET | `/projects/:projectId/tasks` | Query `q`, `columnId`, `assigneeId`, `priority`, `page`, `pageSize` |
-| POST | `/projects/:projectId/tasks` | Create task `{columnId,title,description?,priority,assigneeId?,dueAt?}` |
+| POST | `/projects/:projectId/tasks` | Tạo task ở cuối cột `{columnId,title,description?,priority,assigneeId?,dueAt?}` với header `Idempotency-Key` |
 | GET | `/tasks/:taskId` | Task detail |
-| PATCH | `/tasks/:taskId` | Update fields; require `{expectedVersion,...changes}` |
-| DELETE | `/tasks/:taskId` | Delete task |
-| PATCH | `/tasks/:taskId/move` | `{targetColumnId,targetIndex,expectedVersion}` |
+| PATCH | `/tasks/:taskId` | Sửa task với `{expectedVersion,...changes}`. Nếu đổi `columnId`, gửi thêm `expectedBoardVersion` và chèn task vào cuối cột đích theo cùng quy tắc giao dịch và thứ tự của lệnh Di chuyển. |
+| DELETE | `/tasks/:taskId` | Owner hoặc người tạo còn là thành viên xóa task cùng bình luận và lịch sử |
+| PATCH | `/tasks/:taskId/move` | `{targetColumnId,targetIndex,expectedVersion,expectedBoardVersion}` |
 | GET | `/tasks/:taskId/comments` | List comments ascending/descending documented |
-| POST | `/tasks/:taskId/comments` | `{body}` |
+| POST | `/tasks/:taskId/comments` | Tạo bình luận `{body}` với header `Idempotency-Key` |
 | GET | `/tasks/:taskId/activities` | Audit trail (paginated) |
 
 Move example:
@@ -384,12 +392,18 @@ Move example:
 {
   "targetColumnId": "<target-column-uuid>",
   "targetIndex": 0,
-  "expectedVersion": 3
+  "expectedVersion": 3,
+  "expectedBoardVersion": 7
 }
 
-// 200: {"data":{"id":"<task-id>","columnId":"<target-column-uuid>","position":0,"version":4,...}}
+// 200: {"data":{"id":"<task-id>","columnId":"<target-column-uuid>","position":0,"version":4,"boardVersion":8,...}}
 // 409: {"error":{"code":"TASK_VERSION_CONFLICT","message":"..."}}
+// 409: {"error":{"code":"BOARD_VERSION_CONFLICT","message":"..."}}
 ```
+
+`targetIndex` bắt đầu từ 0 trên thứ tự cột đích trong snapshot đã tải. Khi di chuyển trong cùng cột, lấy task đang kéo ra trước khi xác định chỉ số. Với `n` task còn trong danh sách đích, chấp nhận từ 0 đến `n`, gồm vị trí cuối cột. Sau khi kiểm tra phiên bản, trả `422` nếu chỉ số nằm ngoài khoảng hoặc cột đích thuộc project khác.
+
+Với hai API tạo task và gửi bình luận, client sinh một `Idempotency-Key` kiểu UUID cho mỗi lần gửi có chủ ý, giữ nguyên khóa và payload khi thử lại cùng thao tác. Máy chủ kiểm tra quyền hiện tại, kể cả khi trả kết quả cũ. Máy chủ ghi kết quả thành công cùng giao dịch với dữ liệu và lịch sử tạo task nếu có. Khóa có phạm vi theo tài khoản, loại thao tác và tài nguyên cha. Cùng khóa và payload trả lại kết quả thành công đã lưu. Cùng khóa nhưng payload khác trả `409` với `IDEMPOTENCY_KEY_REUSED`. Nếu kết quả đã bị xóa nhưng tài nguyên cha vẫn tồn tại, server trả `404` và giữ khóa để lần thử lại không tạo lại bản ghi. [Ràng buộc và vòng đời dữ liệu](Sprintly_ERD.md)
 
 For security, task-specific endpoints must trace task -> project -> workspace -> membership before returning data. Search is scoped to a project or workspace accessible by current user. Server returns consistent ordering with a stable tie-breaker.
 
@@ -430,12 +444,14 @@ For security, task-specific endpoints must trace task -> project -> workspace ->
 
 Bắt buộc hiển thị rõ: `loading`, `content`, `empty`, `error + retry`, `offline cached`, submit success/failure. Không hiển thị loader vô hạn. Disable nút submit khi đang request. Điều hướng không tạo nhiều bản sao của cùng một screen khi double-tap.
 
+Nếu tạo task hoặc gửi bình luận bị timeout, giữ bản nháp và báo kết quả chưa được xác nhận. Khi người dùng thử lại online, gửi cùng khóa và payload của thao tác đang chờ. Hiển thị dữ liệu chính thức khi server xác nhận.
+
 ### 6.3. Kanban drag & drop
 
 - Board là các cột theo trục ngang, mỗi cột chứa RecyclerView tasks.
 - Dùng `ItemTouchHelper` hoặc custom gesture nếu cần để chuyển task giữa các cột. Nếu cross-list drag/drop bằng ItemTouchHelper đơn giản không đáp ứng được, tự triển khai logic drag target rõ ràng, test bằng hai cột.
-- Optimistic update **chỉ khi online**: cập nhật cột/position UI tức thì, gọi `PATCH /tasks/:id/move`.
-- Khi API thành công: reconcile theo server response/version. Khi lỗi `409`, reload board + thông báo conflict. Khi lỗi khác: rollback sang vị trí cũ + snackbar retry.
+- Khi online, kéo thả và menu **Di chuyển** dùng cùng quy tắc từ dữ liệu board đầy đủ. Cập nhật giao diện ngay rồi gọi `PATCH /tasks/:id/move` với phiên bản task và board đã tải.
+- Khi API thành công, đối chiếu thứ tự và phiên bản với server. Khi lỗi `409`, hoàn tác cập nhật dự đoán, tải lại board và yêu cầu chọn lại vị trí. Khi biết chắc thao tác ghi thất bại, hoàn tác và cho thử lại. Khi timeout hoặc mất kết nối giữa chừng, đối chiếu board trước khi thử lại và tính vị trí từ dữ liệu mới.
 - Chặn thao tác trùng trên cùng task trong lúc request move đang pending; không cho mất task khỏi cả hai cột.
 - Recreated screen/rotation không phải là nguyên nhân mất task.
 
@@ -454,11 +470,11 @@ Bắt buộc hiển thị rõ: `loading`, `content`, `empty`, `error + retry`, `
 
 1. Sau khi fetch online, lưu workspace/project/board/task vào Room.
 2. Với dữ liệu có cache, UI đọc/observe Room và hiện nội dung ngay, đồng thời thực hiện remote refresh khi có mạng.
-3. Nếu refresh thất bại vì offline, giữ cache và hiển thị banner `Đang xem dữ liệu đã lưu`.
+3. Nếu làm mới dữ liệu gặp lỗi mạng tạm thời, giữ cache và hiển thị banner `Đang xem dữ liệu đã lưu`. Nếu refresh phiên gặp lỗi tạm thời, áp dụng chế độ chỉ đọc theo §3.4 đến khi xác thực phiên thành công.
 4. Nếu chưa từng sync, hiện empty offline state với hướng dẫn thử lại khi có mạng.
 5. Khi mạng quay trở lại, refresh tại lần mở/resume/pull-to-refresh; có thể dùng observer network an toàn, nhưng không spam request.
 6. **Không cho thao tác write offline trong MVP P0**; có thông báo rõ ràng.
-7. Logout phải ngăn user B xem dữ liệu user A dù đã cache.
+7. Logout hoặc xác nhận phiên không hợp lệ khóa cache ngay. Phản hồi từ phiên cũ bị bỏ, kể cả khi cùng tài khoản đăng nhập lại. Loại cache thuộc phạm vi mất quyền khi server xác nhận đã thu hồi quyền truy cập.
 
 ### 7.2. P2: offline write sync (không làm trừ khi P0 hoàn chỉnh)
 
@@ -474,7 +490,7 @@ Bắt buộc hiển thị rõ: `loading`, `content`, `empty`, `error + retry`, `
 ### 8.1. Android unit test tối thiểu
 
 - Login ViewModel: loading → success/error, không double-submit.
-- Refresh token handling: nhiều request đồng thời chỉ kích hoạt refresh cần thiết, refresh failure logout.
+- Nhiều request đồng thời dùng chung một lần refresh. Lỗi tạm thời giữ cache chỉ đọc, refresh bị từ chối dứt khoát kết thúc phiên, phản hồi đến muộn không cập nhật token hoặc cache sau khi đổi phiên.
 - Create Task validation: title blank, invalid due date nếu có rule.
 - Task Move UseCase/Repository: optimistic success, error rollback, `409` conflict reload.
 - Offline repository: cached data hiển thị khi remote lỗi.
@@ -485,8 +501,10 @@ Bắt buộc hiển thị rõ: `loading`, `content`, `empty`, `error + retry`, `
 - Register/login thành công; invalid credential → 401.
 - Refresh rotation: token cũ không thể sử dụng lại sau rotation; logout revoke.
 - Workspace member cannot access another workspace → 403/404 consistent.
-- Owner can add member; non-owner cannot.
-- Task move with wrong expectedVersion → 409; valid move increments version.
+- Owner được tra cứu email và thêm thành viên trong workspace mình quản lý. Member và người ngoài bị từ chối. Gỡ member cập nhật phân công, phiên bản và lịch sử trong cùng giao dịch, kể cả khi có thao tác giao việc đồng thời.
+- Xác minh Owner, người tạo task còn là thành viên và Member khác theo ma trận quyền xóa. Xóa task hoặc tài nguyên cha xóa các bình luận và lịch sử liên quan.
+- Di chuyển trong và giữa cột. Phiên bản task hoặc thứ tự board cũ trả `409`, chỉ số ngoài khoảng trả `422`. Kiểm tra trường hợp hai người thao tác trên hai task khác nhau trong cùng board.
+- Tạo task và gửi bình luận với `Idempotency-Key`. Mô phỏng mất phản hồi sau commit và hai yêu cầu đồng thời dùng cùng khóa. Cùng khóa và payload chỉ tạo một bản ghi, còn payload khác trả `409`.
 - Assignee not workspace member → rejected.
 - Project creation seeds 3 columns exactly once.
 
@@ -500,16 +518,17 @@ Bắt buộc hiển thị rõ: `loading`, `content`, `empty`, `error + retry`, `
 | Case | Kỳ vọng |
 |---|---|
 | Login sai password | Có error message, không navigate |
-| Token hết hạn | Silent refresh và request thành công hoặc logout rõ ràng |
+| Access token hết hạn | Refresh thành công thì tiếp tục. Refresh bị từ chối dứt khoát thì về đăng nhập. |
+| Refresh phiên gặp lỗi tạm thời | Đọc cache hiện tại và khóa ghi đến khi xác thực lại thành công. |
 | Không mạng khi đã cache | Hiện dữ liệu cũ và offline banner |
 | Không mạng khi chưa cache | Empty offline state, không crash |
 | Kéo task API lỗi | UI rollback, snackbar |
 | Kéo task version conflict | Board refresh, task không mất |
 | Owner xóa member | Member không còn xem project sau refresh |
-| User A logout, User B login | Không lộ cache user A |
+| User A logout rồi A hoặc B login | Phản hồi cũ về muộn không ghi lại token hoặc cache của phiên đã kết thúc. |
 | Xoay màn hình ở task detail | Không crash; state được khôi phục |
 | API trả 500 hoặc request timeout | Có retry; không spinning vô hạn |
-| Gửi comment liên tiếp | Tránh duplicate do double tap |
+| Tạo task hoặc gửi bình luận mất phản hồi sau commit | Thử lại cùng khóa và payload, chỉ có một bản ghi. |
 | Background rồi resume | Không duplicate collector/navigation |
 
 ---
@@ -535,31 +554,31 @@ Bắt buộc hiển thị rõ: `loading`, `content`, `empty`, `error + retry`, `
 ### AC-01 Auth
 
 - Một user đăng ký, login, đóng/mở app vẫn giữ phiên hợp lệ.
-- Access token expire → tự refresh; refresh fail → clear session và về login.
-- Logout trên thiết bị làm refresh token cũ vô hiệu trên backend.
+- Access token hết hạn thì tự refresh. Lỗi tạm thời giữ cache chỉ đọc. Khi máy chủ xác nhận refresh token hết hạn, bị thu hồi hoặc không hợp lệ, khóa cache và về đăng nhập.
+- Logout khóa phiên trên thiết bị ngay cả khi offline. Sau logout được server xác nhận, refresh token của phiên đã thu hồi bị từ chối.
 
 ### AC-02 Workspace/Project
 
-- Owner tạo workspace, thêm member đã có account; member thấy workspace khi login.
+- Owner tạo workspace và thêm tài khoản đã đăng ký qua email khớp chính xác. Member thấy workspace khi đăng nhập. Khi bị gỡ, tài khoản mất quyền truy cập và các task đang giao cho họ chuyển về Chưa giao, có ghi lịch sử.
 - Tạo project tạo sẵn 3 cột: To Do, In Progress, Done.
-- Role không đủ quyền không thể quản lý member kể cả gọi API bằng Postman/curl.
+- Gọi trực tiếp API bằng tài khoản thiếu quyền tra cứu email, quản lý member hoặc xóa tài nguyên bị từ chối.
 
 ### AC-03 Task/Kanban
 
 - Owner/member tạo task, assign member hợp lệ, sửa title/description/priority/due date.
-- Drag task từ To Do sang In Progress; reload màn hình vẫn nằm cột mới.
-- Khi move API trả 500 hoặc 409, UI không mất task và có trạng thái đúng sau rollback/refetch.
+- Kéo task sang cột khác và đổi vị trí trong cùng cột. Tải lại vẫn thấy thứ tự chính thức. Khi người khác đổi thứ tự đích trước khi gửi move, app nhận `409`, tải lại và cho chọn lại vị trí.
+- Khi move lỗi hoặc mất phản hồi, UI giữ task và phục hồi vị trí từ trạng thái đã biết hoặc đối chiếu lại board. Khi tạo task mất phản hồi sau commit, thử lại cùng khóa chỉ tạo một task và một bản ghi lịch sử tạo.
 
 ### AC-04 Comment/Audit
 
-- Thành viên bình luận task; comment xuất hiện sau reload.
-- Các thay đổi create/update/move/assign tạo audit record đúng actor/timestamp.
+- Thành viên gửi và tải lại được bình luận. Nếu mất phản hồi sau commit, thử lại cùng khóa vẫn chỉ có một bình luận.
+- Các thay đổi create/update/move/assign có lịch sử đúng người thực hiện và thời điểm. Xóa task hoặc tài nguyên cha xóa cả lịch sử và bình luận của task liên quan.
 
 ### AC-05 Search & Offline
 
 - Lọc task theo priority/assignee/column; search theo title, có clear filters.
 - Khi offline, board đã sync mở được từ Room; hành động write bị khóa/nhắc người dùng.
-- Khi online lại, pull-to-refresh cập nhật dữ liệu đúng; không lộ cache giữa account.
+- Khi online lại, pull-to-refresh cập nhật dữ liệu và dọn cache mất quyền đã được xác nhận. Sau logout và đăng nhập lại, dữ liệu đến muộn của phiên trước bị bỏ.
 
 ### AC-06 Engineering
 
@@ -583,7 +602,7 @@ Repo phải có:
 7. **GitHub Actions**: lint/build/unit test tối thiểu. Instrumented UI tests có thể yêu cầu emulator runner riêng.
 8. **Demo checklist/script** 2–3 phút: login → workspace → project → task → drag & drop → comment → offline cache → logout.
 9. **Release APK** khi môi trường cho phép; nếu thiếu signing config, tạo debug APK và ghi rõ chưa phải release ký chính thức. Tuyệt đối không commit keystore private.
-10. **Known limitations / Roadmap**: P1 notifications, realtime; P2 offline write sync, attachment.
+10. **Known limitations / Roadmap** gồm P1 thông báo và realtime, P2 ghi offline, lời mời và đính kèm. Tổng quan, Lịch công việc và phần trăm hoàn thành nằm sau P0.
 
 ### Gợi ý diễn đạt trên CV sau khi đã làm thật
 
@@ -634,7 +653,7 @@ Repo phải có:
 
 ### Phase 3 — Task CRUD & Kanban
 
-- Backend tasks, columns, move transaction/version conflict, comments/activities cơ bản.
+- Backend tasks, columns, di chuyển trong giao dịch, kiểm tra phiên bản task và board, bình luận và lịch sử cơ bản. Tạo task và gửi bình luận hỗ trợ thử lại cùng khóa sau timeout.
 - Android board XML + RecyclerView, task form/detail, optimistic move/rollback.
 - Verify: task kéo giữa 2 cột, reload giữ đúng; mock 409/500 không làm mất task.
 
