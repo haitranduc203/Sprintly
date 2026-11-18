@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 import { apiErrorHandler } from "./api-errors.js";
 import type { PrismaClient } from "./generated/prisma/client.js";
+import { registerTaskCommentRoutes } from "./task-comment-routes.js";
 import { readMove, readNewTask, readTaskFilters, readTaskPatch } from "./task-validation.js";
 import { createTaskService } from "./tasks.js";
 import { readId } from "./validation.js";
@@ -43,4 +44,6 @@ export const registerTaskRoutes: FastifyPluginAsync<TaskRoutesOptions> = async (
     await service.remove(readId(request.params.taskId, "taskId"), request.authUser!.id);
     return reply.code(204).send();
   });
+
+  await app.register(registerTaskCommentRoutes, { database: options.database });
 };
