@@ -124,7 +124,7 @@ MVP sử dụng **REST API tự xây** trong cùng một monorepo:
 - Node.js + TypeScript + Fastify (hoặc Express nếu Fastify gây blocker), PostgreSQL, Prisma ORM.
 - JWT access token ngắn hạn + refresh token ngẫu nhiên được hash trong database, refresh rotation.
 - bcrypt/argon2 cho password hash, validation schema, centralized error handler.
-- Docker Compose cho PostgreSQL phục vụ local development; Prisma migration + seed.
+- Dùng PostgreSQL 17 cài trực tiếp trên máy hoặc một instance PostgreSQL sẵn có để phát triển. Prisma quản lý migration và seed. [Hướng dẫn chạy backend](../README.md#run-the-backend)
 - P1 realtime: Socket.IO; P1 push: Firebase Cloud Messaging, chỉ khi P0 ổn định.
 
 **Lý do:** Chủ động chuẩn hóa API cho Retrofit, thực hành auth/interceptor, 401/409, permission, audit và optimistic updates. Codex phải ghi rõ các lệnh chạy backend và cấu hình emulator truy cập backend (`10.0.2.2` nếu backend chạy trên máy host). Không dùng Supabase cho MVP trừ khi người dùng yêu cầu thay đổi stack.
@@ -158,7 +158,6 @@ sprintly/
 │   └── .env.example
 ├── .github/workflows/
 ├── docs/                        # Architecture/API/test notes nếu cần
-├── docker-compose.yml
 ├── README.md
 └── .gitignore
 ```
@@ -633,8 +632,8 @@ Repo phải có:
 
 ### Phase 0 — Inspect, plan, bootstrap
 
-- Kiểm tra repo hiện có, môi trường Java/Gradle/Android SDK/Node/Docker, tránh ghi đè project có sẵn.
-- Tạo skeleton monorepo Android XML + Backend TypeScript + PostgreSQL Compose.
+- Kiểm tra repo hiện có, môi trường Java/Gradle/Android SDK/Node/PostgreSQL, tránh ghi đè project có sẵn.
+- Tạo skeleton monorepo Android XML và backend TypeScript kết nối PostgreSQL qua `DATABASE_URL`.
 - Tạo backend `GET /health`, Prisma migration đầu tiên, seed; Android main screen + theme + navigation scaffold.
 - Viết README run commands. Chạy thử các lệnh khả thi và ghi kết quả.
 - Output: kiến trúc được chọn, tree files, build status và checklist Phase 1.

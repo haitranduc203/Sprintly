@@ -8,7 +8,6 @@ Sprintly is an Android Kanban app for small teams. Phase 0 sets up the Android s
 | --- | --- |
 | `source/` | Single-module Kotlin Android app using XML Views, View Binding, Material Components and Fragment navigation. |
 | `backend/` | TypeScript and Fastify service, Prisma schema, migrations, seed and API tests. |
-| `compose.yaml` | Local PostgreSQL service. |
 | `.github/workflows/` | Android and backend build and test jobs. |
 | `docs/` and `design-system/` | Approved MVP requirements, API contract, ERD and Orbix design. |
 
@@ -28,12 +27,20 @@ Connect a device or start an emulator before running `connectedDebugAndroidTest`
 
 ## Run the backend
 
-Install Node.js 24.11 or later in the 24.x line, npm and Docker with Compose. From the repository root, copy the environment template and set local credentials in `backend/.env`. Set `POSTGRES_PASSWORD` and the corresponding password in `DATABASE_URL` to match. URL-encode any special characters in the URL password. Set a local password for each demo account before seeding. Each password must contain at least 8 characters and fit within 72 UTF-8 bytes.
+Install Node.js 24.11 or later in the 24.x line and PostgreSQL 17. On Windows, the PostgreSQL installer includes pgAdmin. Keep PostgreSQL running on port `5432`. [PostgreSQL Windows installer](https://www.postgresql.org/download/windows/)
+
+In pgAdmin, connect to the local PostgreSQL server as `postgres` and open the Query Tool for the `postgres` database. Replace the example password with your own, then run each statement separately. [CREATE ROLE](https://www.postgresql.org/docs/17/sql-createrole.html) · [CREATE DATABASE](https://www.postgresql.org/docs/17/sql-createdatabase.html)
+
+```sql
+CREATE ROLE sprintly LOGIN PASSWORD 'replace_me';
+CREATE DATABASE sprintly OWNER sprintly;
+```
+
+From the repository root, copy the template. Edit `backend/.env` before running the backend commands. Replace the password in `DATABASE_URL` with the password for the `sprintly` role. URL-encode any special characters in the URL password. Set `DEMO_OWNER_PASSWORD` and `DEMO_MEMBER_PASSWORD` for the app's demo accounts. Each must contain at least 8 characters and fit within 72 UTF-8 bytes.
 
 ```powershell
 Copy-Item backend/.env.example backend/.env
-# Edit backend/.env before starting PostgreSQL.
-docker compose --env-file backend/.env up -d --wait db
+# Edit backend/.env before running the commands below.
 Set-Location backend
 npm.cmd ci
 npm.cmd run db:migrate
@@ -41,7 +48,7 @@ npm.cmd run db:seed
 npm.cmd run dev
 ```
 
-Stop the server with `Ctrl+C`. To stop PostgreSQL, run `docker compose --env-file backend/.env stop db` from the repository root. Compose retains the database volume across restarts. If PostgreSQL is already running locally, use a dedicated development database and set `DATABASE_URL` to it.
+Stop the backend with `Ctrl+C`. If you already have a PostgreSQL instance, create a dedicated development database and point `DATABASE_URL` to it. GitHub Actions provisions its own PostgreSQL test service.
 
 From another terminal, check database readiness:
 
@@ -68,4 +75,4 @@ The seed provisions `owner@sprintly.demo` and `member@sprintly.demo` in a sample
 - Add Android registration, login and session routing with secure token storage.
 - Verify the full authentication flow on an emulator and cover definitive refresh rejection, temporary failure and late responses from a closed session.
 
-See the [implementation specification](docs/Sprintly_Codex_Implementation_Spec.md) and the [handoff](docs/Sprintly_Handoff.md) for the phase gates and acceptance criteria.
+The phase gates, test results and acceptance criteria are recorded here. [Implementation specification](docs/Sprintly_Codex_Implementation_Spec.md) · [Phase 0 verification](docs/Sprintly_Phase_0_Verification.md) · [Handoff](docs/Sprintly_Handoff.md)

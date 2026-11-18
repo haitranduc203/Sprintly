@@ -5,7 +5,7 @@
 - Nền Android ở `source/` có ViewBinding, màn mở đầu Orbix và điều hướng Fragment. `minSdk` là 26 và `applicationId` là `com.example.sprintly`.
 - Backend ở `backend/` có `GET /health`, migration PostgreSQL và seed hai tài khoản demo. [README](../README.md) hướng dẫn chạy, kiểm thử và chuẩn bị Phase 1.
 - Thử nghiệm trên Pixel 7 Pro API 34 xác nhận Android có thể nhận thao tác thả giữa hai cột. Dùng kết quả này khi triển khai kéo thả Kanban ở Phase 3.
-- Quyết định BA đã được duyệt ngày 17/11/2026. Phase 0 nằm trên `chore/bootstrap`. Sau khi xác minh và merge Phase 0 vào `main`, tạo nhánh riêng từ `main` cho Phase 1.
+- Quyết định BA đã được duyệt ngày 17/11/2026. Phase 1 bắt đầu từ một nhánh tách từ `main` sau khi hợp nhất PR Phase 0. [Báo cáo kiểm thử Phase 0](Sprintly_Phase_0_Verification.md)
 - [Đặc tả dự án](Sprintly_Codex_Implementation_Spec.md) · [BA](Sprintly_BA.md) · [Use Case](Sprintly_Use_Cases.md) · [ERD](Sprintly_ERD.md) · [Thiết kế Orbix đã chốt](Sprintly_Orbix_Design.html)
 
 ## Quyết định BA đã duyệt
