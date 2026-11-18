@@ -2,7 +2,7 @@
 
 Thiết kế dành cho nhóm phát triển phần mềm nhỏ quản lý tiến độ theo Kanban. Luồng chính là vào workspace, mở dự án, tạo và giao việc, di chuyển thẻ, rồi kiểm tra bình luận hoặc lịch sử. P0 dùng Android Kotlin, XML Views, Fragments và Material Components. Nội dung giao diện dùng tiếng Việt, giữ tên ba cột mặc định do đặc tả quy định. [Đặc tả sản phẩm](Sprintly_Codex_Implementation_Spec.md) · [Phân tích nghiệp vụ](Sprintly_BA.md) · [Use Case](Sprintly_Use_Cases.md) · [ERD](Sprintly_ERD.md)
 
-**Thiết kế đã chốt ngày 17/11/2026.** Dùng bản Orbix để đối chiếu bố cục, màu sắc và thành phần khi triển khai Android. Bản xem trước có 11 màn hình P0 và minh họa thêm **Tổng quan**, **Lịch công việc** và tỷ lệ hoàn thành dự án cho giai đoạn sau P0. [Bản thiết kế Orbix](Sprintly_Orbix_Design.html) · [Hệ thống thiết kế Sprintly](../design-system/sprintly/MASTER.md)
+**Thiết kế đã chốt ngày 17/11/2026.** Dùng bản Orbix để đối chiếu bố cục, màu sắc và thành phần khi triển khai Android. Bản xem trước gồm 11 màn hình P0, ba màn **Onboarding** bổ sung và hai màn **Tổng quan**, **Lịch công việc** cho giai đoạn sau P0. Tỷ lệ hoàn thành dự án cũng thuộc giai đoạn sau P0. [Bản thiết kế Orbix](Sprintly_Orbix_Design.html) · [Hệ thống thiết kế Sprintly](../design-system/sprintly/MASTER.md)
 
 ## Nghiên cứu và phương án
 
@@ -32,7 +32,14 @@ Thanh công cụ hiển thị tiêu đề theo ngữ cảnh, nút Quay lại ở
 ```mermaid
 flowchart TD
     S["Kiểm tra phiên"] -->|Có phiên| W["Workspace"]
-    S -->|Khách| L["Đăng nhập"]
+    S -->|Lần đầu, chưa có phiên| O1["Sắp xếp dự án"]
+    S -->|Đã xem hoặc hết phiên| L["Đăng nhập"]
+    O1 -->|Tiếp tục| O2["Giao việc rõ ràng"]
+    O2 -->|Tiếp tục| O3["Theo dõi tiến độ"]
+    O1 -->|Bỏ qua| L
+    O2 -->|Bỏ qua| L
+    O3 -->|Tạo tài khoản| R["Đăng ký"]
+    O3 -->|Đăng nhập| L
     L --> R["Đăng ký"]
     L --> W
     R --> W
@@ -58,9 +65,17 @@ Cùng một mã ưu tiên dùng cùng nhãn trên thẻ, chi tiết, biểu mẫ
 
 ### 1. Kiểm tra phiên · session
 
-Hiển thị biểu trưng Sprintly và “Đang kiểm tra phiên…”. Khi phiên hợp lệ, mở danh sách workspace. Khi chưa lưu phiên, mở **Đăng nhập**. Khi máy chủ từ chối refresh dứt khoát, xóa phiên và cache của tài khoản hiện tại rồi mở **Đăng nhập** với thông báo “Phiên đã hết hạn. Vui lòng đăng nhập lại.” Bỏ qua phản hồi đến muộn của phiên đã kết thúc, kể cả sau khi đăng nhập bằng tài khoản khác.
+Hiển thị biểu trưng Sprintly và “Đang kiểm tra phiên…”. Khi phiên hợp lệ, mở danh sách workspace. Khi chưa có phiên, mở **Onboarding** trong lần mở đầu tiên hoặc **Đăng nhập** nếu người dùng đã qua phần giới thiệu. Khi máy chủ từ chối refresh dứt khoát, xóa phiên và cache của tài khoản hiện tại rồi mở **Đăng nhập** với thông báo “Phiên đã hết hạn. Vui lòng đăng nhập lại.” Bỏ qua phản hồi đến muộn của phiên đã kết thúc, kể cả sau khi đăng nhập bằng tài khoản khác.
 
 Khi refresh gặp lỗi mạng, timeout hoặc `5xx`, giữ phiên cục bộ và chỉ cho đọc cache của tài khoản hiện tại. Hiển thị “Chưa thể làm mới phiên” và **Thử lại**. Nếu thiếu cache, hiển thị “Chưa có dữ liệu đã lưu” cùng lối thử lại. Chỉ mở lại thao tác ghi theo quyền sau khi refresh thành công. [UC-02 và UC-12](Sprintly_Use_Cases.md) · [QD-06](Sprintly_BA.md#6-quyết-định-đã-duyệt)
+
+### Giới thiệu lần đầu · onboarding
+
+1. **Sắp xếp dự án** minh họa hai dự án trong một workspace. [Preview bước 1](Sprintly_Orbix_Design.html#onboarding)
+2. **Giao việc rõ ràng** minh họa người phụ trách và hạn hoàn thành của một công việc. [Preview bước 2](Sprintly_Orbix_Design.html#onboarding-assignment)
+3. **Theo dõi tiến độ** minh họa bảng Kanban ba cột. [Preview bước 3](Sprintly_Orbix_Design.html#onboarding-progress)
+
+Chỉ báo hiển thị vị trí trong ba bước. Hai bước đầu có **Tiếp tục** và **Bỏ qua**. Nút **Quay lại** ở bước 2 và 3 mở bước trước. Ở bước cuối, **Tạo tài khoản** mở **Đăng ký** và **Đăng nhập** mở biểu mẫu đăng nhập. **Bỏ qua** cũng đưa người dùng đến đăng nhập. Khi rời phần giới thiệu qua một trong các lối này, thiết bị ghi nhận người dùng đã xem onboarding.
 
 ### 2. Đăng nhập · login
 
@@ -151,6 +166,10 @@ Khi đã có cache và mất mạng, dùng banner **Đang xem dữ liệu đã l
 | P2 · FR-17 | Chi tiết task có khu **Tệp đính kèm** và nút mở trình chọn hệ thống. Thiết kế trạng thái đang tải lên, thành công, lỗi/thử lại và chế độ xem tệp. |
 
 Dark mode thuộc phần hoàn thiện tùy tiến độ theo §3.3. Bố cục tablet/large screen và landscape chuyên biệt thuộc triển vọng P2 theo §2.1. [Đặc tả sản phẩm](Sprintly_Codex_Implementation_Spec.md)
+
+## Yêu cầu khi triển khai Android XML
+
+Mọi layout và tài nguyên XML giao diện phải bám bản Orbix hiện tại. Đối chiếu màn hình và trạng thái tương ứng trước khi viết XML, rồi kiểm tra lại trong Android Studio Preview hoặc trên emulator. [Bản thiết kế Orbix](Sprintly_Orbix_Design.html) · [Hướng dẫn XML trong dự án Android](../source/AGENTS.md)
 
 ## Nghiệm thu khi chạy Android
 

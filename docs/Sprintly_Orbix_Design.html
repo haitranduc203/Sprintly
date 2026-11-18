@@ -136,6 +136,98 @@ const authArtwork = () => `
 
 const authWordmark = () => `<div class="support-wordmark">${brand()}<span>Sprintly</span></div>`;
 
+const onboardingProjects = () => `
+  <div class="onboarding-scene onboarding-scene-projects" role="img" aria-label="Workspace Studio Sprintly với dự án Android App và Website sản phẩm.">
+    <div class="onboarding-preview" aria-hidden="true">
+      <div class="onboarding-preview-head">
+        <span class="onboarding-preview-icon">${icon('layers')}</span>
+        <strong>Studio Sprintly</strong>
+      </div>
+      <div class="onboarding-projects">
+        <div class="onboarding-project">
+          ${icon('folder')}<strong>Android App</strong>${pics(['QK','MA','TV'],21)}
+        </div>
+        <div class="onboarding-project">
+          ${icon('folder')}<strong>Website sản phẩm</strong>${pics(['TV','HN'],21)}
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+const onboardingAssignment = () => `
+  <div class="onboarding-scene onboarding-scene-assignment" role="img" aria-label="Công việc Rà soát đăng nhập được giao cho Minh Anh, hạn hoàn thành ngày 17 tháng 11.">
+    <div class="onboarding-preview" aria-hidden="true">
+      <div class="onboarding-preview-head">
+        <span class="onboarding-preview-icon">${icon('folder')}</span>
+        <strong>Android App</strong>
+      </div>
+      <div class="onboarding-work">
+        <strong class="onboarding-work-title">Rà soát đăng nhập</strong>
+        <dl>
+          <div><dt>Người phụ trách</dt><dd>${avatar('MA',20)} Minh Anh</dd></div>
+          <div><dt>Hạn hoàn thành</dt><dd>${icon('calendar')} 17/11</dd></div>
+        </dl>
+      </div>
+    </div>
+  </div>`;
+
+const onboardingBoard = () => `
+  <div class="onboarding-scene" role="img" aria-label="Bảng Kanban dự án Android App với ba cột To Do, In Progress và Done.">
+    <div class="onboarding-preview" aria-hidden="true">
+      <div class="onboarding-preview-head">
+        <span class="onboarding-preview-icon">${icon('board')}</span>
+        <strong>Android App</strong>
+        ${pics(['QK','MA','TV'],21)}
+      </div>
+      <div class="onboarding-lanes">
+        <div class="onboarding-lane todo">
+          <span class="onboarding-lane-title">To Do</span>
+          <div class="onboarding-task">
+            <span>Kiểm thử bản build</span>
+            <span class="onboarding-task-meta">${avatar('QK',17)}<span>18/11</span></span>
+          </div>
+        </div>
+        <div class="onboarding-lane doing">
+          <span class="onboarding-lane-title">In Progress</span>
+          <div class="onboarding-task">
+            <span>Rà soát đăng nhập</span>
+            <span class="onboarding-task-meta">${avatar('MA',17)}<span>17/11</span></span>
+          </div>
+        </div>
+        <div class="onboarding-lane done">
+          <span class="onboarding-lane-title">Done</span>
+          <div class="onboarding-task">
+            <span>Chốt thiết kế</span>
+            <span class="onboarding-task-meta">${avatar('TV',17)}${icon('check')}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+const onboardingScreen = ({ step, art, title, copy, previous, next }) => `
+  <div class="pbody support-onboarding">
+    ${authWordmark()}
+    <div class="onboarding-main">
+      ${art}
+      <div class="onboarding-copy">
+        <h3>${title}</h3>
+        <p>${copy}</p>
+      </div>
+    </div>
+    <div class="onboarding-actions">
+      <div class="onboarding-steps">
+        <span class="sr">Bước ${step} trên 3</span>
+        ${[1,2,3].map(index=>`<span aria-hidden="true"${index===step?' class="current"':''}></span>`).join('')}
+      </div>
+      <div class="onboarding-action-row">
+        ${previous?iconbtn('back','Quay lại',`data-go="${previous}"`):''}
+        <button type="button" class="support-auth-submit support-auth-submit-lime" data-go="${next||'register'}"><span>${next?'Tiếp tục':'Tạo tài khoản'}</span>${icon('arrow')}</button>
+      </div>
+      <div class="support-auth-footer">${next?'':'Đã có tài khoản? '}<button type="button" data-go="login">${next?'Bỏ qua':'Đăng nhập'}</button></div>
+    </div>
+  </div>`;
+
 const authPassword = (label, autocomplete, placeholder) => `
   <div class="support-password">
     <label><span>${label}</span>
@@ -145,6 +237,28 @@ const authPassword = (label, autocomplete, placeholder) => `
   </div>`;
 
 const supporting = {
+  onboarding: () => onboardingScreen({
+    step: 1,
+    art: onboardingProjects(),
+    title: 'Sắp xếp dự án',
+    copy: 'Tập hợp các dự án của nhóm trong một không gian làm việc.',
+    next: 'onboarding-assignment'
+  }),
+  'onboarding-assignment': () => onboardingScreen({
+    step: 2,
+    art: onboardingAssignment(),
+    title: 'Giao việc rõ ràng',
+    copy: 'Chọn người phụ trách và đặt hạn cho từng công việc.',
+    previous: 'onboarding',
+    next: 'onboarding-progress'
+  }),
+  'onboarding-progress': () => onboardingScreen({
+    step: 3,
+    art: onboardingBoard(),
+    title: 'Theo dõi tiến độ',
+    copy: 'Di chuyển công việc giữa các cột trên bảng Kanban.',
+    previous: 'onboarding-assignment'
+  }),
   session: () => `
     <div class="pbody support-session">
       <div class="support-session-main">
@@ -241,6 +355,167 @@ const supporting = {
 };
 
 const supportingCss = `
+  .support-onboarding {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 20px clamp(16px, 6cqw, 24px) 12px;
+    background: var(--paper);
+  }
+  .onboarding-main {
+    display: grid;
+    gap: 25px;
+    flex: none;
+    margin-block: auto;
+  }
+  .onboarding-scene {
+    position: relative;
+    display: grid;
+    align-items: center;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 216px;
+    padding: 26px clamp(8px, 3.5cqw, 14px);
+    border: 1px solid var(--scene-border, #dde9d7);
+    border-radius: 24px;
+    background: linear-gradient(145deg, var(--mist), var(--scene-tint, #e5f2da));
+  }
+  .onboarding-scene-projects { --scene-border: #dce8ef; --scene-tint: #e1eef7; --scene-ring: #cfdfeb; }
+  .onboarding-scene-assignment { --scene-border: #e8e2f7; --scene-tint: var(--violet-soft); --scene-ring: #ddd5f8; }
+  .onboarding-scene::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    right: -66px;
+    bottom: -143px;
+    width: 258px;
+    aspect-ratio: 1;
+    border: 28px solid var(--scene-ring, #d3e9bf);
+    border-radius: 50%;
+  }
+  .onboarding-preview {
+    display: grid;
+    gap: 12px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--paper);
+    box-shadow: 0 12px 24px #22351e18;
+  }
+  .onboarding-preview-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    font-size: .83rem;
+  }
+  .onboarding-preview-head .pics, .onboarding-project .pics { margin-inline-start: auto; }
+  .onboarding-preview-icon {
+    display: grid;
+    place-items: center;
+    width: 29px;
+    height: 29px;
+    border-radius: 8px;
+    color: var(--violet);
+    background: var(--violet-soft);
+  }
+  .onboarding-preview-icon svg { width: 16px; height: 16px; }
+  .onboarding-projects { display: grid; gap: 6px; }
+  .onboarding-project {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: var(--mist);
+    font-size: .75rem;
+  }
+  .onboarding-project > svg { width: 14px; height: 14px; color: var(--blue-ink); }
+  .onboarding-work { display: grid; gap: 8px; }
+  .onboarding-work-title { font-size: 1rem; line-height: 1.25; }
+  .onboarding-work dl { display: grid; gap: 4px; font-size: .73rem; }
+  .onboarding-work dl > div {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px 8px;
+    min-height: 29px;
+    border-top: 1px solid var(--line);
+    padding-block-start: 4px;
+  }
+  .onboarding-work dt { color: var(--muted); }
+  .onboarding-work dd { display: flex; gap: 5px; align-items: center; font-weight: 650; }
+  .onboarding-work dd svg { width: 14px; height: 14px; color: var(--violet); }
+  .onboarding-lanes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+  }
+  .onboarding-lane {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 2;
+    gap: 5px;
+    padding: 5px;
+    border-radius: 8px;
+    background: var(--mist);
+  }
+  .onboarding-lane.todo { --lane-ink: var(--blue-ink); background: color-mix(in srgb, var(--blue) 45%, var(--mist)); }
+  .onboarding-lane.doing { --lane-ink: var(--amber-ink); background: color-mix(in srgb, var(--amber) 43%, var(--mist)); }
+  .onboarding-lane.done { --lane-ink: var(--mint-ink); background: color-mix(in srgb, var(--mint) 45%, var(--mist)); }
+  .onboarding-lane-title {
+    color: var(--lane-ink, var(--ink));
+    align-self: center;
+    font-size: .67rem;
+    font-weight: 730;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+  .onboarding-task {
+    display: grid;
+    align-content: space-between;
+    gap: 8px;
+    min-height: 73px;
+    padding: 6px;
+    border-radius: 6px;
+    background: var(--paper);
+    font-size: .69rem;
+    font-weight: 660;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+  .onboarding-task-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 3px;
+    color: var(--muted);
+    font-size: .58rem;
+  }
+  .onboarding-task-meta svg { width: 12px; height: 12px; color: var(--mint-ink); }
+  .onboarding-copy { display: grid; gap: 10px; }
+  .onboarding-copy h3 {
+    font-size: clamp(1.78rem, 8.7cqw, 2.15rem);
+    font-weight: 780;
+    line-height: 1.12;
+    letter-spacing: -.048em;
+    text-wrap: balance;
+  }
+  .onboarding-copy p { color: var(--muted); line-height: 1.5; text-wrap: balance; }
+  .onboarding-actions { display: grid; flex: none; gap: 5px; }
+  .onboarding-steps { display: flex; gap: 5px; margin-block-end: 10px; }
+  .onboarding-steps > span[aria-hidden] { width: 8px; height: 5px; border-radius: 8px; background: #c9c5da; }
+  .onboarding-steps > span.current { width: 24px; background: var(--violet); }
+  .onboarding-action-row { display: flex; gap: 8px; }
+  .onboarding-action-row .iconbtn { min-height: 52px; border: 1px solid var(--line); border-radius: 14px; }
+  .onboarding-action-row .support-auth-submit { flex: 1; min-width: 0; gap: 8px; }
+  .onboarding-actions .support-auth-submit { min-height: 52px; margin: 0; border-radius: 14px; font-size: .95rem; }
+  .onboarding-actions .support-auth-footer { margin: 0; }
+  .onboarding-actions .support-auth-footer button { padding-inline: 8px; }
   .support-session, .support-auth {
     background: #fff;
   }
@@ -849,6 +1124,7 @@ const screenList=[
   ['projects','Dự án','workspace'],['overview','Tổng quan','workspace',true],['calendar','Lịch công việc','workspace',true],
   ['members','Thành viên','workspace'],['board','Bảng Kanban','tasks'],['task','Chi tiết công việc','tasks'],
   ['task-form','Tạo / sửa công việc','tasks'],['search','Tìm và lọc','tasks'],['workspaces','Danh sách workspace','workspace'],
+  ['onboarding','Onboarding · Dự án','account'],['onboarding-assignment','Onboarding · Giao việc','account'],['onboarding-progress','Onboarding · Tiến độ','account'],
   ['login','Đăng nhập','account'],['register','Đăng ký','account'],['profile','Hồ sơ','account'],['session','Khôi phục phiên','account']
 ];
 const groups=[['all','Tất cả'],['workspace','Workspace'],['tasks','Công việc'],['account','Tài khoản']];
