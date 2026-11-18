@@ -1,0 +1,74 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="152dp"
+    android:viewportWidth="320"
+    android:viewportHeight="152">
+
+    <path
+        android:pathData="M59,101C54,71 89,37 139,25C189,13 247,23 260,53C273,83 234,117 183,129C133,141 66,131 59,101Z"
+        android:strokeColor="@color/orbix_auth_illustration_line"
+        android:strokeWidth="1" />
+    <path
+        android:pathData="M42,109C33,77 82,33 140,17C198,1 271,17 281,48C291,79 245,123 187,138C129,153 51,141 42,109Z"
+        android:strokeColor="@color/orbix_auth_illustration_line"
+        android:strokeWidth="1" />
+
+    <group android:pivotX="174" android:pivotY="72" android:rotation="13">
+        <path
+            android:fillColor="@color/orbix_selection_container"
+            android:pathData="M119,39H238Q250,39 250,51V93Q250,105 238,105H119Q107,105 107,93V51Q107,39 119,39Z"
+            android:strokeColor="@color/orbix_auth_illustration_line"
+            android:strokeWidth="1" />
+        <path
+            android:fillColor="@color/orbix_auth_illustration_lavender"
+            android:pathData="M130,57H145Q152,57 152,64V79Q152,86 145,86H130Q123,86 123,79V64Q123,57 130,57Z" />
+        <path
+            android:pathData="M131,72L136,77L144,67"
+            android:strokeColor="@color/orbix_selection"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:strokeWidth="2" />
+        <path
+            android:pathData="M164,71H226"
+            android:strokeColor="@color/orbix_auth_illustration_gray"
+            android:strokeLineCap="round"
+            android:strokeWidth="5" />
+    </group>
+
+    <group android:pivotX="145" android:pivotY="94" android:rotation="-10">
+        <path
+            android:fillColor="@color/orbix_auth_illustration_line"
+            android:pathData="M85,67H205Q217,67 217,79V120Q217,132 205,132H85Q73,132 73,120V79Q73,67 85,67Z" />
+        <path
+            android:fillColor="@color/orbix_surface"
+            android:pathData="M85,60H205Q217,60 217,72V113Q217,125 205,125H85Q73,125 73,113V72Q73,60 85,60Z"
+            android:strokeColor="@color/orbix_auth_illustration_line"
+            android:strokeWidth="1" />
+        <path
+            android:fillColor="@color/orbix_primary"
+            android:pathData="M96,77H111Q118,77 118,84V100Q118,107 111,107H96Q89,107 89,100V84Q89,77 96,77Z" />
+        <path
+            android:pathData="M97,92L102,97L110,87"
+            android:strokeColor="@color/orbix_on_primary"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:strokeWidth="2" />
+        <path
+            android:pathData="M130,88H191"
+            android:strokeColor="@color/orbix_auth_illustration_gray"
+            android:strokeLineCap="round"
+            android:strokeWidth="5" />
+        <path
+            android:pathData="M130,99H171"
+            android:strokeColor="@color/orbix_auth_illustration_line"
+            android:strokeLineCap="round"
+            android:strokeWidth="5" />
+    </group>
+
+    <path
+        android:fillColor="@color/orbix_primary"
+        android:pathData="M273,31a5,5 0,1 0,0 10a5,5 0,1 0,0 -10" />
+    <path
+        android:fillColor="@color/orbix_auth_illustration_lavender"
+        android:pathData="M51,109a4,4 0,1 0,0 8a4,4 0,1 0,0 -8" />
+</vector>

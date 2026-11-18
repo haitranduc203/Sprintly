@@ -1,6 +1,6 @@
 # Sprintly
 
-Sprintly is an Android Kanban app for small teams. Phase 0 sets up the Android shell, the REST service and the local PostgreSQL database.
+Sprintly is an Android Kanban app for small teams. Phase 1 adds account registration, sign-in, session restoration and sign-out to the Android app and PostgreSQL-backed REST service.
 
 ## Repository layout
 
@@ -23,7 +23,7 @@ Set-Location source
 .\gradlew.bat :app:connectedDebugAndroidTest
 ```
 
-Connect a device or start an emulator before running `connectedDebugAndroidTest`. Run the `app` configuration in Android Studio to open the Sprintly start screen. The screen runs independently of the backend in Phase 0.
+Start the backend before signing in or creating an account. The debug app uses `http://10.0.2.2:3000/api/v1/`, which reaches the host from the Android emulator. Override the URL with `sprintlyApiBaseUrl` in `source/local.properties` or with the Gradle property `-PsprintlyApiBaseUrl`. Cleartext HTTP is limited to emulator and loopback addresses in debug builds. Release sign-in requires a configured HTTPS endpoint.
 
 ## Run the backend
 
@@ -36,13 +36,23 @@ CREATE ROLE sprintly LOGIN PASSWORD 'replace_me';
 CREATE DATABASE sprintly OWNER sprintly;
 ```
 
-From the repository root, copy the template. Edit `backend/.env` before running the backend commands. Replace the password in `DATABASE_URL` with the password for the `sprintly` role. URL-encode any special characters in the URL password. Set `DEMO_OWNER_PASSWORD` and `DEMO_MEMBER_PASSWORD` for the app's demo accounts. Each must contain at least 8 characters and fit within 72 UTF-8 bytes.
+From the repository root, create `backend/.env` if it is missing.
+
+```powershell
+if (-not (Test-Path backend/.env)) { Copy-Item backend/.env.example backend/.env }
+```
+
+Replace the password in `DATABASE_URL` with the password for the `sprintly` role. URL-encode any special characters in the URL password. Set `DEMO_OWNER_PASSWORD` and `DEMO_MEMBER_PASSWORD` for the app's demo accounts. Each must contain at least 8 characters and fit within 72 UTF-8 bytes.
 
 Quote demo passwords containing `#` in `.env`, for example `DEMO_OWNER_PASSWORD='example#password'`.
 
+Set `AUTH_JWT_SECRET` in `backend/.env` to a random signing secret for this environment. Copy the output of this command into the value.
+
 ```powershell
-Copy-Item backend/.env.example backend/.env
-# Edit backend/.env before running the commands below.
+node -p "require('node:crypto').randomBytes(32).toString('hex')"
+```
+
+```powershell
 Set-Location backend
 npm.cmd ci
 npm.cmd run db:migrate
@@ -69,12 +79,22 @@ npm.cmd run build
 
 After building, `npm.cmd start` runs the compiled service.
 
-The seed provisions `owner@sprintly.demo` and `member@sprintly.demo` in a sample workspace. It sets the passwords from the local environment on first creation and preserves existing password hashes on subsequent runs. Phase 1 adds the routes and Android screens to sign in with these accounts.
+The seed provisions `owner@sprintly.demo` and `member@sprintly.demo` in a sample workspace. It sets the passwords from the local environment on first creation and preserves existing password hashes on subsequent runs. Use the configured demo credentials to sign in or create your own account in the app.
+
+## Phase 1 authentication
+
+The API under `/api/v1` supports `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout` and bearer-authenticated `GET /users/me`. Access tokens expire after 15 minutes by default. Refresh tokens rotate on use within a 30-day session. After rotation the previous token can still sign out that session, which lets sign-out revoke the session if it races with a refresh. Android encrypts the saved session with a key in Android Keystore.
+
+Sign-in and registration share a limit of 10 requests per minute per connection IP. When a reverse proxy connects to Fastify on behalf of multiple clients, those requests share the proxy's limit with the current server configuration.
 
 ## Phase 1 checklist
 
-- Add session persistence and implement register, login, refresh rotation, logout and `/users/me` in the REST API.
-- Add Android registration, login and session routing with secure token storage.
-- Verify the full authentication flow on an emulator and cover definitive refresh rejection, temporary failure and late responses from a closed session.
+For PostgreSQL integration tests, apply the migrations to a dedicated test database. Set `TEST_DATABASE_URL` to that database before running `npm.cmd test`. The PostgreSQL suite is skipped when the variable is absent. GitHub Actions points it to the test service.
+
+With the backend running on port `3000` and Sprintly signed out on the emulator, run the full authentication UI test from `source/`.
+
+```powershell
+.\gradlew.bat :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.sprintly.AuthApiFlowTest -Pandroid.testInstrumentationRunnerArguments.sprintlyAuthE2e=true
+```
 
 The phase gates, test results and acceptance criteria are recorded here. [Implementation specification](docs/Sprintly_Codex_Implementation_Spec.md) · [Phase 0 verification](docs/Sprintly_Phase_0_Verification.md) · [Handoff](docs/Sprintly_Handoff.md)

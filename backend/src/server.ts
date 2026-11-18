@@ -1,12 +1,14 @@
 import { buildApp } from "./app.js";
-import { readDatabaseUrl, readListenOptions } from "./config.js";
+import { readAuthOptions, readDatabaseUrl, readListenOptions } from "./config.js";
 import { createPrismaClient } from "./database.js";
 
 async function startServer() {
   const listenOptions = readListenOptions();
+  const authOptions = readAuthOptions();
   const database = createPrismaClient(readDatabaseUrl());
   const app = buildApp({
     logger: true,
+    auth: { ...authOptions, database },
     checkDatabase: async () => {
       await database.$queryRaw`SELECT 1`;
     },
