@@ -6,6 +6,7 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
 import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.action.ViewActions.scrollTo
+import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withResourceName
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -37,7 +38,7 @@ class AuthApiFlowTest {
 
         ActivityScenario.launch(MainActivity::class.java).use {
             awaitAccount(email)
-            onView(withResourceName("logout_button")).perform(scrollTo(), click())
+            signOutFromProfile()
             awaitLogin()
 
             enter("email_input", email)
@@ -48,12 +49,14 @@ class AuthApiFlowTest {
             enter("password_input", password)
             submit()
             awaitAccount(email)
-            onView(withResourceName("logout_button")).perform(scrollTo(), click())
+            signOutFromProfile()
             awaitLogin()
         }
     }
 
     private fun awaitAccount(email: String) {
+        awaitDisplayed(withId(R.id.workspace_profile))
+        onView(withId(R.id.workspace_profile)).perform(click())
         awaitDisplayed(allOf(withResourceName("account_email"), withText(email)))
     }
 
@@ -64,4 +67,18 @@ class AuthApiFlowTest {
     private fun submit() {
         onView(withResourceName("submit_button")).perform(closeSoftKeyboard(), scrollTo(), click())
     }
+}
+
+internal fun signOutFromWorkspace() {
+    awaitDisplayed(withId(R.id.workspace_profile))
+    onView(withId(R.id.workspace_profile)).perform(click())
+    signOutFromProfile()
+    awaitLogin()
+}
+
+private fun signOutFromProfile() {
+    awaitDisplayed(withId(R.id.logout_button))
+    onView(withId(R.id.logout_button)).perform(scrollTo(), click())
+    awaitDisplayed(withText(R.string.auth_logout_confirm))
+    onView(withId(android.R.id.button1)).perform(click())
 }

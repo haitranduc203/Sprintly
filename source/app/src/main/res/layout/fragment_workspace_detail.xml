@@ -1,0 +1,149 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/orbix_surface"
+    android:orientation="vertical">
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/workspace_toolbar"
+        style="@style/Widget.Sprintly.WorkspaceToolbar"
+        app:navigationContentDescription="@string/workspace_back"
+        app:navigationIcon="@drawable/ic_auth_back" />
+    <LinearLayout
+        android:id="@+id/workspace_tab_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="8dp"
+        android:visibility="gone">
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/workspace_tabs"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@color/orbix_surface"
+            app:tabContentStart="8dp"
+            app:tabGravity="start"
+            app:tabIconTint="@color/workspace_tab_text"
+            app:tabIndicatorColor="@color/orbix_selection"
+            app:tabInlineLabel="true"
+            app:tabMode="scrollable"
+            app:tabTextColor="@color/workspace_tab_text">
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:icon="@drawable/ic_workspace_folder"
+                android:text="@string/workspace_projects" />
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:icon="@drawable/ic_workspace_people"
+                android:text="@string/workspace_member" />
+        </com.google.android.material.tabs.TabLayout>
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/workspace_more"
+            style="@style/Widget.Sprintly.WorkspaceIconButton"
+            android:contentDescription="@string/workspace_actions"
+            android:src="@drawable/ic_workspace_more" />
+    </LinearLayout>
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <LinearLayout
+            android:id="@+id/projects_panel"
+            android:layout_width="match_parent"
+    android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="8dp">
+                <TextView
+                    android:id="@+id/project_heading"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/workspace_project_heading"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textColor="@color/orbix_on_surface" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/project_create"
+                    style="@style/Widget.Sprintly.WorkspaceTextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/workspace_project_create"
+                    app:icon="@drawable/ic_workspace_add" />
+            </LinearLayout>
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/project_rows"
+                    style="@style/Widget.Sprintly.WorkspaceList" />
+                <include
+                    android:id="@+id/projects_status"
+                    layout="@layout/view_workspace_status" />
+            </FrameLayout>
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/members_panel"
+            android:layout_width="match_parent"
+    android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Sprintly.WorkspaceCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginVertical="12dp"
+                app:cardBackgroundColor="@color/orbix_selection_container">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+                    <TextView
+                        android:id="@+id/member_count"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingHorizontal="4dp"
+                        android:textAppearance="?attr/textAppearanceTitleMedium"
+                        android:textColor="@color/orbix_on_surface" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/member_add"
+                        style="@style/Widget.Sprintly.WorkspaceButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/workspace_member_add"
+                        app:icon="@drawable/ic_workspace_add" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <TextView
+                android:id="@+id/other_members_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="16dp"
+                android:paddingBottom="8dp"
+                android:text="@string/workspace_member_empty"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="@color/orbix_on_surface_variant"
+                android:visibility="gone" />
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/member_rows"
+                style="@style/Widget.Sprintly.WorkspaceList"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+        <include
+            android:id="@+id/detail_status"
+            layout="@layout/view_workspace_status" />
+    </FrameLayout>
+</LinearLayout>

@@ -1,0 +1,4 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/orbix_selection" android:state_checked="true" />
+    <item android:color="@color/orbix_on_surface_variant" />
+</selector>

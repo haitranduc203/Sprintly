@@ -1,0 +1,42 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:accessibilityLiveRegion="polite"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="24dp">
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/status_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/workspace_loading"
+        android:indeterminate="true"
+        app:indicatorColor="@color/orbix_selection" />
+    <TextView
+        android:id="@+id/status_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textAppearance="?attr/textAppearanceTitleMedium"
+        android:textColor="@color/orbix_on_surface"
+        android:visibility="gone" />
+    <TextView
+        android:id="@+id/status_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:gravity="center"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="@color/orbix_on_surface_variant"
+        android:visibility="gone" />
+    <com.google.android.material.button.MaterialButton
+            android:id="@+id/status_retry"
+            style="@style/Widget.Sprintly.WorkspaceTextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/auth_retry"
+            android:layout_marginTop="8dp"
+            android:visibility="gone" />
+</LinearLayout>

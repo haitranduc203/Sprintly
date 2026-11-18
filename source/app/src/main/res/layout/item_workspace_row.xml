@@ -1,0 +1,61 @@
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/Widget.Sprintly.WorkspaceCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="68dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="4dp"
+        android:paddingVertical="8dp">
+        <TextView
+            android:id="@+id/row_avatar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_workspace_avatar"
+            android:gravity="center"
+            android:importantForAccessibility="no"
+            android:textAppearance="?attr/textAppearanceLabelLarge"
+            android:textColor="@color/orbix_selection"
+            android:visibility="gone" />
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/row_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="@color/orbix_on_surface" />
+            <TextView
+                android:id="@+id/row_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="@color/orbix_on_surface_variant" />
+        </LinearLayout>
+        <TextView
+            android:id="@+id/row_role"
+            style="@style/Widget.Sprintly.WorkspaceRole"
+            android:layout_marginEnd="4dp"
+            android:maxWidth="88dp"
+            android:gravity="center"
+            android:visibility="gone" />
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/row_more"
+            style="@style/Widget.Sprintly.WorkspaceIconButton"
+            android:src="@drawable/ic_workspace_more"
+            android:visibility="gone" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
