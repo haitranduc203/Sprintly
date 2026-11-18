@@ -1,9 +1,19 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Sprintly" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+<resources>
+    <style name="Theme.Sprintly" parent="Theme.Material3.Light.NoActionBar">
+        <item name="android:windowBackground">@color/orbix_surface</item>
+        <item name="android:colorBackground">@color/orbix_surface</item>
+        <item name="colorPrimary">@color/orbix_primary</item>
+        <item name="colorOnPrimary">@color/orbix_on_primary</item>
+        <item name="colorSecondary">@color/orbix_selection</item>
+        <item name="colorSecondaryContainer">@color/orbix_selection_container</item>
+        <item name="colorOnSecondaryContainer">@color/orbix_selection</item>
+        <item name="colorSurface">@color/orbix_surface</item>
+        <item name="colorOnSurface">@color/orbix_on_surface</item>
+        <item name="colorOnSurfaceVariant">@color/orbix_on_surface_variant</item>
+        <item name="colorOutline">@color/orbix_outline</item>
+        <item name="colorOutlineVariant">@color/orbix_divider</item>
+        <item name="colorError">@color/orbix_error</item>
+        <item name="colorErrorContainer">@color/orbix_error_container</item>
+        <item name="colorOnErrorContainer">@color/orbix_error</item>
     </style>
-
-    <style name="Theme.Sprintly" parent="Base.Theme.Sprintly" />
 </resources>

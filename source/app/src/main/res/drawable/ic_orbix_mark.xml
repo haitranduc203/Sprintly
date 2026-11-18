@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+
+    <path
+        android:fillColor="@color/orbix_brand"
+        android:pathData="M20,0H44A20,20 0,0 1,64 20V44A20,20 0,0 1,44 64H20A20,20 0,0 1,0 44V20A20,20 0,0 1,20 0Z" />
+
+    <path
+        android:fillColor="@color/orbix_primary"
+        android:pathData="M32,16C32,25.6 25.6,32 16,32C25.6,32 32,38.4 32,48C32,38.4 38.4,32 48,32C38.4,32 32,25.6 32,16Z" />
+</vector>

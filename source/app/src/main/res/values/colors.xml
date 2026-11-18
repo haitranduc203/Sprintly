@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="orbix_surface">#FFFFFF</color>
+    <color name="orbix_on_surface">#171A17</color>
+    <color name="orbix_on_surface_variant">#555B54</color>
+    <color name="orbix_primary">#A4ED65</color>
+    <color name="orbix_on_primary">#172413</color>
+    <color name="orbix_selection">#4736C5</color>
+    <color name="orbix_selection_container">#EEEBFF</color>
+    <color name="orbix_outline">#787E75</color>
+    <color name="orbix_divider">#E4E6E1</color>
+    <color name="orbix_error">#842B2A</color>
+    <color name="orbix_error_container">#FCE1DF</color>
+    <color name="orbix_brand">#22351E</color>
 </resources>

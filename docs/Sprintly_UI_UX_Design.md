@@ -1,12 +1,12 @@
 # Sprintly — Nghiên cứu và thiết kế UI/UX Android
 
-Bản thiết kế đề xuất cho nhóm phát triển phần mềm nhỏ quản lý tiến độ theo Kanban. Luồng chính là vào workspace, mở dự án, tạo và giao việc, di chuyển thẻ, rồi kiểm tra bình luận hoặc lịch sử. P0 dùng Android Kotlin, XML Views, Fragments và Material Components. Nội dung giao diện dùng tiếng Việt, giữ tên ba cột mặc định do đặc tả quy định. [Đặc tả sản phẩm](Sprintly_Codex_Implementation_Spec.md) · [Phân tích nghiệp vụ](Sprintly_BA.md) · [Use Case](Sprintly_Use_Cases.md) · [ERD](Sprintly_ERD.md)
+Thiết kế dành cho nhóm phát triển phần mềm nhỏ quản lý tiến độ theo Kanban. Luồng chính là vào workspace, mở dự án, tạo và giao việc, di chuyển thẻ, rồi kiểm tra bình luận hoặc lịch sử. P0 dùng Android Kotlin, XML Views, Fragments và Material Components. Nội dung giao diện dùng tiếng Việt, giữ tên ba cột mặc định do đặc tả quy định. [Đặc tả sản phẩm](Sprintly_Codex_Implementation_Spec.md) · [Phân tích nghiệp vụ](Sprintly_BA.md) · [Use Case](Sprintly_Use_Cases.md) · [ERD](Sprintly_ERD.md)
 
-**Thiết kế đã chốt ngày 17/11/2026.** Dùng bản Orbix để đối chiếu bố cục, màu sắc, thành phần và điều hướng khi triển khai Android. Bản có 11 màn hình MVP cùng hai màn hình đề xuất **Tổng quan** và **Lịch công việc**, được đánh dấu trong bản xem trước. [Bản thiết kế Orbix](Sprintly_Orbix_Design.html) · [Hệ thống thiết kế Sprintly](../design-system/sprintly/MASTER.md)
+**Thiết kế đã chốt ngày 17/11/2026.** Dùng bản Orbix để đối chiếu bố cục, màu sắc và thành phần khi triển khai Android. Bản xem trước có 11 màn hình P0 và minh họa thêm **Tổng quan**, **Lịch công việc** và tỷ lệ hoàn thành dự án cho giai đoạn sau P0. [Bản thiết kế Orbix](Sprintly_Orbix_Design.html) · [Hệ thống thiết kế Sprintly](../design-system/sprintly/MASTER.md)
 
 ## Nghiên cứu và phương án
 
-- Nghiên cứu với `ui-ux-pro-max` định hướng Flat Design cho công cụ quản lý công việc. Bản Orbix dùng Roboto, nền trắng, xanh chanh **#A4ED65** cho nút thêm và tím **#4736C5** cho tab đang chọn. Bảng dự án dùng cụm avatar và thanh tiến độ. [Hệ thống thiết kế](../design-system/sprintly/MASTER.md)
+- Nghiên cứu với `ui-ux-pro-max` định hướng Flat Design cho công cụ quản lý công việc. Bản Orbix dùng Roboto, nền trắng, xanh chanh **#A4ED65** cho nút thêm và tím **#4736C5** cho tab đang chọn. Thẻ dự án dùng cụm avatar. [Hệ thống thiết kế](../design-system/sprintly/MASTER.md)
 - Dùng vùng chạm ít nhất 48 × 48dp cho biểu tượng, nút, chip và tay nắm kéo. Nút chỉ có biểu tượng cần tên truy cập. Trạng thái cột, lỗi, ưu tiên và quyền có nhãn chữ. Khi chữ lớn, cho nhãn tự xuống dòng, giữ nội dung nhập và nút lưu cuộn tới được. Áp dụng window insets cho thanh công cụ, nội dung sát cạnh, nút cuối và bàn phím. [Tiếp cận trong Android Views](https://developer.android.com/guide/topics/ui/accessibility/views/apps-views) · [Edge-to-edge và window insets](https://developer.android.com/develop/ui/views/layout/edge-to-edge)
 - Hai điểm cần kiểm tra trên thiết bị là thao tác di chuyển khi bật TalkBack hoặc dùng bàn phím và điền thông tin bằng trình quản lý mật khẩu. Thiết kế cung cấp lệnh **Di chuyển** cho cùng kết quả với cử chỉ kéo, hỗ trợ dán và tự điền mật khẩu, đồng thời giữ nhãn hiển thị cho mỗi ô nhập. [Nguyên tắc tiếp cận trong Android Views](https://developer.android.com/guide/topics/ui/accessibility/views/principles-views) · [Kéo thả trong Android Views](https://developer.android.com/develop/ui/views/touch-and-input/drag-drop/view) · [Android Autofill](https://developer.android.com/identity/autofill/autofill-optimize)
 - Luồng offline dựa trên đặc tả P0 và UC-12. Cache theo tài khoản được hiển thị ngay khi có bản sao. Banner nêu rõ chế độ chỉ đọc, mỗi lỗi nêu hành động tiếp theo. [Đặc tả §7](Sprintly_Codex_Implementation_Spec.md#7-offline--sync-behavior) · [UC-12](Sprintly_Use_Cases.md#uc-12-xem-offline-và-làm-mới-khi-trở-lại-online)
@@ -27,7 +27,7 @@ Chọn **cột ngang có lộ cột kế tiếp và chip tới cột** cho P0 th
 
 ## Cấu trúc điều hướng
 
-Thanh công cụ hiển thị tiêu đề theo ngữ cảnh, nút Quay lại ở màn con và hành động theo màn. Danh sách workspace là gốc sau đăng nhập. Chi tiết workspace mặc định mở tab **Dự án**, tab **Thành viên** nằm cùng cấp. Bản Orbix minh họa thanh điều hướng dưới với các đích **Tổng quan**, **Dự án**, **Lịch**, **Hồ sơ** và nút **Tạo công việc** ở giữa. **Tổng quan** và **Lịch** mang nhãn đề xuất. Tìm kiếm mở từ board và giới hạn theo dự án.
+Thanh công cụ hiển thị tiêu đề theo ngữ cảnh, nút Quay lại ở màn con và hành động theo màn. Danh sách workspace là gốc sau đăng nhập. Chi tiết workspace mặc định mở tab **Dự án**, tab **Thành viên** nằm cùng cấp. P0 mở **Hồ sơ** từ danh sách workspace và **Tạo công việc** từ board. Các đích **Tổng quan** và **Lịch** trên thanh điều hướng minh họa của Orbix thuộc giai đoạn sau P0. Tìm kiếm mở từ board và giới hạn theo dự án.
 
 ```mermaid
 flowchart TD
@@ -54,13 +54,13 @@ Back và Up trả về nguồn mở màn, giữ tab, vị trí cuộn, cột đa
 
 Lần tải đầu dùng chỉ báo tải hoặc skeleton theo bố cục. Khi làm mới và có dữ liệu, giữ nội dung và báo tiến trình riêng. Phản hồi thành công rỗng hiển thị theo ngữ cảnh. Timeout, lỗi mạng hoặc lỗi máy chủ có nút **Thử lại**. Gửi biểu mẫu khóa nút tương ứng trong lúc chờ và giữ dữ liệu đã nhập nếu thất bại. Đưa focus tới ô lỗi đầu tiên và đọc thông báo gắn với ô. Sau thành công, cập nhật dữ liệu trước khi đóng lớp thao tác hoặc điều hướng.
 
-Cùng một mã ưu tiên dùng cùng nhãn trên thẻ, chi tiết, biểu mẫu và bộ lọc. LOW là **Thấp**, MEDIUM là **Trung bình**, HIGH là **Cao**, URGENT là **Khẩn cấp**. Hành động vượt quyền được bỏ khỏi menu. Hành động hợp lệ tạm thời bị khóa khi offline hoặc đang gửi và có trạng thái giải thích.
+Cùng một mã ưu tiên dùng cùng nhãn trên thẻ, chi tiết, biểu mẫu và bộ lọc. LOW là **Thấp**, MEDIUM là **Trung bình**, HIGH là **Cao**, URGENT là **Khẩn cấp**. Hành động vượt quyền được bỏ khỏi menu. Hành động ghi tạm thời bị khóa khi offline, trong lúc chờ khôi phục phiên hoặc khi đang gửi chính thao tác đó. Giao diện hiển thị lý do tương ứng.
 
 ### 1. Kiểm tra phiên · session
 
-Hiển thị biểu trưng Sprintly và “Đang kiểm tra phiên…”. Khi đã có phiên hợp lệ, mở workspace thẳng. Khi chưa lưu phiên hoặc máy chủ từ chối refresh dứt khoát, mở **Đăng nhập**. Với phiên đã bị từ chối, hiển thị “Phiên đã hết hạn. Vui lòng đăng nhập lại.”
+Hiển thị biểu trưng Sprintly và “Đang kiểm tra phiên…”. Khi phiên hợp lệ, mở danh sách workspace. Khi chưa lưu phiên, mở **Đăng nhập**. Khi máy chủ từ chối refresh dứt khoát, xóa phiên và cache của tài khoản hiện tại rồi mở **Đăng nhập** với thông báo “Phiên đã hết hạn. Vui lòng đăng nhập lại.” Bỏ qua phản hồi đến muộn của phiên đã kết thúc, kể cả sau khi đăng nhập bằng tài khoản khác.
 
-Lỗi mạng, timeout hoặc lỗi máy chủ tạm thời khi refresh giữ phiên cục bộ theo đề xuất QD-06. Mở danh sách workspace đã lưu nếu có. Nếu chưa có dữ liệu, hiển thị “Kết nối mạng để tải workspace” và **Thử lại**. Thời gian chờ kết thúc ở một trong các trạng thái có lối đi tiếp. [UC-02 và UC-12](Sprintly_Use_Cases.md) · [QD-06](Sprintly_BA.md#6-quyết-định-đề-xuất-để-duyệt)
+Khi refresh gặp lỗi mạng, timeout hoặc `5xx`, giữ phiên cục bộ và chỉ cho đọc cache của tài khoản hiện tại. Hiển thị “Chưa thể làm mới phiên” và **Thử lại**. Nếu thiếu cache, hiển thị “Chưa có dữ liệu đã lưu” cùng lối thử lại. Chỉ mở lại thao tác ghi theo quyền sau khi refresh thành công. [UC-02 và UC-12](Sprintly_Use_Cases.md) · [QD-06](Sprintly_BA.md#6-quyết-định-đã-duyệt)
 
 ### 2. Đăng nhập · login
 
@@ -76,11 +76,11 @@ Thanh công cụ **Workspace** có lối vào **Hồ sơ**. Mỗi hàng có avat
 
 ### 5. Chi tiết workspace, tab Dự án · projects
 
-Thanh công cụ mang tên workspace, Up về danh sách và menu **Sửa workspace**, **Xóa workspace** cho Owner. Tab **Dự án** có thẻ tên và mô tả. Chạm thẻ mở board. Cả hai vai trò có **Tạo dự án**, **Sửa dự án** theo QD-02. Owner có **Xóa dự án**. Sau khi tạo thành công, mở board mới có ba cột mặc định. Rỗng hiển thị “Chưa có dự án”. Ngoại tuyến mở dự án đã lưu, khóa thao tác ghi. Khi mất quyền đã được máy chủ xác nhận, đóng chi tiết và về danh sách workspace đã cập nhật. [UC-04 và UC-06](Sprintly_Use_Cases.md) · [QD-02](Sprintly_BA.md#6-quyết-định-đề-xuất-để-duyệt)
+Thanh công cụ mang tên workspace, Up về danh sách và menu **Sửa workspace**, **Xóa workspace** cho Owner. Tab **Dự án** có thẻ tên và mô tả. Chạm thẻ mở board. Cả hai vai trò có **Tạo dự án** và **Sửa dự án**. Chỉ Owner có **Xóa dự án**. Sau khi tạo thành công, mở board mới có ba cột mặc định. Rỗng hiển thị “Chưa có dự án”. Ngoại tuyến mở dự án đã lưu, khóa thao tác ghi. Khi mất quyền đã được máy chủ xác nhận, đóng chi tiết và về danh sách workspace đã cập nhật. [UC-04 và UC-06](Sprintly_Use_Cases.md) · [QD-02](Sprintly_BA.md#6-quyết-định-đã-duyệt)
 
 ### 6. Chi tiết workspace, tab Thành viên · members
 
-Hàng thành viên có avatar chữ cái, tên, email và vai trò. Owner có **Thêm thành viên** và thao tác **Gỡ khỏi workspace** trên hàng đủ điều kiện. Member xem danh sách. Nếu chỉ có Owner, hiển thị hàng của họ và ghi “Chưa có thành viên khác”. Nếu cache chứa workspace nhưng thiếu danh sách đã tải, báo “Chưa tải danh sách thành viên về thiết bị”. Sau khi thêm hoặc gỡ thành công, làm mới danh sách và số lượng nếu có hiển thị. Back về danh sách workspace. [UC-05](Sprintly_Use_Cases.md#uc-05-xem-thêm-và-xóa-thành-viên)
+Hàng thành viên có avatar chữ cái, tên, email và vai trò. Chỉ Owner của workspace được tra cứu tài khoản hiện hữu theo email khớp chính xác để **Thêm thành viên** hoặc chọn **Gỡ khỏi workspace** trên hàng đủ điều kiện. Member xem danh sách. Nếu chỉ có Owner, hiển thị hàng của họ và ghi “Chưa có thành viên khác”. Nếu cache chứa workspace nhưng thiếu danh sách đã tải, báo “Chưa tải danh sách thành viên về thiết bị”. Sau khi thêm hoặc gỡ thành công, làm mới danh sách và số lượng nếu có hiển thị. Khi gỡ thành viên, làm mới công việc liên quan để hiển thị **Chưa giao**, giữ tên tác giả và tác nhân đã ghi trên công việc, bình luận và lịch sử. Back về danh sách workspace. [UC-05](Sprintly_Use_Cases.md#uc-05-xem-thêm-và-xóa-thành-viên) · [QD-01 và QD-03](Sprintly_BA.md#6-quyết-định-đã-duyệt)
 
 ### 7. Board · board
 
@@ -88,17 +88,17 @@ Thanh công cụ có ngữ cảnh workspace, làm mới và menu quản lý boar
 
 ### 8. Chi tiết công việc · task
 
-Thanh công cụ có Up và menu **Di chuyển**, **Chỉnh sửa**, **Xóa công việc** theo quyền. Trang cuộn dọc lần lượt hiển thị tiêu đề, các thuộc tính, mô tả, **Bình luận** và **Lịch sử**. Hàng cột mở sheet chọn cột/vị trí. Hàng ưu tiên, người phụ trách và hạn mở sheet sửa một trường. Gửi cùng `expectedVersion`, giữ giá trị đã xác nhận khi lưu lỗi và tải lại task nếu có xung đột. Nút **Chỉnh sửa** mở biểu mẫu đầy đủ cho nội dung dài.
+Thanh công cụ có Up và menu **Di chuyển**, **Chỉnh sửa**, **Xóa công việc** theo quyền. Chỉ Owner hoặc người tạo công việc còn là thành viên của workspace thấy **Xóa công việc**. Trang cuộn dọc lần lượt hiển thị tiêu đề, các thuộc tính, mô tả, **Bình luận** và **Lịch sử**. Hàng cột mở sheet chọn cột/vị trí. Hàng ưu tiên, người phụ trách và hạn mở sheet sửa một trường. Gửi cùng `expectedVersion`, giữ giá trị đã xác nhận khi lưu lỗi và tải lại task nếu có xung đột. Nút **Chỉnh sửa** mở biểu mẫu đầy đủ cho nội dung dài.
 
-Nút **Bình luận** mở ô nhập 1–2.000 ký tự và **Gửi**. Thêm bình luận vào danh sách sau xác nhận rồi cuộn đến khối bình luận. Lỗi giữ nội dung, chặn gửi trùng. Khối **Lịch sử** phân trang từ server, hiển thị hành động, tác nhân và giờ địa phương. Hai khối tải hoặc thử lại độc lập. Các thuộc tính hiển thị ở dạng chỉ đọc khi offline.
+P0 cho xem danh sách và tạo bình luận. Nút **Bình luận** mở ô nhập 1–2.000 ký tự và **Gửi**. Áp dụng trạng thái gửi và thử lại dành cho lần tạo ở phần [Gửi và thử lại](#gửi-và-thử-lại). Chỉ thêm bình luận vào danh sách sau xác nhận rồi cuộn đến khối bình luận. Khối **Lịch sử** phân trang từ server, hiển thị hành động, tác nhân và giờ địa phương. Hai khối tải hoặc thử lại độc lập. Các thuộc tính hiển thị ở dạng chỉ đọc khi offline.
 
 Offline mở trường task đã lưu, hiển thị bình luận nếu đã đồng bộ và dùng thông báo kết nối cho lịch sử hoặc dữ liệu chưa có cache. Lỗi 403/404 chuyển tới nơi người dùng còn quyền xem. Khi xóa thành công hoặc chọn Back, trả về board hoặc kết quả tìm kiếm tương ứng với nơi đã mở task. [UC-08, UC-10 và UC-12](Sprintly_Use_Cases.md)
 
 ### 9. Tạo hoặc sửa công việc · task-form
 
-Biểu mẫu toàn màn hình dùng một cột dọc với **Tiêu đề** 1–150 ký tự, **Mô tả**, **Cột**, **Ưu tiên**, **Người phụ trách**, **Hạn hoàn thành**. Khi tạo, điền cột theo nguồn mở và ưu tiên mặc định **Trung bình** theo đề xuất. Người phụ trách chọn trong workspace hoặc **Chưa giao**. Hạn dùng chọn ngày/giờ theo locale Android và có **Bỏ hạn**. CTA là **Tạo công việc** hoặc **Lưu thay đổi**. Thêm/sửa cột của task theo lựa chọn hợp lệ của dự án. Lệnh **Di chuyển** ở board/chi tiết dùng cho chọn thứ tự cụ thể.
+Biểu mẫu toàn màn hình dùng một cột dọc với **Tiêu đề** 1–150 ký tự, **Mô tả**, **Cột**, **Ưu tiên**, **Người phụ trách**, **Hạn hoàn thành**. Khi tạo, điền cột theo nguồn mở và ưu tiên mặc định **Trung bình**. Người phụ trách chọn trong workspace hoặc **Chưa giao**. Hạn dùng chọn ngày/giờ theo locale Android và có **Bỏ hạn**. CTA là **Tạo công việc** hoặc **Lưu thay đổi**. Khi lưu biểu mẫu sửa với cột thay đổi, công việc được thêm vào cuối cột đích. Gửi `expectedVersion` và `expectedBoardVersion` lấy từ cùng snapshot board. Lệnh **Di chuyển** ở board/chi tiết cho phép chọn vị trí cụ thể.
 
-Thành công từ luồng tạo về board ở cột đích và đưa thẻ mới vào tầm nhìn. Từ luồng sửa về chi tiết đã cập nhật. Nếu mất mạng khi đang nhập, giữ bản nháp trong phiên, khóa lưu và báo lý do. Với 409, báo “Công việc đã thay đổi. Hãy kiểm tra bản mới trước khi lưu lại.” Tải dữ liệu hiện tại và giữ giá trị người dùng đã nhập để họ xem lại trước khi gửi. Dùng xác nhận bỏ thay đổi với Back/Up khi có chỉnh sửa. [UC-08](Sprintly_Use_Cases.md#uc-08-xem-tạo-sửa-giao-và-xóa-task)
+Thành công từ luồng tạo về board ở cột đích và đưa thẻ mới vào tầm nhìn. Áp dụng trạng thái gửi và thử lại dành cho lần tạo ở phần [Gửi và thử lại](#gửi-và-thử-lại). Từ luồng sửa về chi tiết đã cập nhật. Nếu mất mạng khi đang nhập, giữ bản nháp trong phiên, khóa lưu và báo lý do. Với `409`, báo “Công việc hoặc bảng đã thay đổi. Hãy kiểm tra dữ liệu mới trước khi lưu lại.” Tải lại công việc và board nếu đang đổi cột, giữ dữ liệu đã nhập và yêu cầu xem lại lựa chọn cột trước khi gửi lại. Dùng xác nhận bỏ thay đổi với Back/Up khi có chỉnh sửa. [UC-08](Sprintly_Use_Cases.md#uc-08-xem-tạo-sửa-giao-và-xóa-task)
 
 ### 10. Tìm công việc · search
 
@@ -106,31 +106,35 @@ Tiêu đề hoặc phụ đề mang tên dự án. Ô **Tìm theo tiêu đề**,
 
 ### 11. Hồ sơ · profile
 
-Hiển thị avatar chữ cái, tên và email phiên hiện tại. Nếu lỗi tải thông tin, dùng thông tin phiên đã lưu và **Thử lại** khi cần. Mục **Đăng xuất** tách khỏi thông tin tài khoản, mở xác nhận “Đăng xuất khỏi Sprintly?” với **Hủy** và **Đăng xuất**. Logout khả dụng khi offline và luôn kết thúc phiên trên thiết bị. Sau xác nhận quay về đăng nhập, chặn mọi đường quay lại cache tài khoản trước. Back khi chưa đăng xuất về workspace. [UC-03](Sprintly_Use_Cases.md#uc-03-đăng-xuất)
+Hiển thị avatar chữ cái, tên và email phiên hiện tại. Nếu lỗi tải thông tin, dùng thông tin phiên đã lưu và **Thử lại** khi cần. Mục **Đăng xuất** tách khỏi thông tin tài khoản, mở xác nhận “Đăng xuất khỏi Sprintly?” với **Hủy** và **Đăng xuất**. Sau xác nhận, kết thúc phiên trên thiết bị ngay cả khi offline, xóa phiên cục bộ, chặn truy cập cache tài khoản cũ và quay về đăng nhập. Máy chủ thu hồi phiên khi xử lý thành công yêu cầu đăng xuất. Bỏ qua phản hồi đến muộn của phiên cũ để chúng không khôi phục phiên hay ghi lại cache. Back khi chưa đăng xuất về workspace. [UC-03](Sprintly_Use_Cases.md#uc-03-đăng-xuất)
 
 ## Biểu mẫu phụ, hộp thoại và bộ chọn
 
 | Bề mặt | Nội dung và quy tắc |
 | --- | --- |
 | Tạo/sửa workspace | **Tên workspace** 1–100 ký tự và **Mô tả** tùy chọn. Tạo xong mở tab Dự án của workspace mới. Sửa xong giữ tab hiện tại. |
-| Thêm thành viên | Owner nhập **Email tài khoản**, nhấn **Tìm tài khoản**, xem tên/email của kết quả khớp chính xác rồi nhấn **Thêm vào workspace**. Hiển thị “Không tìm thấy tài khoản với email này” hoặc “Tài khoản đã thuộc workspace”. |
+| Thêm thành viên | Chỉ Owner của workspace có biểu mẫu này. Nhập **Email tài khoản** đầy đủ, nhấn **Tìm tài khoản**, xem tên/email của tài khoản hiện hữu khớp chính xác rồi nhấn **Thêm vào workspace**. Hiển thị “Không tìm thấy tài khoản với email này” hoặc “Tài khoản đã thuộc workspace”. |
 | Gỡ thành viên | Xác nhận “Gỡ {tên} khỏi workspace?” và “Người này sẽ mất quyền truy cập. Công việc đang giao cho họ sẽ chuyển sang Chưa giao.” Chặn thao tác với Owner cuối cùng. |
 | Tạo/sửa dự án | **Tên dự án** 1–100 ký tự và **Mô tả** tùy chọn. Tạo xong mở board. Sửa xong cập nhật ngữ cảnh tên dự án và giữ vị trí xem. |
 | Thêm/đổi tên cột | Nhập **Tên cột**, báo tên trống hoặc lỗi máy chủ ở trường. Đổi tên giữ ID và các thẻ. Sau khi thêm, chuyển sang cột mới và trả focus về tiêu đề cột. |
 | Di chuyển | Chọn **Cột đích**, rồi **Vị trí** với “Đầu cột”, “Cuối cột” hoặc “Trước {tên công việc}”. Trong cột rỗng, chỉ có một vị trí. CTA **Di chuyển**. Hủy trả focus về menu đã mở. |
 | Bộ lọc | Bottom sheet có **Cột**, **Ưu tiên**, **Người phụ trách**, mỗi nhóm có **Tất cả**. **Áp dụng** chạy truy vấn. **Xóa bộ lọc** giữ từ khóa. **Đặt lại** ở màn chính xóa cả từ khóa và lọc. |
 | Bộ chọn trường | Cột và ưu tiên dùng danh sách chọn một, người phụ trách có thể lọc theo tên/email trong workspace. Ngày và giờ dùng picker Android, có Hủy và Xác nhận. |
-| Xác nhận xóa | Tiêu đề chứa tên đối tượng. Workspace nêu dự án và công việc bị xóa kèm. Dự án nêu cột và công việc. Công việc nêu bình luận và lịch sử. Hai nút **Hủy** và **Xóa**. Điều hướng sau khi máy chủ xác nhận. |
+| Xác nhận xóa | Tiêu đề chứa tên đối tượng. Khi xóa workspace, nêu hệ quả xóa các dự án, cột và công việc bên trong. Khi xóa dự án, nêu hệ quả xóa các cột và công việc bên trong. Cả ba loại xóa đều nêu rõ bình luận và lịch sử của công việc bị xóa sẽ mất vĩnh viễn. Hai nút **Hủy** và **Xóa**. Cập nhật dữ liệu và điều hướng sau khi máy chủ xác nhận. |
 | Bỏ thay đổi | Khi có bản nháp đã sửa, Back/Up hoặc đóng sheet mở “Bỏ thay đổi?” với **Tiếp tục chỉnh sửa** và **Bỏ thay đổi**. |
 
-Các đề xuất về quyền QD-02, gỡ người được giao QD-03, xóa hẳn QD-04, thứ tự QD-05 và tách lỗi refresh tạm thời với phiên bị từ chối QD-06 cần được duyệt cùng BA. Ứng dụng chỉ hiển thị tài nguyên được phép, còn máy chủ xác thực mọi yêu cầu. [Phân tích nghiệp vụ §6](Sprintly_BA.md#6-quyết-định-đề-xuất-để-duyệt)
+Ứng dụng chỉ hiển thị hành động và tài nguyên được phép. Máy chủ kiểm tra quyền cho từng yêu cầu. [Quyết định nghiệp vụ đã duyệt](Sprintly_BA.md#6-quyết-định-đã-duyệt)
+
+## Gửi và thử lại
+
+Khi tạo công việc hoặc gửi bình luận, hiển thị **Đang gửi** và khóa nút để ngăn thao tác lặp. Nếu mất phản hồi trước khi biết kết quả, giữ nội dung và hiển thị **Chưa xác nhận** cùng **Thử lại**. Khi đủ điều kiện ghi, thử lại cùng thao tác bằng đúng payload và `Idempotency-Key` đã gửi lần đầu. Chỉ hiển thị thành công, đưa mục vào danh sách hoặc điều hướng sau khi nhận kết quả xác nhận. [QD-07](Sprintly_BA.md#6-quyết-định-đã-duyệt)
 
 ## Tương tác di chuyển và phục hồi
 
 1. Bắt đầu kéo từ tay nắm sau ngưỡng dịch chuyển. Cuộn ngang trên bề mặt board và cuộn dọc trong cột theo hướng thao tác. Trong khi kéo, tự cuộn khi tới vùng mép bên trong board. Viền cột đích và vạch chèn xác nhận mục tiêu. Thả ngoài vùng hợp lệ hoặc hủy cử chỉ đưa thẻ về nguồn.
-2. Kéo hoặc lệnh **Di chuyển** dùng cùng quy tắc chọn vị trí. Vị trí đích dựa trên snapshot board đầy đủ đã tải, theo thứ tự chính thức của máy chủ. Tính chỉ số từ 0 trên danh sách đích sau khi bỏ task nguồn nếu cùng cột. Với cột còn *n* thẻ, điểm chèn cuối là *n*. Gửi ID cột, chỉ số và version đã tải. Chọn vị trí hiện tại kết thúc thao tác ngay.
-3. Khi online, hiển thị ngay thẻ ở đích, lưu vị trí nguồn và khóa move lặp trên thẻ đó. Khi thành công, đối chiếu vị trí, thứ tự thẻ lân cận và version từ máy chủ hoặc tải lại board nếu phản hồi chỉ trả task đã đổi. Trạng thái move đang chờ tồn tại qua xoay màn hình và thẻ xuất hiện đúng một lần.
-4. Với 409, hoàn tác và tải lại board, báo “Bảng vừa thay đổi. Hãy kiểm tra vị trí mới.” Với vị trí đích bất hợp lệ, báo “Vị trí đã thay đổi” và làm mới. Với lỗi ghi đã xác định, hoàn tác và hiện “Chưa di chuyển được công việc” + **Thử lại**. Khi timeout hoặc mất mạng giữa chừng, đối chiếu board trước khi gửi lại vì máy chủ có thể đã xử lý.
+2. Kéo hoặc lệnh **Di chuyển** dùng chung một snapshot board đầy đủ, nhất quán, có `boardVersion`, version của công việc và thứ tự chính thức từ máy chủ. Tính `targetIndex` từ 0 trên danh sách đích sau khi bỏ task nguồn nếu cùng cột. Với cột còn *n* thẻ, điểm chèn cuối là *n*. Gửi `targetColumnId`, `targetIndex`, `expectedVersion` và `expectedBoardVersion` từ snapshot đã dùng để chọn vị trí. Chọn vị trí hiện tại kết thúc thao tác ngay.
+3. Khi online, hiển thị ngay thẻ ở đích, lưu vị trí nguồn và khóa move lặp trên thẻ đó. Khi thành công, đối chiếu vị trí, thứ tự thẻ lân cận và các version từ máy chủ. Tải lại board nếu phản hồi thiếu thông tin cần đối chiếu. Trạng thái move đang chờ tồn tại qua xoay màn hình và thẻ xuất hiện đúng một lần.
+4. Với `409`, hoàn tác vị trí tạm, tải lại board và yêu cầu chọn lại cột/vị trí trên snapshot mới. Hiển thị “Bảng vừa thay đổi. Hãy chọn lại vị trí.” Với vị trí đích bất hợp lệ, báo “Vị trí đã thay đổi” và làm mới. Với lỗi ghi đã xác định, hoàn tác và hiện “Chưa di chuyển được công việc” + **Thử lại**. Khi timeout hoặc mất kết nối giữa chừng, hoàn tác vị trí tạm, hiển thị **Chưa xác nhận**, rồi tải và đối chiếu board. Nếu board xác nhận đã di chuyển đúng đích, dùng kết quả đó để kết thúc thao tác. Nếu người dùng cần thử lại, yêu cầu chọn lại vị trí trên snapshot mới.
 5. TalkBack và bàn phím đi từ tiêu đề cột qua thẻ và menu có tên theo ngữ cảnh. Sau khi chọn vị trí, trả focus về thẻ đã di chuyển nếu đang hiển thị, đưa cột đích vào tầm nhìn và thông báo tên thẻ cùng cột đích. Khi lỗi, thông báo kết quả mà không cướp focus. [Nguyên tắc tiếp cận trong Android Views](https://developer.android.com/guide/topics/ui/accessibility/views/principles-views)
 
 Khi đã có cache và mất mạng, dùng banner **Đang xem dữ liệu đã lưu** cùng dòng “Kết nối mạng để thay đổi”. Khi chưa sync, dùng “Chưa có dữ liệu đã lưu” và **Thử lại**. Khi kết nối lại, làm mới lúc mở màn, resume hoặc người dùng yêu cầu. Timeout khi có cache giữ dữ liệu và báo “Chưa thể làm mới”. Khi quyền bị thu hồi, loại cache của phạm vi bị mất quyền và quay về cấp gần nhất còn được phép. Tách trạng thái thiếu quyền với lỗi kết nối tạm thời. [UC-12](Sprintly_Use_Cases.md#uc-12-xem-offline-và-làm-mới-khi-trở-lại-online)
@@ -139,6 +143,7 @@ Khi đã có cache và mất mạng, dùng banner **Đang xem dữ liệu đã l
 
 | Ưu tiên | Vị trí và hành vi đề xuất |
 | --- | --- |
+| Sau P0 · Orbix | Màn **Tổng quan**, **Lịch công việc** và tỷ lệ hoàn thành trên thẻ dự án. Khi triển khai tỷ lệ, nhận diện cột hoàn thành bằng ID ổn định của cột Done mặc định được tạo cùng dự án, kể cả khi cột đã đổi tên. |
 | P1 · FR-13 | Thông báo hệ thống khi được giao việc. Chạm mở task sau khi kiểm tra phiên và quyền. Thiếu quyền hoặc task đã xóa thì báo tình trạng và cho về workspace. Xin quyền thông báo theo ngữ cảnh khi triển khai. |
 | P1 · FR-14 | Realtime cập nhật board và chi tiết đang mở. Khi đang kéo hoặc chỉnh sửa, giữ thao tác hiện tại và đối chiếu dữ liệu khi kết thúc. Khi kết nối lại, tải phần thay đổi hoặc tải mới theo dịch vụ. |
 | P2 · FR-15 | Hàng đợi ghi offline hiển thị **Chờ đồng bộ**, **Đồng bộ thất bại** trên task hoặc biểu mẫu. Cung cấp thử lại và bước xem lại xung đột khi server trả 409. |
@@ -153,10 +158,12 @@ Dark mode thuộc phần hoàn thiện tùy tiến độ theo §3.3. Bố cục 
 | --- | --- |
 | Bố cục | Kiểm tra portrait 360/390/440dp, landscape điện thoại, chữ 100% và 200%, chuỗi dài, notch và điều hướng cử chỉ. Nhãn thiết yếu đọc được, nút chạm ít nhất 48dp, bàn phím và system bars chừa chỗ nút lưu/gửi. |
 | Trợ năng | TalkBack đọc nhãn, vai trò, trạng thái, thứ tự cột và thông báo lỗi. Từ menu, dùng TalkBack hoặc bàn phím để hoàn tất move trong và khác cột. Sau đóng hộp thoại, focus về nơi mở hoặc đích hợp lệ. |
-| Phiên và quyền | Đăng ký, đăng nhập sai rồi đúng, dán và autofill, refresh khi hết hạn, từ chối refresh, lỗi tạm thời, logout offline và A → B. Kiểm tra Owner, Member, người ngoài workspace trên UI và API. |
-| Vòng đời và dữ liệu | Xoay khi mở task, soạn bình luận, đặt bộ lọc và move đang chờ. Trở lại app giữ trạng thái cần thiết và gửi yêu cầu hợp lý. Test tải đầu, rỗng, retry, timeout, 403/404, 409, 422 và 500. |
-| Kanban và đồng bộ | Kéo trong cột và giữa cột, thả vào cột rỗng và cuối cột, kéo qua mép, chọn move qua menu, kiểm tra thứ tự sau refresh. Test lỗi khi server đã ghi trước timeout và rollback khi lỗi ghi xác định. |
-| Offline | Bật chế độ máy bay với và chưa có cache, kiểm tra giới hạn ghi, khôi phục kết nối, làm mới sau khi bị gỡ membership, logout và đăng nhập bằng tài khoản khác trên cùng máy. |
+| Phiên | Kiểm tra đăng ký, đăng nhập sai rồi đúng, dán và autofill. Refresh lỗi mạng, timeout hoặc `5xx` giữ cache ở chế độ chỉ đọc cho đến khi refresh thành công. Refresh bị từ chối dứt khoát xóa phiên và cache. Logout online/offline kết thúc phiên cục bộ ngay, máy chủ thu hồi phiên khi xử lý thành công. Phản hồi muộn của A sau khi đăng xuất hoặc khi B đăng nhập bị bỏ qua. |
+| Quyền | Kiểm tra Owner, Member và người ngoài workspace trên UI và API. Chỉ Owner của workspace được tra cứu email khớp chính xác để thêm thành viên và xóa workspace/dự án. Chỉ Owner hoặc người tạo còn là thành viên được xóa công việc. Khi nhận `403`/`404` cho tài nguyên đang mở, về cấp gần nhất còn quyền xem. |
+| Gỡ thành viên và xóa dữ liệu | Sau khi gỡ thành viên, công việc liên quan chuyển sang **Chưa giao**, tên tác giả và tác nhân cũ vẫn hiển thị, lịch sử ghi Owner là tác nhân gỡ giao việc. Hộp thoại xóa nêu dữ liệu bị mất. Khi xác nhận thành công, mọi công việc bị xóa cùng bình luận và lịch sử của chúng biến mất khỏi các màn liên quan. |
+| Vòng đời và retry | Xoay khi mở task, soạn bình luận, đặt bộ lọc và move đang chờ. Kiểm tra tải đầu, rỗng, thử lại và gửi lặp. Mô phỏng mất phản hồi sau khi máy chủ tạo công việc hoặc bình luận. Giao diện hiển thị **Chưa xác nhận**, thử lại dùng cùng payload và `Idempotency-Key`, danh sách chỉ có một mục đã xác nhận. |
+| Kanban và đồng bộ | Kéo trong và giữa cột, thả vào cột rỗng/cuối cột, kéo qua mép và chọn move qua menu. Kiểm tra thứ tự sau refresh, cả hai version trong yêu cầu và việc chọn lại vị trí sau `409`. Sửa biểu mẫu đổi cột phải thêm vào cuối cột đích và kiểm tra cả hai version. Kiểm tra `422` và hoàn tác khi lỗi ghi đã xác định. Khi timeout, kiểm tra hoàn tác vị trí tạm, trạng thái **Chưa xác nhận** và đối chiếu board trước khi chọn lại. |
+| Offline | Bật chế độ máy bay khi đã có và khi chưa có cache. Kiểm tra giới hạn ghi, khôi phục kết nối, làm mới sau khi bị gỡ membership và đăng nhập bằng tài khoản khác trên cùng máy. |
 | Build và kiểm thử | Thực hiện AC-06 với backend, thiết bị Android hoặc emulator và CI. Bản xem thử minh họa bố cục và luồng. Bảng này là tiêu chí kiểm tra khi triển khai. |
 
 ## Truy vết

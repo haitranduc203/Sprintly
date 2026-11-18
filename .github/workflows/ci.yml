@@ -1,0 +1,94 @@
+name: Sprintly CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Android build, unit tests and lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: source
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Install Android SDK packages
+        run: >-
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          --install "platforms;android-37.0" "build-tools;36.0.0"
+      - name: Build debug APK, run unit tests and lint
+        run: bash ./gradlew --no-daemon :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+
+  backend:
+    name: Backend tests and PostgreSQL smoke test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: sprintly
+          POSTGRES_PASSWORD: sprintly-test-only
+          POSTGRES_DB: sprintly_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U sprintly -d sprintly_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://sprintly:sprintly-test-only@127.0.0.1:5432/sprintly_test
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Install backend dependencies
+        run: npm ci
+      - name: Apply migrations and seed demo users
+        env:
+          DEMO_OWNER_PASSWORD: owner-test-only-123
+          DEMO_MEMBER_PASSWORD: member-test-only-123
+        run: |
+          npm run db:migrate
+          npm run db:seed
+      - name: Run backend tests
+        run: npm test
+      - name: Build backend
+        run: npm run build
+      - name: Check running API readiness
+        env:
+          HOST: 127.0.0.1
+          PORT: '3000'
+        run: |
+          node dist/src/server.js > "$RUNNER_TEMP/sprintly-api.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          if ! curl --fail --silent --show-error --retry 10 --retry-all-errors --retry-delay 1 --max-time 3 \
+              --output "$RUNNER_TEMP/sprintly-health.json" http://127.0.0.1:3000/health \
+              || ! jq -e '.data.status == "ok"' "$RUNNER_TEMP/sprintly-health.json"; then
+            cat "$RUNNER_TEMP/sprintly-api.log"
+            exit 1
+          fi

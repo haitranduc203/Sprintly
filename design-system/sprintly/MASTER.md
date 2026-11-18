@@ -1,12 +1,14 @@
 # Sprintly — Design system Android
 
-Hệ thống thiết kế theo bản Orbix đã chốt ngày 17/11/2026. [Bản thiết kế Orbix](../../docs/Sprintly_Orbix_Design.html) · [Đặc tả màn hình](../../docs/Sprintly_UI_UX_Design.md)
+Hệ thống thiết kế theo bản Orbix đã chốt ngày 17/11/2026. [Bản thiết kế Orbix](../../docs/Sprintly_Orbix_Design.html) · [Đặc tả màn hình](../../docs/Sprintly_UI_UX_Design.md) · [Quyết định nghiệp vụ đã duyệt](../../docs/Sprintly_BA.md#6-quyết-định-đã-duyệt)
 
 ## Hướng hình ảnh
 
-Giao diện phẳng với nền trắng, cột xám nhạt và thẻ có viền mảnh. Xanh chanh dành cho nút thêm và hành động chính. Tím dành cho tab đang chọn, liên kết và viền focus. Bảng dự án dùng cụm avatar và thanh tiến độ. Biểu tượng dạng nét theo Material, kích thước 24dp ở vùng chạm 48dp. Avatar hiển thị chữ viết tắt khi thiếu ảnh. Màu cảnh báo đi kèm nhãn mô tả.
+Giao diện phẳng với nền trắng, cột xám nhạt và thẻ có viền mảnh. Xanh chanh dành cho nút thêm và hành động chính. Tím dành cho tab đang chọn, liên kết và viền focus. Thẻ dự án dùng cụm avatar. Biểu tượng dạng nét theo Material, kích thước 24dp ở vùng chạm 48dp. Avatar hiển thị chữ viết tắt khi thiếu ảnh. Màu cảnh báo đi kèm nhãn mô tả.
 
 Dùng Roboto theo hệ thống Android. Chế độ sáng là phạm vi P0.
+
+Màn **Tổng quan**, **Lịch công việc** và tỷ lệ hoàn thành dự án được minh họa trong Orbix cho giai đoạn sau P0. Khi triển khai tỷ lệ, dùng ID ổn định của cột Done mặc định để nhận diện cột hoàn thành, kể cả sau khi đổi tên cột. [Phạm vi sau P0](../../docs/Sprintly_UI_UX_Design.md#phạm-vi-sau-p0)
 
 ## Màu ngữ nghĩa
 
