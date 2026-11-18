@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Sprintly</string>
+    <string name="welcome_description">Quản lý công việc nhóm bằng Kanban.</string>
 </resources>

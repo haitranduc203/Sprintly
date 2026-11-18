@@ -2,9 +2,10 @@
 
 ## Trạng thái bàn giao
 
-- Project Android khởi tạo nằm ở `source/`. Dùng Android Studio để mở thư mục này hoặc chạy `cd source` và `.\gradlew.bat :app:assembleDebug :app:testDebugUnitTest` trên Windows. Unit test hiện là test mẫu của project.
-- `minSdk` hiện là 24, trong khi đặc tả chọn 26. Đối chiếu lại khi dựng nền Android. Chuẩn bị Android SDK trên máy mới và để Android Studio tạo `local.properties` theo đường dẫn trên máy đó.
-- Quyết định BA đã được duyệt ngày 17/11/2026. Bước triển khai tiếp theo là Phase 0 trên nhánh `chore/bootstrap` từ `main`.
+- Nền Android ở `source/` có ViewBinding, màn mở đầu Orbix và điều hướng Fragment. `minSdk` là 26 và `applicationId` là `com.example.sprintly`.
+- Backend ở `backend/` có `GET /health`, migration PostgreSQL và seed hai tài khoản demo. [README](../README.md) hướng dẫn chạy, kiểm thử và chuẩn bị Phase 1.
+- Thử nghiệm trên Pixel 7 Pro API 34 xác nhận Android có thể nhận thao tác thả giữa hai cột. Dùng kết quả này khi triển khai kéo thả Kanban ở Phase 3.
+- Quyết định BA đã được duyệt ngày 17/11/2026. Phase 0 nằm trên `chore/bootstrap`. Sau khi xác minh và merge Phase 0 vào `main`, tạo nhánh riêng từ `main` cho Phase 1.
 - [Đặc tả dự án](Sprintly_Codex_Implementation_Spec.md) · [BA](Sprintly_BA.md) · [Use Case](Sprintly_Use_Cases.md) · [ERD](Sprintly_ERD.md) · [Thiết kế Orbix đã chốt](Sprintly_Orbix_Design.html)
 
 ## Quyết định BA đã duyệt
