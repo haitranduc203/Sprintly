@@ -4,17 +4,16 @@
 
 - Android ở `source/` dùng Kotlin/XML, ViewBinding và điều hướng Fragment. Phase 1 có màn kiểm tra phiên, đăng nhập, đăng ký và hồ sơ theo thiết kế Orbix. Phiên được mã hóa bằng Android Keystore. `minSdk` là 26 và `applicationId` là `com.example.sprintly`.
 - Backend ở `backend/` có API xác thực `/api/v1`, xoay refresh token, thu hồi phiên, `GET /health`, migration PostgreSQL và seed hai tài khoản demo. [Hướng dẫn chạy và kiểm thử](../README.md)
-- Thử nghiệm trên Pixel 7 Pro API 34 xác nhận Android có thể nhận thao tác thả giữa hai cột. Dùng kết quả này khi triển khai kéo thả Kanban ở Phase 3.
 - Quyết định BA đã được duyệt ngày 17/11/2026. Nhánh `feature/authentication` tách từ `main` sau khi hợp nhất Phase 0. [Báo cáo kiểm thử Phase 0](Sprintly_Phase_0_Verification.md)
 - Kiểm chứng Phase 1 trên máy ngày 18/11/2026. Backend đạt 10 test trên PostgreSQL 17.11, migration giữ nguyên hai tài khoản demo. Android đạt 8 unit test và 6 Espresso test trên Pixel 6a Android 14. Thử tắt hẳn tiến trình xác nhận app khôi phục phiên khi có kết nối, giữ đúng tài khoản khi API lỗi và xóa phiên khi đăng xuất offline.
 - Phase 2 đưa người dùng đã đăng nhập đến danh sách workspace. Android hiển thị dự án, thành viên và board từ API, đồng thời áp dụng quyền Owner và Member trong từng workspace. Backend giữ thứ tự cột và `boardVersion` nhất quán. [Quyền và lệnh kiểm thử Phase 2](../README.md#phase-2-workspace-and-project-permissions)
 - Kiểm chứng Phase 2 trên máy ngày 18/11/2026. Migration PostgreSQL 17.11 UTF-8 giữ nguyên hai tài khoản demo và phiên đang hoạt động. Backend đạt 15 test. Android đạt 17 unit test và 7 Espresso test trên Pixel 6a Android 14, gồm luồng hai tài khoản với workspace, thành viên, dự án và cột Kanban. Lint có 0 lỗi và 9 cảnh báo.
-- Board Phase 2 hiển thị cột đã lưu. Phase 3 bổ sung task và xử lý gỡ phân công, tăng phiên bản task, ghi lịch sử trong cùng giao dịch gỡ thành viên. [Đặc tả Phase 3](Sprintly_Codex_Implementation_Spec.md#phase-3--task-crud--kanban)
+- Phase 3 có board Kanban, biểu mẫu tạo và sửa task, màn chi tiết với bình luận và lịch sử. Người dùng kéo thả hoặc dùng **Di chuyển** để chọn cột và vị trí. Khi gỡ thành viên, backend gỡ phân công, tăng phiên bản task và ghi lịch sử trong cùng giao dịch. [Đặc tả Phase 3](Sprintly_Codex_Implementation_Spec.md#phase-3--task-crud--kanban) · [Lệnh kiểm thử Phase 3](../README.md#verify-the-end-to-end-flows)
 - [Đặc tả dự án](Sprintly_Codex_Implementation_Spec.md) · [BA](Sprintly_BA.md) · [Use Case](Sprintly_Use_Cases.md) · [ERD](Sprintly_ERD.md) · [Thiết kế Orbix đã chốt](Sprintly_Orbix_Design.html)
 
 ## Quy ước Git
 
-- Đặt tên nhánh theo dạng `<loại>/<mô-tả>`. Các loại đã thống nhất gồm `feature/`, `fix/`, `hotfix/`, `refactor/`, `chore/`, `docs/`, `test/` và `release/`. Phase 1 dùng `feature/authentication`. Phase 2 dùng `feature/workspace-management`.
+- Đặt tên nhánh theo dạng `<loại>/<mô-tả>`. Các loại đã thống nhất gồm `feature/`, `fix/`, `hotfix/`, `refactor/`, `chore/`, `docs/`, `test/` và `release/`. Phase 1 dùng `feature/authentication`. Phase 2 dùng `feature/workspace-management`. Phase 3 dùng `feature/task-kanban`.
 - Tiêu đề commit mô tả thay đổi, chẳng hạn `feat: add authentication`. Prefix `codex/` không dùng cho tên nhánh hoặc commit.
 - Commit từng phần đã hoàn thành và kiểm thử. Tách backend, lớp dữ liệu Android, giao diện và tài liệu thành các commit có thể rà soát riêng.
 
@@ -29,8 +28,19 @@
 
 [Chi tiết các quyết định đã duyệt](Sprintly_BA.md#6-quyết-định-đã-duyệt)
 
+## Kiểm chứng Phase 3
+
+| Kiểm tra ngày 18/11/2026 | Kết quả |
+| --- | --- |
+| PostgreSQL 17.11 UTF-8, `prisma migrate deploy` và đối chiếu schema | PASS. Migration giữ dữ liệu Phase 2, bao gồm tài khoản, phiên đang hoạt động và cột dự án đã lưu. Prisma xác nhận schema khớp migration. |
+| `npm run build` và `npm test` | PASS. 20 test backend. Bộ test bao phủ quyền ghi và xóa, phiên bản task và board, thứ tự cột, gửi lại bằng cùng khóa và lịch sử sau khi gỡ thành viên. |
+| `assembleDebug`, `testDebugUnitTest`, `lintDebug` | PASS. 31 unit test Android, gồm hoàn tác move khi mô phỏng HTTP 409 và 500. Lint có 0 lỗi và 8 cảnh báo. |
+| AndroidJUnitRunner trên Pixel 6a Android 14 với API thật | PASS. 8 ca Espresso, gồm kéo thả vào cột đã có task, tải lại đúng thứ tự và mở lại task để xác nhận nội dung sửa, bình luận và lịch sử. Luồng xác thực và phân quyền workspace cũng pass. |
+| `android-cli` trên Pixel 6a Android 14 | Đối chiếu ảnh board, chi tiết và biểu mẫu task với thiết kế Orbix. Kiểm tra vị trí điều hướng, nhãn, ưu tiên và CTA sau khi nạp dữ liệu thật. |
+
 ## Thứ tự triển khai đề xuất
 
 1. **Phase 0 · `chore/bootstrap`**. Dùng scaffold trong `source/`, chốt `minSdk` và `applicationId`, bật ViewBinding, dựng theme Orbix và điều hướng Fragment. Dựng PostgreSQL, migration ban đầu và `/health`. Thiết lập CI build và kiểm tra API cơ bản. Thử kéo task giữa hai cột trên emulator sớm.
 2. **Mốc demo đầu tiên**. Làm theo luồng hai tài khoản với backend thật. Đăng nhập, tạo workspace, thêm thành viên, tạo dự án, giao task, di chuyển task và tải lại để kiểm tra vị trí. Viết kiểm thử phiên, phân quyền và xung đột trước khi chốt từng luồng.
-3. **Mốc hoàn tất MVP**. Bổ sung offline chỉ đọc, tìm/lọc, bình luận và lịch sử. Kiểm tra lại AC-01–AC-06 trước khi đóng gói. FR-12 yêu cầu CI và ít nhất một UI test để nghiệm thu MVP.
+3. **Phase 4 · Room và đọc offline**. Lưu workspace, project, board và task theo tài khoản. Kiểm tra mở lại dữ liệu từng tải khi tắt mạng và bảo đảm tài khoản khác không đọc được dữ liệu đã lưu.
+4. **Mốc hoàn tất MVP**. Bổ sung giao diện tìm/lọc và hoàn thiện trải nghiệm bình luận, lịch sử. Kiểm tra lại AC-01–AC-06 trước khi đóng gói. FR-12 yêu cầu CI và ít nhất một UI test để nghiệm thu MVP.
