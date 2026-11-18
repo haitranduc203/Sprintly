@@ -128,7 +128,9 @@
                     android:layout_height="wrap_content"
                     android:gravity="start|center_vertical"
                     android:minHeight="48dp"
-                    android:text="@string/task_unassigned" />
+                    android:text="@string/task_unassigned"
+                    android:textColor="@color/orbix_on_surface"
+                    app:strokeColor="@color/orbix_divider" />
 
                 <TextView
                     android:layout_width="match_parent"
