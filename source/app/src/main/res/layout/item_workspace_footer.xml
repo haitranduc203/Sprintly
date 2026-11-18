@@ -1,0 +1,48 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+    <LinearLayout
+        android:id="@+id/workspace_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:accessibilityLiveRegion="polite"
+        android:orientation="vertical"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="16dp"
+        android:visibility="gone">
+        <TextView
+            android:id="@+id/workspace_empty_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/workspace_empty"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textColor="@color/orbix_on_surface" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:text="@string/workspace_empty_help"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="@color/orbix_on_surface_variant" />
+    </LinearLayout>
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/workspace_create"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:singleLine="false"
+        android:text="@string/workspace_create_list"
+        android:textColor="@color/orbix_on_surface_variant"
+        app:cornerRadius="12dp"
+        app:icon="@drawable/ic_workspace_add"
+        app:iconGravity="textStart"
+        app:iconTint="@color/orbix_on_surface_variant"
+        app:strokeColor="@color/orbix_divider" />
+</LinearLayout>

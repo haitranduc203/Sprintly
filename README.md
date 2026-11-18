@@ -1,6 +1,6 @@
 # Sprintly
 
-Sprintly is an Android Kanban app for small teams. Phase 1 adds account registration, sign-in, session restoration and sign-out to the Android app and PostgreSQL-backed REST service.
+Sprintly is an Android Kanban app for small teams. The app supports account authentication and management of workspaces, members, projects and Kanban columns through a PostgreSQL-backed REST API.
 
 ## Repository layout
 
@@ -33,7 +33,7 @@ In pgAdmin, connect to the local PostgreSQL server as `postgres` and open the Qu
 
 ```sql
 CREATE ROLE sprintly LOGIN PASSWORD 'replace_me';
-CREATE DATABASE sprintly OWNER sprintly;
+CREATE DATABASE sprintly OWNER sprintly ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;
 ```
 
 From the repository root, create `backend/.env` if it is missing.
@@ -79,7 +79,7 @@ npm.cmd run build
 
 After building, `npm.cmd start` runs the compiled service.
 
-The seed provisions `owner@sprintly.demo` and `member@sprintly.demo` in a sample workspace. It sets the passwords from the local environment on first creation and preserves existing password hashes on subsequent runs. Use the configured demo credentials to sign in or create your own account in the app.
+The seed provisions `owner@sprintly.demo` and `member@sprintly.demo` in the Sprintly Demo workspace, with a Sprintly Launch project and three default columns. It sets passwords from the local environment on first creation. Subsequent runs preserve existing password hashes and edits to an existing demo project. Use the configured demo credentials to sign in or create your own account in the app.
 
 ## Phase 1 authentication
 
@@ -87,7 +87,21 @@ The API under `/api/v1` supports `POST /auth/register`, `POST /auth/login`, `POS
 
 Sign-in and registration share a limit of 10 requests per minute per connection IP. When a reverse proxy connects to Fastify on behalf of multiple clients, those requests share the proxy's limit with the current server configuration.
 
-## Phase 1 checklist
+## Phase 2 workspace and project permissions
+
+Any signed-in user can create a workspace and becomes its Owner in the same transaction. Owners add existing accounts as Members by looking up an exact email address. A removed member loses access to that workspace and its projects.
+
+| Operation inside a workspace | Owner | Member |
+| --- | --- | --- |
+| View the workspace, members, projects and boards | Yes | Yes |
+| Create or edit a project and add or rename a column | Yes | Yes |
+| Edit or delete the workspace | Yes | |
+| Look up an account by email, add or remove a member | Yes | |
+| Delete a project | Yes | |
+
+New projects start with To Do, In Progress and Done in that order. Phase 2 boards show the saved columns. Task creation, assignment and movement are part of Phase 3. [Implementation specification](docs/Sprintly_Codex_Implementation_Spec.md)
+
+## Verify the end-to-end flows
 
 For PostgreSQL integration tests, apply the migrations to a dedicated test database. Set `TEST_DATABASE_URL` to that database before running `npm.cmd test`. The PostgreSQL suite is skipped when the variable is absent. GitHub Actions points it to the test service.
 
@@ -95,6 +109,12 @@ With the backend running on port `3000` and Sprintly signed out on the emulator,
 
 ```powershell
 .\gradlew.bat :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.sprintly.AuthApiFlowTest -Pandroid.testInstrumentationRunnerArguments.sprintlyAuthE2e=true
+```
+
+Run the two-account workspace flow on a development database. The test creates two accounts, verifies the Owner and Member views and removes the workspace it creates.
+
+```powershell
+.\gradlew.bat :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.sprintly.WorkspaceApiFlowTest -Pandroid.testInstrumentationRunnerArguments.sprintlyWorkspaceE2e=true
 ```
 
 The phase gates, test results and acceptance criteria are recorded here. [Implementation specification](docs/Sprintly_Codex_Implementation_Spec.md) · [Phase 0 verification](docs/Sprintly_Phase_0_Verification.md) · [Handoff](docs/Sprintly_Handoff.md)

@@ -26,9 +26,32 @@
             app:argType="boolean" />
     </fragment>
 
-    <fragment
-        android:id="@+id/account_fragment"
-        android:name="com.example.sprintly.ui.AccountFragment"
-        android:label="@string/auth_account"
-        tools:layout="@layout/fragment_account" />
+    <navigation
+        android:id="@+id/authenticated_graph"
+        app:startDestination="@id/workspace_list_fragment">
+        <fragment
+            android:id="@+id/workspace_list_fragment"
+            android:name="com.example.sprintly.ui.workspace.WorkspaceListFragment"
+            android:label="@string/workspace_title"
+            tools:layout="@layout/fragment_workspace_list" />
+        <fragment
+            android:id="@+id/account_fragment"
+            android:name="com.example.sprintly.ui.AccountFragment"
+            android:label="@string/auth_account"
+            tools:layout="@layout/fragment_account" />
+        <fragment
+            android:id="@+id/workspace_detail_fragment"
+            android:name="com.example.sprintly.ui.workspace.WorkspaceDetailFragment"
+            tools:layout="@layout/fragment_workspace_detail">
+            <argument android:name="workspaceId" app:argType="string" />
+        </fragment>
+        <fragment
+            android:id="@+id/workspace_board_fragment"
+            android:name="com.example.sprintly.ui.workspace.WorkspaceBoardFragment"
+            android:label="@string/workspace_board"
+            tools:layout="@layout/fragment_workspace_board">
+            <argument android:name="workspaceId" app:argType="string" />
+            <argument android:name="projectId" app:argType="string" />
+        </fragment>
+    </navigation>
 </navigation>

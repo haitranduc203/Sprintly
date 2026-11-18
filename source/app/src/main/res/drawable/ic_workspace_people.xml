@@ -1,0 +1,4 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="@color/orbix_on_surface_variant" android:pathData="M9,12a4,4 0,1 0,0 -8a4,4 0,1 0,0 8M9,6a2,2 0,1 1,0 4a2,2 0,1 1,0 -4M9,14c-4,0 -7,2 -7,5v1h14v-1c0,-3 -3,-5 -7,-5M4.5,18c1,-1.2 2.7,-2 4.5,-2s3.5,.8 4.5,2zM16,5v2a2,2 0,0 1,0 4v2a4,4 0,1 0,0 -8M17.5,14.2l-.75,1.9c1.4,.55 2.4,1.25 2.75,1.9H18v2h4v-1c0,-2 -1.7,-3.9 -4.5,-4.8z" android:fillType="evenOdd" />
+</vector>

@@ -19,4 +19,8 @@
     <color name="orbix_auth_illustration_gray">#AFAFBE</color>
     <color name="orbix_warning">#684515</color>
     <color name="orbix_warning_container">#FFE7B1</color>
+    <color name="orbix_surface_lane">#F5F6F3</color>
+    <color name="orbix_workspace_mark_owner">#E9F9D9</color>
+    <color name="orbix_info_container">#D9ECFA</color>
+    <color name="orbix_success_container">#C6EED7</color>
 </resources>

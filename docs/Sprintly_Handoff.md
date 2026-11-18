@@ -7,12 +7,16 @@
 - Thử nghiệm trên Pixel 7 Pro API 34 xác nhận Android có thể nhận thao tác thả giữa hai cột. Dùng kết quả này khi triển khai kéo thả Kanban ở Phase 3.
 - Quyết định BA đã được duyệt ngày 17/11/2026. Nhánh `feature/authentication` tách từ `main` sau khi hợp nhất Phase 0. [Báo cáo kiểm thử Phase 0](Sprintly_Phase_0_Verification.md)
 - Kiểm chứng Phase 1 trên máy ngày 18/11/2026. Backend đạt 10 test trên PostgreSQL 17.11, migration giữ nguyên hai tài khoản demo. Android đạt 8 unit test và 6 Espresso test trên Pixel 6a Android 14. Thử tắt hẳn tiến trình xác nhận app khôi phục phiên khi có kết nối, giữ đúng tài khoản khi API lỗi và xóa phiên khi đăng xuất offline.
+- Phase 2 đưa người dùng đã đăng nhập đến danh sách workspace. Android hiển thị dự án, thành viên và board từ API, đồng thời áp dụng quyền Owner và Member trong từng workspace. Backend giữ thứ tự cột và `boardVersion` nhất quán. [Quyền và lệnh kiểm thử Phase 2](../README.md#phase-2-workspace-and-project-permissions)
+- Kiểm chứng Phase 2 trên máy ngày 18/11/2026. Migration PostgreSQL 17.11 UTF-8 giữ nguyên hai tài khoản demo và phiên đang hoạt động. Backend đạt 15 test. Android đạt 17 unit test và 7 Espresso test trên Pixel 6a Android 14, gồm luồng hai tài khoản với workspace, thành viên, dự án và cột Kanban. Lint có 0 lỗi và 9 cảnh báo.
+- Board Phase 2 hiển thị cột đã lưu. Phase 3 bổ sung task và xử lý gỡ phân công, tăng phiên bản task, ghi lịch sử trong cùng giao dịch gỡ thành viên. [Đặc tả Phase 3](Sprintly_Codex_Implementation_Spec.md#phase-3--task-crud--kanban)
 - [Đặc tả dự án](Sprintly_Codex_Implementation_Spec.md) · [BA](Sprintly_BA.md) · [Use Case](Sprintly_Use_Cases.md) · [ERD](Sprintly_ERD.md) · [Thiết kế Orbix đã chốt](Sprintly_Orbix_Design.html)
 
 ## Quy ước Git
 
-- Đặt tên nhánh theo dạng `<loại>/<mô-tả>`. Các loại đã thống nhất gồm `feature/`, `fix/`, `hotfix/`, `refactor/`, `chore/`, `docs/`, `test/` và `release/`. Phase 1 dùng `feature/authentication`.
+- Đặt tên nhánh theo dạng `<loại>/<mô-tả>`. Các loại đã thống nhất gồm `feature/`, `fix/`, `hotfix/`, `refactor/`, `chore/`, `docs/`, `test/` và `release/`. Phase 1 dùng `feature/authentication`. Phase 2 dùng `feature/workspace-management`.
 - Tiêu đề commit mô tả thay đổi, chẳng hạn `feat: add authentication`. Prefix `codex/` không dùng cho tên nhánh hoặc commit.
+- Commit từng phần đã hoàn thành và kiểm thử. Tách backend, lớp dữ liệu Android, giao diện và tài liệu thành các commit có thể rà soát riêng.
 
 ## Quyết định BA đã duyệt
 

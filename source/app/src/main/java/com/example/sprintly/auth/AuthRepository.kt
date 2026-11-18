@@ -37,6 +37,34 @@ class AuthRepository @Inject internal constructor(
     suspend fun register(email: String, displayName: String, password: String): AuthResult =
         authenticate { remote.register(email, displayName, password) }
 
+    internal suspend fun <T> withAccess(request: suspend (AccessToken) -> T): T {
+        val (active, initial) = synchronized(lock) {
+            val current = session ?: throw AuthRemoteFailure(
+                if (mutableState.value == AuthState.Checking) "AUTH_RETRY" else "UNAUTHORIZED",
+            )
+            current to readyCredentials(current)
+        }
+        val (initialTokens, initialAccess) = initial
+
+        val result = try {
+            request(initialAccess)
+        } catch (failure: AuthRemoteFailure) {
+            synchronized(lock) { requireCurrentSession(active) }
+            if (failure.status != 401) throw failure
+
+            val refreshed = refresh(active, initialTokens)
+            val (retryTokens, retryAccess) = synchronized(lock) {
+                requireCurrentSession(active)
+                if (refreshed?.access == null) throw AuthRemoteFailure("AUTH_RETRY")
+                readyCredentials(active)
+            }
+            retryRequest(active, retryTokens, retryAccess, request)
+        }
+
+        synchronized(lock) { requireCurrentSession(active) }
+        return result
+    }
+
     suspend fun signOut() {
         scope.async {
             val refreshToken = synchronized(lock) {
@@ -132,6 +160,41 @@ class AuthRepository @Inject internal constructor(
         synchronized(lock) {
             tokens.access.takeIf { session === active && active.tokens === tokens }
         }
+
+    // Called with the lock held so the session identity and credentials are checked together.
+    private fun requireCurrentSession(active: ActiveSession) {
+        if (session !== active) throw AuthRemoteFailure("SESSION_CHANGED")
+    }
+
+    private fun readyCredentials(active: ActiveSession): Pair<SessionTokens, AccessToken> {
+        val state = mutableState.value
+        val tokens = active.tokens
+        val access = tokens.access
+        if (state !is AuthState.SignedIn || state.needsRetry || access == null) {
+            throw AuthRemoteFailure("AUTH_RETRY")
+        }
+        return tokens to access
+    }
+
+    private suspend fun <T> retryRequest(
+        active: ActiveSession,
+        tokens: SessionTokens,
+        access: AccessToken,
+        request: suspend (AccessToken) -> T,
+    ): T {
+        try {
+            return request(access)
+        } catch (failure: AuthRemoteFailure) {
+            synchronized(lock) {
+                requireCurrentSession(active)
+                if (failure.status != 401) throw failure
+                if (active.tokens === tokens) {
+                    mutableState.value = AuthState.SignedIn(active.user, needsRetry = true)
+                }
+            }
+            throw AuthRemoteFailure("AUTH_RETRY")
+        }
+    }
 
     // Retrofit retries a protected call at the repository layer, where the login identity
     // and the rejected credentials can be compared before and after refresh.

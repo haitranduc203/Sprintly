@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.withResumed
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.navOptions
 import com.example.sprintly.auth.AuthState
@@ -28,9 +29,11 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private val session: SessionViewModel by viewModels()
+    private var routedUserId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        routedUserId = savedInstanceState?.getString(ROUTED_USER_KEY)
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
@@ -62,18 +65,31 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(ROUTED_USER_KEY, routedUserId)
+    }
+
     private suspend fun showSession(
         binding: ActivityMainBinding,
         nav: NavController,
         state: AuthState,
     ) {
-        val current = nav.currentDestination?.id
+        val currentDestination = nav.currentDestination
+        val current = currentDestination?.id
+        val inWorkspace = currentDestination?.hierarchy?.any {
+            it.id == R.id.authenticated_graph
+        } == true
         val destination = when (state) {
             AuthState.Checking -> null
-            is AuthState.SignedIn -> R.id.account_fragment
-            is AuthState.SignedOut -> when (current) {
-                R.id.register_fragment -> R.id.register_fragment
-                else -> R.id.login_fragment
+            is AuthState.SignedIn -> {
+                val keepDestination = inWorkspace && routedUserId == state.user.id
+                routedUserId = state.user.id
+                if (keepDestination) current else R.id.authenticated_graph
+            }
+            is AuthState.SignedOut -> {
+                routedUserId = null
+                if (current == R.id.register_fragment) current else R.id.login_fragment
             }
         }
 
@@ -100,5 +116,9 @@ class MainActivity : AppCompatActivity() {
             binding.navHost.isVisible = true
             binding.sessionGate.root.isVisible = false
         }
+    }
+
+    private companion object {
+        const val ROUTED_USER_KEY = "routedUserId"
     }
 }

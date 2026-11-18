@@ -1,0 +1,93 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/orbix_surface"
+    android:orientation="vertical">
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/board_toolbar"
+        style="@style/Widget.Sprintly.WorkspaceToolbar"
+        app:navigationContentDescription="@string/workspace_back"
+        app:navigationIcon="@drawable/ic_auth_back"
+        app:title="@string/workspace_board">
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end">
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/board_refresh"
+                style="@style/Widget.Sprintly.WorkspaceIconButton"
+                android:contentDescription="@string/workspace_board_refresh"
+                android:src="@drawable/ic_workspace_refresh" />
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/board_more"
+                style="@style/Widget.Sprintly.WorkspaceIconButton"
+                android:contentDescription="@string/workspace_board_actions"
+                android:src="@drawable/ic_workspace_more" />
+        </LinearLayout>
+    </com.google.android.material.appbar.MaterialToolbar>
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <LinearLayout
+            android:id="@+id/board_content"
+            android:layout_width="match_parent"
+    android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <TextView
+                android:id="@+id/board_project_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="8dp"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                android:textColor="@color/orbix_on_surface"
+                android:textStyle="bold" />
+            <HorizontalScrollView
+                android:id="@+id/column_chip_scroll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="16dp"
+                android:paddingEnd="8dp"
+                android:scrollbars="none">
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/column_chips"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:chipSpacingHorizontal="8dp"
+                    app:selectionRequired="true"
+                    app:singleLine="true"
+                    app:singleSelection="true" />
+            </HorizontalScrollView>
+            <HorizontalScrollView
+                android:id="@+id/column_scroll"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="8dp"
+                android:layout_weight="1"
+                android:clipToPadding="false"
+                android:paddingStart="16dp"
+                android:paddingEnd="8dp"
+                android:scrollbars="horizontal">
+                <LinearLayout
+                    android:id="@+id/board_columns"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+            <com.google.android.material.button.MaterialButton
+                    android:id="@+id/column_add"
+                    style="@style/Widget.Sprintly.WorkspaceTextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/workspace_column_add"
+                    android:layout_marginStart="8dp"
+                    app:icon="@drawable/ic_workspace_add" />
+        </LinearLayout>
+        <include
+            android:id="@+id/board_status"
+            layout="@layout/view_workspace_status" />
+    </FrameLayout>
+</LinearLayout>

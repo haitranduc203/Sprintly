@@ -26,6 +26,8 @@ internal class AuthRemote(baseUrl: String) {
     private val gson = Gson()
     private val endpoints = baseUrl.takeIf(String::isNotBlank)?.let { Endpoints(it, gson) }
 
+    fun <T : Any> authenticatedApi(service: Class<T>): T? = endpoints?.authenticated?.create(service)
+
     suspend fun signIn(email: String, password: String): AuthenticatedUser =
         userAndTokens { auth.login(LoginRequest(email, password)) }
 
@@ -57,8 +59,12 @@ internal class AuthRemote(baseUrl: String) {
 
     private suspend fun <T> call(request: suspend Endpoints.() -> Response<T>): T? {
         val api = endpoints ?: throw AuthRemoteFailure("API_NOT_CONFIGURED")
+        return execute { api.request() }
+    }
+
+    suspend fun <T> execute(request: suspend () -> Response<T>): T? {
         try {
-            val response = api.request()
+            val response = request()
             if (response.isSuccessful) return response.body()
 
             val status = response.code()
@@ -111,7 +117,8 @@ internal class AuthRemote(baseUrl: String) {
             .build()
 
         val auth = retrofit(baseUrl, gson, publicClient).create(AuthApi::class.java)
-        val users = retrofit(baseUrl, gson, authenticatedClient).create(UserApi::class.java)
+        val authenticated = retrofit(baseUrl, gson.newBuilder().serializeNulls().create(), authenticatedClient)
+        val users = authenticated.create(UserApi::class.java)
 
         private fun retrofit(baseUrl: String, gson: Gson, client: OkHttpClient) = Retrofit.Builder()
             .baseUrl(baseUrl)
@@ -140,7 +147,7 @@ private interface UserApi {
     suspend fun me(@Tag token: AccessToken): Response<Envelope<UserPayload>>
 }
 
-private class Envelope<T>(@SerializedName("data") val data: T?)
+internal class Envelope<T>(@SerializedName("data") val data: T?)
 
 private class LoginRequest(
     @SerializedName("email") val email: String,

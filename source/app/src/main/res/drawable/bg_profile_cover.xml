@@ -1,0 +1,6 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp" android:height="106dp" android:viewportWidth="360" android:viewportHeight="106">
+    <path android:fillColor="@color/orbix_selection_container" android:pathData="M0,0h360v106H0z" />
+    <path android:strokeColor="@color/orbix_auth_illustration_line" android:strokeWidth="2"
+        android:pathData="M48,106C72,2 294,-22 346,106M84,106C115,21 274,6 321,106M122,106C146,49 258,31 295,106M154,106C183,76 239,68 267,106" />
+</vector>
