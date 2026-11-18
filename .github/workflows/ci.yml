@@ -75,6 +75,8 @@ jobs:
           npm run db:migrate
           npm run db:seed
       - name: Run backend tests
+        env:
+          TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
         run: npm test
       - name: Build backend
         run: npm run build
@@ -83,6 +85,7 @@ jobs:
           HOST: 127.0.0.1
           PORT: '3000'
         run: |
+          export AUTH_JWT_SECRET="$(node -p 'require("node:crypto").randomBytes(32).toString("hex")')"
           node dist/src/server.js > "$RUNNER_TEMP/sprintly-api.log" 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT

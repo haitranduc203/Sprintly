@@ -12,4 +12,11 @@
     <color name="orbix_error">#842B2A</color>
     <color name="orbix_error_container">#FCE1DF</color>
     <color name="orbix_brand">#22351E</color>
+    <color name="orbix_auth_input_surface">#F8F9FB</color>
+    <color name="orbix_auth_illustration_surface">#F5F6F9</color>
+    <color name="orbix_auth_illustration_line">#DDD9EE</color>
+    <color name="orbix_auth_illustration_lavender">#C4B9F2</color>
+    <color name="orbix_auth_illustration_gray">#AFAFBE</color>
+    <color name="orbix_warning">#684515</color>
+    <color name="orbix_warning_container">#FFE7B1</color>
 </resources>

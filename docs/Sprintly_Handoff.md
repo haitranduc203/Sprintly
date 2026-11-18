@@ -2,11 +2,17 @@
 
 ## Trạng thái bàn giao
 
-- Nền Android ở `source/` có ViewBinding, màn mở đầu Orbix và điều hướng Fragment. `minSdk` là 26 và `applicationId` là `com.example.sprintly`.
-- Backend ở `backend/` có `GET /health`, migration PostgreSQL và seed hai tài khoản demo. [README](../README.md) hướng dẫn chạy, kiểm thử và chuẩn bị Phase 1.
+- Android ở `source/` dùng Kotlin/XML, ViewBinding và điều hướng Fragment. Phase 1 có màn kiểm tra phiên, đăng nhập, đăng ký và hồ sơ theo thiết kế Orbix. Phiên được mã hóa bằng Android Keystore. `minSdk` là 26 và `applicationId` là `com.example.sprintly`.
+- Backend ở `backend/` có API xác thực `/api/v1`, xoay refresh token, thu hồi phiên, `GET /health`, migration PostgreSQL và seed hai tài khoản demo. [Hướng dẫn chạy và kiểm thử](../README.md)
 - Thử nghiệm trên Pixel 7 Pro API 34 xác nhận Android có thể nhận thao tác thả giữa hai cột. Dùng kết quả này khi triển khai kéo thả Kanban ở Phase 3.
-- Quyết định BA đã được duyệt ngày 17/11/2026. Phase 1 bắt đầu từ một nhánh tách từ `main` sau khi hợp nhất PR Phase 0. [Báo cáo kiểm thử Phase 0](Sprintly_Phase_0_Verification.md)
+- Quyết định BA đã được duyệt ngày 17/11/2026. Nhánh `feature/authentication` tách từ `main` sau khi hợp nhất Phase 0. [Báo cáo kiểm thử Phase 0](Sprintly_Phase_0_Verification.md)
+- Kiểm chứng Phase 1 trên máy ngày 18/11/2026. Backend đạt 10 test trên PostgreSQL 17.11, migration giữ nguyên hai tài khoản demo. Android đạt 8 unit test và 6 Espresso test trên Pixel 6a Android 14. Thử tắt hẳn tiến trình xác nhận app khôi phục phiên khi có kết nối, giữ đúng tài khoản khi API lỗi và xóa phiên khi đăng xuất offline.
 - [Đặc tả dự án](Sprintly_Codex_Implementation_Spec.md) · [BA](Sprintly_BA.md) · [Use Case](Sprintly_Use_Cases.md) · [ERD](Sprintly_ERD.md) · [Thiết kế Orbix đã chốt](Sprintly_Orbix_Design.html)
+
+## Quy ước Git
+
+- Đặt tên nhánh theo dạng `<loại>/<mô-tả>`. Các loại đã thống nhất gồm `feature/`, `fix/`, `hotfix/`, `refactor/`, `chore/`, `docs/`, `test/` và `release/`. Phase 1 dùng `feature/authentication`.
+- Tiêu đề commit mô tả thay đổi, chẳng hạn `feat: add authentication`. Prefix `codex/` không dùng cho tên nhánh hoặc commit.
 
 ## Quyết định BA đã duyệt
 
