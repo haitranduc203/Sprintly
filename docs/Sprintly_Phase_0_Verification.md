@@ -42,7 +42,7 @@ Script kiểm thử tạm gọi Prisma CLI và seed của dự án, kiểm tra b
 
 ## CI và hướng dẫn chạy
 
-- Workflow chạy khi có PR hoặc khi push lên `main`. Hai job kiểm tra Android build/unit test/lint và backend test/build, migration, seed, cùng HTTP readiness trên PostgreSQL. Kết quả CI được lưu theo commit. [Sprintly CI](https://github.com/haitranduc203/Sprintly/actions/workflows/ci.yml)
+- Workflow chạy khi có PR hoặc khi push lên `main`. Hai job kiểm tra Android build/unit test/lint và backend test/build, migration, seed, cùng HTTP readiness trên PostgreSQL. Kết quả CI được lưu theo commit. [Kiểm tra trên PR Phase 0](https://github.com/haitranduc203/Sprintly/pull/1/checks) · [Sprintly CI](https://github.com/haitranduc203/Sprintly/actions/workflows/ci.yml)
 - Espresso được kiểm tra trên emulator local. README có lệnh build/test và cách chuẩn bị PostgreSQL trực tiếp. [README](../README.md)
 
 ## Bàn giao Phase 1

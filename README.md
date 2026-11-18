@@ -29,7 +29,7 @@ Connect a device or start an emulator before running `connectedDebugAndroidTest`
 
 Install Node.js 24.11 or later in the 24.x line and PostgreSQL 17. On Windows, the PostgreSQL installer includes pgAdmin. Keep PostgreSQL running on port `5432`. [PostgreSQL Windows installer](https://www.postgresql.org/download/windows/)
 
-In pgAdmin, connect to the local PostgreSQL server as `postgres` and open the Query Tool for the `postgres` database. Replace the example password with your own, then run each statement separately. [CREATE ROLE](https://www.postgresql.org/docs/17/sql-createrole.html) · [CREATE DATABASE](https://www.postgresql.org/docs/17/sql-createdatabase.html)
+In pgAdmin, connect to the local PostgreSQL server as `postgres` and open the Query Tool for the `postgres` database. Replace the example password with your own, then run each statement separately. In the SQL string, double any apostrophe in the password, as in `'my''password'`. [CREATE ROLE](https://www.postgresql.org/docs/17/sql-createrole.html) · [CREATE DATABASE](https://www.postgresql.org/docs/17/sql-createdatabase.html)
 
 ```sql
 CREATE ROLE sprintly LOGIN PASSWORD 'replace_me';
@@ -37,6 +37,8 @@ CREATE DATABASE sprintly OWNER sprintly;
 ```
 
 From the repository root, copy the template. Edit `backend/.env` before running the backend commands. Replace the password in `DATABASE_URL` with the password for the `sprintly` role. URL-encode any special characters in the URL password. Set `DEMO_OWNER_PASSWORD` and `DEMO_MEMBER_PASSWORD` for the app's demo accounts. Each must contain at least 8 characters and fit within 72 UTF-8 bytes.
+
+Quote demo passwords containing `#` in `.env`, for example `DEMO_OWNER_PASSWORD='example#password'`.
 
 ```powershell
 Copy-Item backend/.env.example backend/.env
