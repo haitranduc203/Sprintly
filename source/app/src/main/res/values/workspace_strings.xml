@@ -55,7 +55,6 @@
     <string name="workspace_column_edit">Đổi tên cột</string>
     <string name="workspace_column_actions">Thao tác cột %1$s</string>
     <string name="workspace_column_empty">Chưa có công việc</string>
-    <string name="workspace_column_empty_count" translatable="false">0</string>
     <string name="workspace_conflict">Dữ liệu đã thay đổi. Hãy làm mới rồi thử lại.</string>
     <string name="auth_logout_confirm">Đăng xuất khỏi Sprintly?</string>
     <plurals name="workspace_member_count">

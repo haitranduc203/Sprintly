@@ -2,7 +2,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/orbix_surface"
     android:orientation="vertical">
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/board_toolbar"
@@ -33,7 +32,7 @@
         <LinearLayout
             android:id="@+id/board_content"
             android:layout_width="match_parent"
-    android:layout_height="match_parent"
+            android:layout_height="match_parent"
             android:orientation="vertical"
             android:visibility="gone">
             <TextView
@@ -45,6 +44,25 @@
                 android:textAppearance="?attr/textAppearanceHeadlineSmall"
                 android:textColor="@color/orbix_on_surface"
                 android:textStyle="bold" />
+            <TextView
+                android:id="@+id/board_task_count"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="16dp"
+                android:paddingBottom="8dp"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="@color/orbix_on_surface_variant" />
+            <TextView
+                android:id="@+id/board_sync_error"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:accessibilityLiveRegion="polite"
+                android:background="@color/orbix_warning_container"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="@color/orbix_warning"
+                android:visibility="gone" />
             <HorizontalScrollView
                 android:id="@+id/column_chip_scroll"
                 android:layout_width="match_parent"
@@ -61,30 +79,40 @@
                     app:singleLine="true"
                     app:singleSelection="true" />
             </HorizontalScrollView>
-            <HorizontalScrollView
-                android:id="@+id/column_scroll"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/board_columns"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_marginTop="8dp"
                 android:layout_weight="1"
                 android:clipToPadding="false"
                 android:paddingStart="16dp"
-                android:paddingEnd="8dp"
-                android:scrollbars="horizontal">
-                <LinearLayout
-                    android:id="@+id/board_columns"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal" />
-            </HorizontalScrollView>
-            <com.google.android.material.button.MaterialButton
+                android:paddingEnd="16dp"
+                android:scrollbars="horizontal" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp">
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/column_add"
                     style="@style/Widget.Sprintly.WorkspaceTextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/workspace_column_add"
-                    android:layout_marginStart="8dp"
                     app:icon="@drawable/ic_workspace_add" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/board_task_create"
+                    style="@style/Widget.Sprintly.WorkspaceButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/board_task_create"
+                    app:icon="@drawable/ic_workspace_add"
+                    app:iconGravity="textStart" />
+            </LinearLayout>
         </LinearLayout>
         <include
             android:id="@+id/board_status"
