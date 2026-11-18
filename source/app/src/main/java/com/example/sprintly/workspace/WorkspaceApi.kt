@@ -1,8 +1,8 @@
 package com.example.sprintly.workspace
 
 import com.example.sprintly.auth.AccessToken
-import com.example.sprintly.auth.AuthRemoteFailure
 import com.example.sprintly.auth.Envelope
+import com.example.sprintly.tasks.TaskPayload
 import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.http.Body
@@ -172,8 +172,12 @@ internal class BoardColumnPayload(
     @SerializedName("id") val id: String?,
     @SerializedName("name") val name: String?,
     @SerializedName("position") val position: Int?,
+    @SerializedName("tasks") val tasks: List<TaskPayload?>?,
 ) {
-    fun toModel() = BoardColumn(id.required(), name.required(), position.required())
+    fun toModel() = BoardColumn(
+        id = id.required(),
+        name = name.required(),
+        position = position.required(),
+        tasks = tasks.orEmpty().map { it.required().toModel() },
+    )
 }
-
-internal fun <T : Any> T?.required(): T = this ?: throw AuthRemoteFailure("SERVER_ERROR")
