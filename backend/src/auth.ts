@@ -3,11 +3,12 @@ import { compare, hash } from "bcryptjs";
 import { errors, jwtVerify, SignJWT } from "jose";
 import { Prisma } from "./generated/prisma/client.js";
 import type { PrismaClient } from "./generated/prisma/client.js";
+import { ApiError } from "./api-errors.js";
+import { uuidPattern } from "./validation.js";
 
-const publicUserFields = { id: true, email: true, displayName: true } as const;
+export const publicUserFields = { id: true, email: true, displayName: true } as const;
 const sessionLifetimeMs = 30 * 24 * 60 * 60 * 1000;
 const tokenPattern = /^([A-Za-z0-9_-]{43})\.[A-Za-z0-9_-]{43}$/;
-const uuidPattern = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 const issuer = "sprintly";
 const audience = "sprintly-api";
 
@@ -24,18 +25,12 @@ export type PublicUser = Prisma.UserGetPayload<{ select: typeof publicUserFields
 
 type SessionIdentity = { id: string; userId: string };
 
-export class AuthError extends Error {
-  constructor(readonly statusCode: number, readonly code: string, message: string) {
-    super(message);
-  }
-}
-
 function invalidRefreshToken() {
-  return new AuthError(401, "REFRESH_TOKEN_INVALID", "The refresh token is invalid or expired");
+  return new ApiError(401, "REFRESH_TOKEN_INVALID", "The refresh token is invalid or expired");
 }
 
 function unauthorized() {
-  return new AuthError(401, "UNAUTHORIZED", "A valid access token is required");
+  return new ApiError(401, "UNAUTHORIZED", "A valid access token is required");
 }
 
 function tokenHash(token: string) {
@@ -91,7 +86,7 @@ export function createAuth({ database, jwtSecret, accessTokenTtlSeconds }: AuthO
       return { user, ...await issueTokens(sessions[0], refreshToken) };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-        throw new AuthError(409, "EMAIL_ALREADY_REGISTERED", "This email is already registered");
+        throw new ApiError(409, "EMAIL_ALREADY_REGISTERED", "This email is already registered");
       }
       throw error;
     }
@@ -104,7 +99,7 @@ export function createAuth({ database, jwtSecret, accessTokenTtlSeconds }: AuthO
     });
     const passwordMatches = await compare(password, account?.passwordHash ?? dummyPasswordHash);
     if (!account || !passwordMatches) {
-      throw new AuthError(401, "INVALID_CREDENTIALS", "Email or password is incorrect");
+      throw new ApiError(401, "INVALID_CREDENTIALS", "Email or password is incorrect");
     }
 
     const { id, email: accountEmail, displayName } = account;

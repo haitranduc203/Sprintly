@@ -53,8 +53,9 @@ model Workspace {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  creator User              @relation(fields: [createdBy], references: [id], onDelete: Restrict)
-  members WorkspaceMember[]
+  creator  User              @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  members  WorkspaceMember[]
+  projects Project[]
 
   @@map("workspaces")
 }
@@ -71,4 +72,34 @@ model WorkspaceMember {
   @@id([workspaceId, userId])
   @@index([userId])
   @@map("workspace_members")
+}
+
+model Project {
+  id           String   @id @default(uuid()) @db.Uuid
+  workspaceId  String   @map("workspace_id") @db.Uuid
+  name         String
+  description  String?
+  boardVersion Int      @default(1) @map("board_version")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  columns   BoardColumn[]
+
+  @@index([workspaceId])
+  @@map("projects")
+}
+
+model BoardColumn {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  name      String
+  position  Int
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, position])
+  @@map("board_columns")
 }

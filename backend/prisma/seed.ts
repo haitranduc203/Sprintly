@@ -1,8 +1,10 @@
 import { hash } from "bcryptjs";
 import { readDatabaseUrl } from "../src/config.js";
 import { createPrismaClient } from "../src/database.js";
+import { defaultBoardColumns } from "../src/workspaces.js";
 
 const demoWorkspaceId = "24e4a192-955c-4708-89e7-d03ee38cff6e";
+const demoProjectId = "d6062002-2cbf-490a-9dbd-89d0ef11429d";
 const demoAccounts = [
   {
     email: "owner@sprintly.demo",
@@ -66,6 +68,18 @@ async function seedDemo() {
           update: { role },
         });
       }
+
+      await tx.project.upsert({
+        where: { id: demoProjectId },
+        create: {
+          id: demoProjectId,
+          workspaceId: workspace.id,
+          name: "Sprintly Launch",
+          description: "Plan and track the next Sprintly release.",
+          columns: { create: defaultBoardColumns },
+        },
+        update: {},
+      });
     });
   } catch {
     throw new Error("Could not seed demo data. Check PostgreSQL connectivity and run npm run db:migrate.");
@@ -73,7 +87,7 @@ async function seedDemo() {
     await database.$disconnect();
   }
 
-  console.log("Demo accounts and workspace seeded.");
+  console.log("Demo accounts, workspace and project seeded.");
 }
 
 try {
