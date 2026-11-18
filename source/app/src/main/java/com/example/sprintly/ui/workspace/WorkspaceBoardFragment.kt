@@ -55,7 +55,7 @@ class WorkspaceBoardFragment : Fragment(R.layout.fragment_workspace_board) {
         var chipViews = emptyMap<String, Chip>()
         var chipLabels = emptyList<Pair<String, String>>()
         var restoreColumn = true
-        var focusAddedColumn = false
+        var addedColumnId: String? = null
         board.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 if (dx == 0) return
@@ -86,8 +86,7 @@ class WorkspaceBoardFragment : Fragment(R.layout.fragment_workspace_board) {
                 findNavController().popBackStack()
             } else {
                 if (action == WorkspaceAction.AddColumn && result.actionSucceeded()) {
-                    model.selectedColumn = result.getString(WorkspaceAction.RESULT_ID)
-                    focusAddedColumn = true
+                    addedColumnId = result.getString(WorkspaceAction.RESULT_ID)
                 }
                 model.refresh()
             }
@@ -135,13 +134,14 @@ class WorkspaceBoardFragment : Fragment(R.layout.fragment_workspace_board) {
                         val reveal = taskToReveal?.takeIf { (columnId, taskId) ->
                             columns.any { column -> column.id == columnId && column.tasks.any { it.id == taskId } }
                         }
-                        if (!restoreColumn && !focusAddedColumn && reveal == null) return@submitList
-                        val selected = columns.indexOfFirst { it.id == (reveal?.first ?: model.selectedColumn) }
+                        val added = addedColumnId?.takeIf { id -> columns.any { it.id == id } }
+                        if (!restoreColumn && added == null && reveal == null) return@submitList
+                        val selected = columns.indexOfFirst { it.id == (reveal?.first ?: added ?: model.selectedColumn) }
                             .coerceAtLeast(0)
                         val column = columns.getOrNull(selected) ?: return@submitList
-                        val focus = focusAddedColumn
+                        val focus = added == column.id
                         restoreColumn = false
-                        focusAddedColumn = false
+                        if (focus) addedColumnId = null
                         if (reveal != null) taskToReveal = null
                         model.selectedColumn = column.id
                         chipViews[column.id]?.let { chip ->
