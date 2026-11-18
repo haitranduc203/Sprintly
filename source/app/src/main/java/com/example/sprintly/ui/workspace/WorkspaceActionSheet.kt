@@ -16,15 +16,18 @@ import androidx.fragment.app.viewModels
 import com.example.sprintly.R
 import com.example.sprintly.auth.AuthState
 import com.example.sprintly.databinding.DialogWorkspaceActionBinding
+import com.example.sprintly.offline.OfflineConnectivity
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.flow.combine
 
 @AndroidEntryPoint
 class WorkspaceActionSheet : BottomSheetDialogFragment() {
     private val model: WorkspaceActionViewModel by viewModels()
+    @Inject internal lateinit var connectivity: OfflineConnectivity
     private val action: WorkspaceAction get() = requireArguments().actionKind()
     private val accountId: String? get() = requireArguments().getString(WorkspaceAction.ACCOUNT_ID)
 
@@ -71,7 +74,7 @@ class WorkspaceActionSheet : BottomSheetDialogFragment() {
             if (isMemberLookup) model.emailChanged(text.toString())
         }
         binding.memberLookup.setOnClickListener {
-            if (currentAccount()?.needsRetry != false) return@setOnClickListener
+            if (!connectivity.isConnected() || currentAccount()?.needsRetry != false) return@setOnClickListener
             val email = binding.actionNameInput.text?.toString()?.trim().orEmpty()
             when {
                 email.isEmpty() -> showNameError(binding, R.string.auth_email_required)
@@ -87,7 +90,7 @@ class WorkspaceActionSheet : BottomSheetDialogFragment() {
             model.selectCandidate(binding.memberCandidate.isChecked)
         }
         binding.actionSubmit.setOnClickListener {
-            if (currentAccount()?.needsRetry != false) return@setOnClickListener
+            if (!connectivity.isConnected() || currentAccount()?.needsRetry != false) return@setOnClickListener
             val name = binding.actionNameInput.text?.toString()?.trim().orEmpty()
             val nameError = when {
                 action.field == null || isMemberLookup -> null
@@ -116,15 +119,15 @@ class WorkspaceActionSheet : BottomSheetDialogFragment() {
         (requireDialog() as BottomSheetDialog).onBackPressedDispatcher.addCallback(viewLifecycleOwner) { close() }
         binding.actionRetrySession.setOnClickListener { sessionViewModel().restore() }
 
-        val updates = combine(model.state, sessionViewModel().state, ::Pair)
-        collectScreen(updates) { (state, auth) ->
+        val updates = combine(model.state, sessionViewModel().state, connectivity.connected, ::Triple)
+        collectScreen(updates) { (state, auth, connected) ->
             when {
                 auth == AuthState.Checking -> requireDialog().hide()
                 auth !is AuthState.SignedIn || auth.user.id != accountId -> dismiss()
                 state.outcome != null -> finish(state.outcome)
                 else -> {
                     requireDialog().show()
-                    render(binding, state, auth.needsRetry)
+                    render(binding, state, auth.needsRetry, connected)
                 }
             }
         }
@@ -134,20 +137,25 @@ class WorkspaceActionSheet : BottomSheetDialogFragment() {
         binding: DialogWorkspaceActionBinding,
         state: WorkspaceActionState,
         needsRetry: Boolean,
+        connected: Boolean,
     ) {
         binding.actionProgress.isVisible = state.busy
         binding.actionNameInput.isEnabled = !state.busy
         binding.actionDescriptionInput.isEnabled = !state.busy
-        binding.memberLookup.isEnabled = !state.busy && !needsRetry
+        binding.memberLookup.isEnabled = !state.busy && !needsRetry && connected
         binding.memberCandidate.isVisible = state.candidate != null
         binding.memberCandidate.isEnabled = !state.busy
         binding.memberCandidate.isChecked = state.candidateSelected
         binding.memberCandidate.text = state.candidate?.let { "${it.displayName}\n${it.email}" }
-        binding.actionSubmit.isEnabled = !state.busy && !needsRetry &&
+        binding.actionSubmit.isEnabled = !state.busy && !needsRetry && connected &&
             (action != WorkspaceAction.AddMember || state.candidateSelected)
         binding.actionCancel.isEnabled = !state.busy
-        binding.actionRetrySession.isVisible = needsRetry
-        val error = if (needsRetry) R.string.auth_refresh_unavailable_description else state.error
+        binding.actionRetrySession.isVisible = connected && needsRetry
+        val error = when {
+            !connected -> R.string.workspace_offline_connect
+            needsRetry -> R.string.auth_refresh_unavailable_description
+            else -> state.error
+        }
         binding.actionError.isVisible = error != null
         error?.let(binding.actionError::setText)
     }

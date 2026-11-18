@@ -9,6 +9,9 @@
         style="@style/Widget.Sprintly.WorkspaceToolbar"
         app:navigationContentDescription="@string/workspace_back"
         app:navigationIcon="@drawable/ic_auth_back" />
+    <include
+        android:id="@+id/workspace_offline_banner"
+        layout="@layout/view_workspace_offline_banner" />
     <LinearLayout
         android:id="@+id/workspace_tab_bar"
         android:layout_width="match_parent"

@@ -19,13 +19,18 @@ import androidx.navigation.fragment.findNavController
 import com.example.sprintly.R
 import com.example.sprintly.databinding.DialogTaskAssigneeBinding
 import com.example.sprintly.databinding.FragmentTaskFormBinding
+import com.example.sprintly.offline.OfflineConnectivity
 import com.example.sprintly.ui.workspace.accessLost
 import com.example.sprintly.ui.workspace.collectScreen
+import com.example.sprintly.ui.workspace.currentAccount
 import com.example.sprintly.ui.workspace.goBackAfterAccessLoss
-import com.example.sprintly.ui.workspace.refreshWithSession
-import com.example.sprintly.ui.workspace.retryWorkspace
+import com.example.sprintly.ui.workspace.refreshWithOfflineSession
+import com.example.sprintly.ui.workspace.retryOfflineWorkspace
+import com.example.sprintly.ui.workspace.showCached
 import com.example.sprintly.ui.workspace.showError
 import com.example.sprintly.ui.workspace.showLoading
+import com.example.sprintly.ui.workspace.showNotCached
+import com.example.sprintly.ui.workspace.temporaryReadFailure
 import com.example.sprintly.workspace.Member
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
@@ -34,10 +39,13 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import javax.inject.Inject
+import kotlinx.coroutines.flow.combine
 
 @AndroidEntryPoint
 class TaskFormFragment : Fragment(R.layout.fragment_task_form) {
     private val model: TaskFormViewModel by viewModels()
+    @Inject internal lateinit var connectivity: OfflineConnectivity
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = FragmentTaskFormBinding.bind(view)
@@ -48,7 +56,8 @@ class TaskFormFragment : Fragment(R.layout.fragment_task_form) {
         binding.taskToolbar.setNavigationOnClickListener { closeForm() }
         binding.taskCancel.setOnClickListener { closeForm() }
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) { closeForm() }
-        binding.taskFormStatus.statusRetry.setOnClickListener { retryWorkspace(model::load) }
+        val retry = { retryOfflineWorkspace(connectivity, model::load) }
+        binding.taskFormStatus.statusRetry.setOnClickListener { retry() }
         binding.taskTitleInput.doAfterTextChanged { text ->
             if (!rendering) model.edit { it.copy(title = text.toString()) }
         }
@@ -61,11 +70,12 @@ class TaskFormFragment : Fragment(R.layout.fragment_task_form) {
         }
         binding.taskClearDue.setOnClickListener { model.edit { it.copy(dueAt = null) } }
         binding.taskSubmit.setOnClickListener {
+            if (!connectivity.isConnected() || currentAccount()?.needsRetry != false) return@setOnClickListener
             requireContext().getSystemService<InputMethodManager>()?.hideSoftInputFromWindow(view.windowToken, 0)
-            retryWorkspace(model::submit)
+            model.submit()
         }
 
-        collectScreen(model.state) { state ->
+        collectScreen(model.state.combine(connectivity.connected) { state, online -> state to online }) { (state, online) ->
             state.result?.let { result ->
                 val nav = findNavController()
                 if (nav.currentDestination?.id == R.id.task_form_fragment) {
@@ -84,9 +94,15 @@ class TaskFormFragment : Fragment(R.layout.fragment_task_form) {
             }
             val options = state.options
             val draft = state.draft
-            binding.taskFormScroll.isVisible = options != null && loadFailure == null
+            val needsRetry = currentAccount()?.needsRetry != false
+            val readOnly = !online || state.cached || needsRetry
+            binding.taskFormScroll.isVisible = options != null && (loadFailure == null || loadFailure.temporaryReadFailure)
             binding.taskFormActions.isVisible = binding.taskFormScroll.isVisible
+            val showBanner = !online || needsRetry || state.cached && loadFailure != null
+            binding.taskOfflineBanner.showCached(binding.taskFormScroll.isVisible && showBanner, online, retry)
             when {
+                binding.taskFormScroll.isVisible -> binding.taskFormStatus.root.isVisible = false
+                !online || loadFailure?.temporaryReadFailure == true -> binding.taskFormStatus.showNotCached()
                 loadFailure != null -> binding.taskFormStatus.showError(loadFailure)
                 options == null -> binding.taskFormStatus.showLoading()
                 else -> binding.taskFormStatus.root.isVisible = false
@@ -109,11 +125,12 @@ class TaskFormFragment : Fragment(R.layout.fragment_task_form) {
             val columnName = options.board.columns.firstOrNull { it.id == draft.columnId }?.name
             binding.taskColumnInput.setText(columnName.orEmpty(), false)
             binding.taskPriorityInput.setText(getString(taskPriorityLabel(draft.priority)), false)
-            val assignee = options.members.firstOrNull { it.id == draft.assigneeId }
+            val assignee = options.members.firstOrNull { it.id == draft.assigneeId }?.displayName
             binding.taskAssigneeButton.text = when {
                 draft.assigneeId == null -> getString(R.string.task_unassigned)
+                assignee == null && readOnly -> getString(R.string.task_assignee_not_cached)
                 assignee == null -> getString(R.string.task_assignee_removed)
-                else -> assignee.displayName
+                else -> assignee
             }
             binding.taskDueButton.text = draft.dueAt?.let(requireContext()::taskDateTime)
                 ?: getString(R.string.task_choose_due)
@@ -123,7 +140,7 @@ class TaskFormFragment : Fragment(R.layout.fragment_task_form) {
                 binding.taskPriorityInput, binding.taskAssigneeButton, binding.taskDueButton, binding.taskClearDue,
             ).forEach { it.isEnabled = state.editable }
             binding.taskCancel.isEnabled = !state.saving
-            binding.taskSubmit.isEnabled = !state.saving
+            binding.taskSubmit.isEnabled = state.canSubmit && !readOnly
             binding.taskSubmit.setText(
                 when {
                     state.saving -> R.string.task_sending
@@ -138,7 +155,7 @@ class TaskFormFragment : Fragment(R.layout.fragment_task_form) {
             state.inputError?.let(binding.taskFormError::setText)
             rendering = false
         }
-        refreshWithSession(view, model::load)
+        refreshWithOfflineSession(view, connectivity, model::load)
     }
 
     private fun closeForm() {

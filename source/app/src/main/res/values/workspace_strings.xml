@@ -1,4 +1,9 @@
 <resources>
+    <string name="workspace_offline_cached">Đang xem dữ liệu đã lưu</string>
+    <string name="workspace_offline_connect">Kết nối mạng để thay đổi.</string>
+    <string name="workspace_offline_refresh_failed">Chưa thể làm mới.</string>
+    <string name="workspace_offline_empty">Chưa có dữ liệu đã lưu</string>
+    <string name="workspace_offline_empty_help">Kết nối mạng rồi thử lại để tải dữ liệu.</string>
     <string name="workspace_title">Không gian làm việc</string>
     <string name="workspace_create">Tạo workspace</string>
     <string name="workspace_create_list">Tạo không gian làm việc</string>

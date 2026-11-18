@@ -18,11 +18,16 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.sprintly.R
 import com.example.sprintly.auth.AuthState
+import com.example.sprintly.databinding.ViewWorkspaceOfflineBannerBinding
 import com.example.sprintly.databinding.ViewWorkspaceStatusBinding
+import com.example.sprintly.offline.OfflineConnectivity
 import com.example.sprintly.ui.SessionViewModel
 import com.example.sprintly.workspace.WorkspaceFailure
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -36,8 +41,12 @@ internal fun initials(label: String): String = label.trim()
 internal val WorkspaceFailure.accessLost: Boolean
     get() = status == 403 || status == 404
 
+internal val WorkspaceFailure.temporaryReadFailure: Boolean
+    get() = code in setOf("NETWORK_ERROR", "OFFLINE", "AUTH_RETRY", "RATE_LIMITED", "SERVER_ERROR") ||
+        status == 429 || (status ?: 0) >= 500
+
 internal fun WorkspaceFailure.displayMessage(): Int = when (code) {
-    "NETWORK_ERROR" -> R.string.workspace_connection_issue
+    "NETWORK_ERROR", "OFFLINE" -> R.string.workspace_connection_issue
     "AUTH_RETRY", "SESSION_CHANGED", "UNAUTHORIZED" -> R.string.auth_refresh_unavailable_description
     "RATE_LIMITED" -> R.string.auth_rate_limited
     else -> when (status) {
@@ -54,20 +63,32 @@ internal fun Fragment.currentAccount(): AuthState.SignedIn? =
 internal fun Fragment.sessionViewModel(): SessionViewModel =
     ViewModelProvider(requireActivity())[SessionViewModel::class.java]
 
-internal fun Fragment.refreshWithSession(view: View, refresh: () -> Unit) {
-    val session = sessionViewModel().state.map { it as? AuthState.SignedIn }.distinctUntilChanged()
-    collectScreen(session, Lifecycle.State.RESUMED) { signedIn ->
-        if (signedIn != null) {
-            refresh()
-            if (hasAccessLossNotice()) {
-                Snackbar.make(view, R.string.workspace_access_lost, Snackbar.LENGTH_LONG).show()
+internal fun Fragment.refreshWithOfflineSession(view: View, connectivity: OfflineConnectivity, refresh: () -> Unit) {
+    val session = sessionViewModel()
+    viewLifecycleOwner.lifecycleScope.launch {
+        viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            var wasConnected: Boolean? = null
+            val account = session.state.map { it as? AuthState.SignedIn }.distinctUntilChanged()
+            account.combine(connectivity.connected, ::Pair).collectLatest { (signedIn, connected) ->
+                val reconnected = connected && wasConnected == false
+                val restoreSession = connected && wasConnected != true && signedIn?.needsRetry == true
+                wasConnected = connected
+                if (signedIn != null) {
+                    // A default network can be announced before its routes can reach the API.
+                    if (reconnected) delay(800)
+                    if (restoreSession) session.restore()
+                    refresh()
+                    if (hasAccessLossNotice()) {
+                        Snackbar.make(view, R.string.workspace_access_lost, Snackbar.LENGTH_LONG).show()
+                    }
+                }
             }
         }
     }
 }
 
-internal fun Fragment.retryWorkspace(refresh: () -> Unit) {
-    if (currentAccount()?.needsRetry == true) sessionViewModel().restore()
+internal fun Fragment.retryOfflineWorkspace(connectivity: OfflineConnectivity, refresh: () -> Unit) {
+    if (connectivity.isConnected() && currentAccount()?.needsRetry == true) sessionViewModel().restore()
     else refresh()
 }
 
@@ -97,6 +118,17 @@ internal fun ViewWorkspaceStatusBinding.showEmpty(@StringRes title: Int, @String
 
 internal fun ViewWorkspaceStatusBinding.showError(failure: WorkspaceFailure) {
     showStatus(R.string.workspace_not_loaded, failure.displayMessage(), retry = true)
+}
+
+internal fun ViewWorkspaceStatusBinding.showNotCached() {
+    showStatus(R.string.workspace_offline_empty, R.string.workspace_offline_empty_help, retry = true)
+}
+
+internal fun ViewWorkspaceOfflineBannerBinding.showCached(show: Boolean, unavailable: Boolean, retry: () -> Unit) {
+    root.isVisible = show
+    if (!show) return
+    offlineDescription.setText(if (unavailable) R.string.workspace_offline_refresh_failed else R.string.workspace_offline_connect)
+    offlineRetry.setOnClickListener { retry() }
 }
 
 private fun ViewWorkspaceStatusBinding.showStatus(

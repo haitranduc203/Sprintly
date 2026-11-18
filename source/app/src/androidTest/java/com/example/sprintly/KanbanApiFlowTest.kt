@@ -83,7 +83,9 @@ class KanbanApiFlowTest {
 
             jumpTo("To Do")
             awaitDisplayed(allOf(title, isDescendantOfA(lane("To Do"))))
-            onView(allOf(withId(R.id.board_task_drag), isDescendantOfA(lane("To Do")))).perform(dragTo("In Progress"))
+            val dragHandle = allOf(withId(R.id.board_task_drag), isEnabled(), isDescendantOfA(lane("To Do")))
+            awaitDisplayed(dragHandle)
+            onView(dragHandle).perform(dragTo("In Progress"))
             jumpTo("In Progress")
             val movedTitle = allOf(title, isDescendantOfA(lane("In Progress")))
             awaitDisplayed(movedTitle)
@@ -137,7 +139,7 @@ class KanbanApiFlowTest {
     private fun dragTo(label: String): ViewAction = object : ViewAction {
         override fun getDescription() = "Drag the task handle into $label"
 
-        override fun getConstraints(): Matcher<View> = isDisplayed()
+        override fun getConstraints(): Matcher<View> = allOf(isDisplayed(), isEnabled())
 
         override fun perform(ui: UiController, handle: View) {
             val board = handle.rootView.findViewById<RecyclerView>(R.id.board_columns)
@@ -201,8 +203,9 @@ class KanbanApiFlowTest {
     }
 
     private fun tap(matcher: Matcher<View>) {
-        awaitDisplayed(matcher)
-        onView(matcher).perform(click())
+        val enabled = allOf(matcher, isEnabled())
+        awaitDisplayed(enabled)
+        onView(enabled).perform(click())
     }
 
     private fun awaitScrolledTo(matcher: Matcher<View>) {

@@ -9,13 +9,17 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.sprintly.R
 import com.example.sprintly.databinding.FragmentWorkspaceDetailBinding
+import com.example.sprintly.offline.OfflineConnectivity
 import com.example.sprintly.workspace.Workspace
 import com.google.android.material.tabs.TabLayout
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import kotlinx.coroutines.flow.combine
 
 @AndroidEntryPoint
 class WorkspaceDetailFragment : Fragment(R.layout.fragment_workspace_detail) {
     private val model: WorkspaceDetailViewModel by viewModels()
+    @Inject internal lateinit var connectivity: OfflineConnectivity
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = FragmentWorkspaceDetailBinding.bind(view)
@@ -23,7 +27,7 @@ class WorkspaceDetailFragment : Fragment(R.layout.fragment_workspace_detail) {
         ViewCompat.setAccessibilityHeading(binding.memberCount, true)
         val projectRows = WorkspaceRowsAdapter(open = { openBoard(model.workspaceId, it.id) })
         val memberRows = WorkspaceRowsAdapter(remove = { member ->
-            openAction(
+            if (canWrite()) openAction(
                 WorkspaceAction.RemoveMember,
                 scopeId = model.workspaceId,
                 targetId = member.id,
@@ -42,12 +46,13 @@ class WorkspaceDetailFragment : Fragment(R.layout.fragment_workspace_detail) {
             override fun onTabReselected(tab: TabLayout.Tab) = Unit
         })
         binding.projectCreate.setOnClickListener {
-            openAction(WorkspaceAction.CreateProject, scopeId = model.workspaceId)
+            if (canWrite()) openAction(WorkspaceAction.CreateProject, scopeId = model.workspaceId)
         }
         binding.memberAdd.setOnClickListener {
-            openAction(WorkspaceAction.AddMember, scopeId = model.workspaceId)
+            if (canWrite()) openAction(WorkspaceAction.AddMember, scopeId = model.workspaceId)
         }
-        binding.detailStatus.statusRetry.setOnClickListener { retryWorkspace(model::refresh) }
+        val retry = { retryOfflineWorkspace(connectivity, model::refresh) }
+        binding.detailStatus.statusRetry.setOnClickListener { retry() }
 
         listenForWorkspaceAction { action, result ->
             val id = result.getString(WorkspaceAction.RESULT_ID)
@@ -58,8 +63,10 @@ class WorkspaceDetailFragment : Fragment(R.layout.fragment_workspace_detail) {
                 else -> model.refresh()
             }
         }
-        refreshWithSession(view, model::refresh)
-        collectScreen(model.state) { state -> render(binding, projectRows, memberRows, state) }
+        refreshWithOfflineSession(view, connectivity, model::refresh)
+        collectScreen(model.state.combine(connectivity.connected, ::Pair)) { (state, online) ->
+            render(binding, projectRows, memberRows, state, online, retry)
+        }
     }
 
     private fun render(
@@ -67,20 +74,25 @@ class WorkspaceDetailFragment : Fragment(R.layout.fragment_workspace_detail) {
         projects: WorkspaceRowsAdapter,
         members: WorkspaceRowsAdapter,
         state: ScreenState<WorkspaceDetail>,
+        online: Boolean,
+        retry: () -> Unit,
     ) {
-        val detail = (state as? ScreenState.Ready)?.data
+        val ready = state as? ScreenState.Ready
+        val detail = ready?.data
         binding.workspaceTabBar.isVisible = detail != null
         binding.workspaceToolbar.title = detail?.workspace?.name.orEmpty()
-        val canWrite = currentAccount()?.needsRetry == false
+        val writable = online && canWrite()
+        val showBanner = !online || currentAccount()?.needsRetry != false || ready?.refreshFailed == true
+        binding.workspaceOfflineBanner.showCached(detail != null && showBanner, online, retry)
         val isOwner = detail?.workspace?.isOwner == true
-        binding.workspaceMore.isVisible = canWrite && isOwner
+        binding.workspaceMore.isVisible = writable && isOwner
         binding.workspaceMore.setOnClickListener {
-            detail?.workspace?.let { showWorkspaceActions(binding.workspaceMore, it) }
+            if (canWrite()) detail?.workspace?.let { showWorkspaceActions(binding.workspaceMore, it) }
         }
         binding.projectsPanel.isVisible = detail?.projects != null
         binding.membersPanel.isVisible = detail?.members != null
-        binding.projectCreate.isEnabled = canWrite
-        binding.memberAdd.isVisible = canWrite && isOwner
+        binding.projectCreate.isEnabled = writable
+        binding.memberAdd.isVisible = writable && isOwner
 
         when (state) {
             ScreenState.Loading -> binding.detailStatus.showLoading()
@@ -88,19 +100,24 @@ class WorkspaceDetailFragment : Fragment(R.layout.fragment_workspace_detail) {
                 projects.submitList(emptyList())
                 members.submitList(emptyList())
                 if (state.error.accessLost) goBackAfterAccessLoss(R.id.workspace_list_fragment)
+                else if (state.error.temporaryReadFailure) binding.detailStatus.showNotCached()
                 else binding.detailStatus.showError(state.error)
             }
             is ScreenState.Ready -> {
                 val data = state.data
                 binding.detailStatus.root.isVisible = data.sectionError != null
                 data.sectionError?.let(binding.detailStatus::showError)
+                if (state.cached && data.projects == null && data.members == null) {
+                    if (!online || state.refreshFailed) binding.detailStatus.showNotCached()
+                    else binding.detailStatus.showLoading()
+                }
                 data.projects?.let { items ->
                     projects.submitList(items.map(::WorkspaceRow))
                     binding.projectsStatus.root.isVisible = items.isEmpty()
                     if (items.isEmpty()) binding.projectsStatus.showEmpty(R.string.workspace_project_empty)
                 }
                 data.members?.let { items ->
-                    members.submitList(items.map { WorkspaceRow(it, isOwner && canWrite) })
+                    members.submitList(items.map { WorkspaceRow(it, isOwner && writable) })
                     binding.memberCount.text = resources.getQuantityString(
                         R.plurals.workspace_member_count,
                         items.size,
@@ -110,6 +127,11 @@ class WorkspaceDetailFragment : Fragment(R.layout.fragment_workspace_detail) {
                 }
             }
         }
+    }
+
+    private fun canWrite(): Boolean {
+        val ready = model.state.value as? ScreenState.Ready ?: return false
+        return !ready.cached && connectivity.isConnected() && currentAccount()?.needsRetry == false
     }
 
     private fun showWorkspaceActions(anchor: View, workspace: Workspace) {

@@ -5,6 +5,8 @@ import com.google.gson.JsonParseException
 import com.google.gson.annotations.SerializedName
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
+import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -22,9 +24,9 @@ internal class AuthenticatedUser(val user: AuthUser, val tokens: SessionTokens)
 
 internal class AuthRemoteFailure(val code: String, val status: Int? = null) : Exception()
 
-internal class AuthRemote(baseUrl: String) {
+internal class AuthRemote(baseUrl: String, networkHandle: () -> Long? = { 0L }) {
     private val gson = Gson()
-    private val endpoints = baseUrl.takeIf(String::isNotBlank)?.let { Endpoints(it, gson) }
+    private val endpoints = baseUrl.takeIf(String::isNotBlank)?.let { Endpoints(it, gson, networkHandle) }
 
     fun <T : Any> authenticatedApi(service: Class<T>): T? = endpoints?.authenticated?.create(service)
 
@@ -85,6 +87,7 @@ internal class AuthRemote(baseUrl: String) {
                 status = status,
             )
         } catch (_: IOException) {
+            endpoints?.evictIdleConnections()
             throw AuthRemoteFailure("NETWORK_ERROR")
         } catch (_: JsonParseException) {
             throw AuthRemoteFailure("SERVER_ERROR")
@@ -98,8 +101,17 @@ internal class AuthRemote(baseUrl: String) {
         return SessionTokens(AccessToken(access), refresh)
     }
 
-    private class Endpoints(baseUrl: String, gson: Gson) {
+    private class Endpoints(baseUrl: String, gson: Gson, networkHandle: () -> Long?) {
+        private val connections = ConnectionPool()
+        private val lastNetwork = AtomicReference<Long?>()
         private val publicClient = OkHttpClient.Builder()
+            .connectionPool(connections)
+            .addInterceptor { chain ->
+                val network = networkHandle()
+                if (lastNetwork.getAndSet(network) != network) evictIdleConnections()
+                if (network == null) throw IOException("No active network")
+                chain.proceed(chain.request())
+            }
             .callTimeout(15, TimeUnit.SECONDS)
             .followRedirects(false)
             .followSslRedirects(false)
@@ -119,6 +131,8 @@ internal class AuthRemote(baseUrl: String) {
         val auth = retrofit(baseUrl, gson, publicClient).create(AuthApi::class.java)
         val authenticated = retrofit(baseUrl, gson.newBuilder().serializeNulls().create(), authenticatedClient)
         val users = authenticated.create(UserApi::class.java)
+
+        fun evictIdleConnections() = connections.evictAll()
 
         private fun retrofit(baseUrl: String, gson: Gson, client: OkHttpClient) = Retrofit.Builder()
             .baseUrl(baseUrl)

@@ -14,6 +14,7 @@
     <string name="task_unassigned">Chưa giao</string>
     <string name="task_invalid_assignee">Hãy chọn một thành viên hiện tại hoặc bỏ giao việc.</string>
     <string name="task_assignee_removed">Thành viên đã rời workspace</string>
+    <string name="task_assignee_not_cached">Chưa có thông tin đã lưu</string>
     <string name="task_assignee_search">Tìm theo tên hoặc email</string>
     <string name="task_assignee_no_results">Không tìm thấy thành viên phù hợp.</string>
     <string name="task_due">Hạn hoàn thành</string>
@@ -50,6 +51,7 @@
     <string name="task_no_comments">Chưa có bình luận.</string>
     <string name="task_no_activity">Chưa có lịch sử.</string>
     <string name="task_loading_discussion">Đang tải…</string>
+    <string name="task_discussion_connect">Kết nối mạng để tải nội dung này.</string>
     <string name="task_more_comments">Tải thêm bình luận</string>
     <string name="task_more_activity">Tải thêm lịch sử</string>
     <string name="task_activity_created">Đã tạo công việc</string>

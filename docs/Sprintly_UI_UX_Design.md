@@ -154,6 +154,8 @@ Khi tạo công việc hoặc gửi bình luận, hiển thị **Đang gửi** v
 
 Khi đã có cache và mất mạng, dùng banner **Đang xem dữ liệu đã lưu** cùng dòng “Kết nối mạng để thay đổi”. Khi chưa sync, dùng “Chưa có dữ liệu đã lưu” và **Thử lại**. Khi kết nối lại, làm mới lúc mở màn, resume hoặc người dùng yêu cầu. Timeout khi có cache giữ dữ liệu và báo “Chưa thể làm mới”. Khi quyền bị thu hồi, loại cache của phạm vi bị mất quyền và quay về cấp gần nhất còn được phép. Tách trạng thái thiếu quyền với lỗi kết nối tạm thời. [UC-12](Sprintly_Use_Cases.md#uc-12-xem-offline-và-làm-mới-khi-trở-lại-online)
 
+Bản xem trước Orbix cần thêm trạng thái offline cho danh sách workspace, chi tiết workspace, board và task. Android đặt banner ngay dưới thanh công cụ hoặc trong phần đầu màn hình, dùng màu cảnh báo và giữ các nội dung đã lưu ở vị trí cũ. Màn chi tiết task vẫn cho đọc thông tin đã lưu. Các khối bình luận và lịch sử hiện thông báo kết nối để tải từ máy chủ.
+
 ## Phạm vi sau P0
 
 | Ưu tiên | Vị trí và hành vi đề xuất |

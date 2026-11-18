@@ -11,6 +11,10 @@
         app:navigationIcon="@drawable/ic_auth_back"
         app:title="@string/task_create" />
 
+    <include
+        android:id="@+id/task_offline_banner"
+        layout="@layout/view_workspace_offline_banner" />
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"

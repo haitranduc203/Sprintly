@@ -1,6 +1,7 @@
 package com.example.sprintly.auth
 
 import com.example.sprintly.BuildConfig
+import com.example.sprintly.offline.OfflineConnectivity
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -25,7 +26,8 @@ internal abstract class AuthModule {
     companion object {
         @Provides
         @Singleton
-        fun provideAuthRemote(): AuthRemote = AuthRemote(BuildConfig.API_BASE_URL)
+        fun provideAuthRemote(connectivity: OfflineConnectivity): AuthRemote =
+            AuthRemote(BuildConfig.API_BASE_URL, connectivity::networkHandle)
 
         @Provides
         @Singleton

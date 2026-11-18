@@ -19,6 +19,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.sprintly.R
 import com.example.sprintly.databinding.FragmentTaskDetailBinding
 import com.example.sprintly.databinding.ItemTaskDiscussionBinding
+import com.example.sprintly.offline.OfflineConnectivity
 import com.example.sprintly.tasks.TaskActivity
 import com.example.sprintly.tasks.TaskComment
 import com.example.sprintly.ui.workspace.accessLost
@@ -27,20 +28,26 @@ import com.example.sprintly.ui.workspace.currentAccount
 import com.example.sprintly.ui.workspace.displayMessage
 import com.example.sprintly.ui.workspace.goBackAfterAccessLoss
 import com.example.sprintly.ui.workspace.initials
-import com.example.sprintly.ui.workspace.refreshWithSession
-import com.example.sprintly.ui.workspace.retryWorkspace
+import com.example.sprintly.ui.workspace.refreshWithOfflineSession
+import com.example.sprintly.ui.workspace.retryOfflineWorkspace
+import com.example.sprintly.ui.workspace.showCached
 import com.example.sprintly.ui.workspace.showError
 import com.example.sprintly.ui.workspace.showLoading
+import com.example.sprintly.ui.workspace.showNotCached
+import com.example.sprintly.ui.workspace.temporaryReadFailure
 import com.example.sprintly.ui.workspace.tint
 import com.example.sprintly.workspace.BoardColumn
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import kotlinx.coroutines.flow.combine
 
 @AndroidEntryPoint
 class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
     private val model: TaskDetailViewModel by viewModels()
+    @Inject internal lateinit var connectivity: OfflineConnectivity
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = FragmentTaskDetailBinding.bind(view)
@@ -50,6 +57,7 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
         val editItem = binding.taskToolbar.menu.add(Menu.NONE, R.id.task_edit, 0, R.string.task_edit)
         editItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
         editItem.setOnMenuItemClickListener {
+            if (!serverAvailable()) return@setOnMenuItemClickListener false
             findNavController().navigate(
                 R.id.task_form_fragment,
                 Bundle().apply {
@@ -69,21 +77,25 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
         deleteItem.isVisible = false
         binding.taskToolbar.setNavigationOnClickListener { closeDetail() }
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) { closeDetail() }
-        binding.taskDetailStatus.statusRetry.setOnClickListener { retryWorkspace(model::refresh) }
-        binding.taskCommentsMore.setOnClickListener { retryWorkspace { model.loadComments() } }
-        binding.taskActivityMore.setOnClickListener { retryWorkspace { model.loadActivity() } }
-        binding.taskMove.setOnClickListener { retryWorkspace { model.state.value.details?.let(::chooseColumn) } }
+        val retry = { retryOfflineWorkspace(connectivity, model::refresh) }
+        binding.taskDetailStatus.statusRetry.setOnClickListener { retry() }
+        binding.taskCommentsMore.setOnClickListener { if (serverAvailable()) model.loadComments() }
+        binding.taskActivityMore.setOnClickListener { if (serverAvailable()) model.loadActivity() }
+        binding.taskMove.setOnClickListener {
+            if (serverAvailable()) model.state.value.details?.let(::chooseColumn)
+        }
         binding.taskCommentInput.doAfterTextChanged {
             if (!rendering) model.editComment(it.toString())
         }
         binding.taskCommentSubmit.setOnClickListener {
+            if (!serverAvailable()) return@setOnClickListener
             requireContext().getSystemService<InputMethodManager>()?.hideSoftInputFromWindow(view.windowToken, 0)
-            retryWorkspace(model::sendComment)
+            model.sendComment()
         }
         listOf(binding.taskDetailTitle, binding.taskDescriptionHeading, binding.taskCommentsHeading, binding.taskActivityHeading)
             .forEach { ViewCompat.setAccessibilityHeading(it, true) }
 
-        collectScreen(model.state) { state ->
+        collectScreen(model.state.combine(connectivity.connected) { state, online -> state to online }) { (state, online) ->
             if (state.deleted) {
                 if (findNavController().currentDestination?.id == R.id.task_detail_fragment) {
                     findNavController().popBackStack()
@@ -100,19 +112,26 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
                 model.clearNotice()
             }
             val details = state.details
-            binding.taskDetailScroll.isVisible = details != null && failure == null
-            binding.taskComposer.isVisible = binding.taskDetailScroll.isVisible
-            editItem.isVisible = binding.taskDetailScroll.isVisible
+            val needsRetry = currentAccount()?.needsRetry != false
+            val readOnly = !online || state.cached || needsRetry
+            val showDetails = details != null && (failure == null || failure.temporaryReadFailure)
+            binding.taskDetailScroll.isVisible = showDetails
+            binding.taskComposer.isVisible = showDetails && !readOnly
+            editItem.isVisible = showDetails && !readOnly
             deleteItem.isVisible = editItem.isVisible && details != null &&
                 (details.workspaceRole == "OWNER" || details.task.createdBy == currentAccount()?.user?.id)
+            val showBanner = !online || needsRetry || state.cached && failure != null
+            binding.taskOfflineBanner.showCached(showDetails && showBanner, online, retry)
             when {
+                showDetails -> binding.taskDetailStatus.root.isVisible = false
+                !online || failure?.temporaryReadFailure == true -> binding.taskDetailStatus.showNotCached()
                 failure != null -> binding.taskDetailStatus.showError(failure)
                 details == null -> binding.taskDetailStatus.showLoading()
                 else -> binding.taskDetailStatus.root.isVisible = false
             }
             if (details == null) return@collectScreen
             val task = details.task
-            val canAct = !state.busy && !state.sendingComment && !state.commentUncertain
+            val canAct = !readOnly && !state.busy && !state.sendingComment && !state.commentUncertain
             editItem.isEnabled = canAct
             deleteItem.isEnabled = canAct
             binding.taskMove.isEnabled = canAct && details.board.columns.any { lane -> lane.tasks.any { it.id == task.id } }
@@ -151,16 +170,16 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
                     addRow(binding.taskActivityRows, it.actor.displayName, activitySummary(it, details.board.columns), it.createdAt)
                 }
             }
-            renderPage(state.comments, binding.taskCommentsStatus, binding.taskCommentsMore, R.string.task_no_comments, R.string.task_more_comments)
-            renderPage(state.activity, binding.taskActivityStatus, binding.taskActivityMore, R.string.task_no_activity, R.string.task_more_activity)
+            renderPage(state.comments, binding.taskCommentsStatus, binding.taskCommentsMore, R.string.task_no_comments, R.string.task_more_comments, readOnly)
+            renderPage(state.activity, binding.taskActivityStatus, binding.taskActivityMore, R.string.task_no_activity, R.string.task_more_activity, readOnly)
 
             rendering = true
             if (binding.taskCommentInput.text.toString() != state.commentText) {
                 binding.taskCommentInput.setText(state.commentText)
             }
             rendering = false
-            binding.taskCommentInput.isEnabled = !state.sendingComment && !state.commentUncertain
-            binding.taskCommentSubmit.isEnabled = !state.busy && !state.sendingComment && !state.comments.loading
+            binding.taskCommentInput.isEnabled = !readOnly && !state.sendingComment && !state.commentUncertain
+            binding.taskCommentSubmit.isEnabled = !readOnly && !state.busy && !state.sendingComment && !state.comments.loading
             binding.taskCommentSubmit.setText(
                 when {
                     state.sendingComment -> R.string.task_sending
@@ -171,8 +190,11 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
             binding.taskCommentError.isVisible = state.commentError != null
             state.commentError?.let(binding.taskCommentError::setText)
         }
-        refreshWithSession(view, model::refresh)
+        refreshWithOfflineSession(view, connectivity, model::refresh)
     }
+
+    private fun serverAvailable(): Boolean = connectivity.isConnected() &&
+        model.state.value.canUseServer && currentAccount()?.needsRetry == false
 
     private fun closeDetail() {
         val state = model.state.value
@@ -199,6 +221,7 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
     }
 
     private fun choosePosition(column: BoardColumn) {
+        if (!serverAvailable()) return
         val tasks = column.tasks.sortedBy { it.position }.filterNot { it.id == model.taskId }
         val labels = (0..tasks.size).map { index ->
             when {
@@ -211,6 +234,7 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
             .setTitle(R.string.task_choose_position)
             .setItems(labels.toTypedArray()) { _, index ->
                 val currentColumn = model.state.value.details?.board?.columns?.firstOrNull { it.id == column.id }
+                if (!serverAvailable()) return@setItems
                 if (currentColumn == column) model.move(column.id, index)
                 else view?.let { Snackbar.make(it, R.string.task_move_failed, Snackbar.LENGTH_LONG).show() }
             }
@@ -219,12 +243,13 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
     }
 
     private fun confirmDelete() {
+        if (!serverAvailable()) return
         val task = model.state.value.details?.task ?: return
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(getString(R.string.task_delete_title, task.title))
             .setMessage(R.string.task_delete_message)
             .setNegativeButton(R.string.workspace_cancel, null)
-            .setPositiveButton(R.string.task_delete) { _, _ -> retryWorkspace(model::delete) }
+            .setPositiveButton(R.string.task_delete) { _, _ -> if (serverAvailable()) model.delete() }
             .show()
     }
 
@@ -257,15 +282,18 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
         more: MaterialButton,
         @StringRes empty: Int,
         @StringRes moreLabel: Int,
+        readOnly: Boolean,
     ) {
-        val message = page.failure?.displayMessage() ?: when {
+        val message = when {
+            readOnly && (page.next != null || page.failure != null) -> R.string.task_discussion_connect
+            page.failure != null -> page.failure.displayMessage()
             page.loading -> R.string.task_loading_discussion
             page.rows.isEmpty() && page.next == null -> empty
             else -> null
         }
         status.isVisible = message != null
         message?.let(status::setText)
-        more.isVisible = !page.loading && page.next != null && (page.failure != null || page.rows.isNotEmpty())
+        more.isVisible = !readOnly && !page.loading && page.next != null && (page.failure != null || page.rows.isNotEmpty())
         more.setText(if (page.failure != null) R.string.auth_retry else moreLabel)
     }
 }

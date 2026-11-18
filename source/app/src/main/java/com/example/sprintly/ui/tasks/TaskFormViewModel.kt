@@ -5,15 +5,17 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sprintly.R
+import com.example.sprintly.offline.OfflineConnectivity
+import com.example.sprintly.offline.WorkspaceSnapshots
 import com.example.sprintly.tasks.Task
 import com.example.sprintly.tasks.TaskInput
 import com.example.sprintly.tasks.TaskRepository
 import com.example.sprintly.ui.workspace.accessLost
 import com.example.sprintly.ui.workspace.displayMessage
+import com.example.sprintly.ui.workspace.temporaryReadFailure
 import com.example.sprintly.workspace.Board
 import com.example.sprintly.workspace.Member
 import com.example.sprintly.workspace.WorkspaceFailure
-import com.example.sprintly.workspace.WorkspaceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -37,18 +39,21 @@ internal data class TaskFormState(
     val saving: Boolean = false,
     val uncertain: Boolean = false,
     val loadFailure: WorkspaceFailure? = null,
+    val cached: Boolean = false,
     @param:StringRes val inputError: Int? = null,
     val result: Task? = null,
 ) {
     val dirty get() = draft != baseline || uncertain
-    val editable get() = !saving && !uncertain && loadFailure == null
+    val editable get() = !saving && !uncertain && (loadFailure == null || loadFailure.temporaryReadFailure)
+    val canSubmit get() = options != null && !saving && !cached && loadFailure == null
 }
 
 @HiltViewModel
 internal class TaskFormViewModel @Inject constructor(
     savedState: SavedStateHandle,
     private val tasks: TaskRepository,
-    private val workspaces: WorkspaceRepository,
+    private val snapshots: WorkspaceSnapshots,
+    private val connectivity: OfflineConnectivity,
 ) : ViewModel() {
     private val projectId = checkNotNull(savedState.get<String>("projectId"))
     private val workspaceId = checkNotNull(savedState.get<String>("workspaceId"))
@@ -64,7 +69,7 @@ internal class TaskFormViewModel @Inject constructor(
 
     fun load() {
         if (loading || state.value.saving || state.value.result != null) return
-        if (state.value.options == null || state.value.loadFailure != null) {
+        if (state.value.options == null || state.value.loadFailure != null || state.value.cached || !connectivity.isConnected()) {
             viewModelScope.launch { loadOptions() }
         }
     }
@@ -81,7 +86,7 @@ internal class TaskFormViewModel @Inject constructor(
         val current = state.value
         val options = current.options ?: return
         val draft = current.draft ?: return
-        if (current.saving || current.result != null || current.loadFailure != null) return
+        if (!current.canSubmit || current.result != null || loading || !connectivity.isConnected()) return
         val input = pending?.payload ?: draft.copy(
             title = draft.title.trim(),
             description = draft.description?.trim()?.ifEmpty { null },
@@ -98,6 +103,7 @@ internal class TaskFormViewModel @Inject constructor(
             mutableState.update { it.copy(inputError = inputError) }
             return
         }
+        val login = snapshots.sessionId() ?: return
         mutableState.update { it.copy(saving = true, inputError = null) }
         viewModelScope.launch {
             try {
@@ -110,9 +116,11 @@ internal class TaskFormViewModel @Inject constructor(
                     if (input == previous.toInput()) previous
                     else tasks.updateTask(previous.id, input, previous.version, boardVersion)
                 }
+                if (snapshots.sessionId() != login) return@launch
                 pending = null
                 mutableState.update { it.copy(saving = false, uncertain = false, result = result) }
             } catch (failure: WorkspaceFailure) {
+                if (snapshots.sessionId() != login) return@launch
                 val uncertain = pending != null && failure.needsIdempotentRetry
                 if (!uncertain) pending = null
                 val keyReused = failure.code == "IDEMPOTENCY_KEY_REUSED"
@@ -125,7 +133,7 @@ internal class TaskFormViewModel @Inject constructor(
                     assigneeRemoved -> R.string.task_invalid_assignee
                     else -> failure.displayMessage()
                 }
-                if (failure.accessLost) mutableState.update { it.copy(loadFailure = failure) }
+                if (failure.accessLost) recordLoadFailure(failure)
                 else if (conflict || assigneeRemoved) loadOptions(message)
                 mutableState.update { it.copy(saving = false, uncertain = uncertain, inputError = message) }
             }
@@ -133,37 +141,61 @@ internal class TaskFormViewModel @Inject constructor(
     }
 
     private suspend fun loadOptions(@StringRes message: Int? = null) {
+        val login = snapshots.sessionId() ?: return
         loading = true
-        mutableState.update { it.copy(loadFailure = null) }
         try {
-            coroutineScope {
-                val project = async { workspaces.getProject(projectId) }
-                val workspace = async { workspaces.getWorkspace(workspaceId) }
-                val board = async { workspaces.getBoard(projectId) }
-                val members = async { workspaces.listMembers(workspaceId) }
-                val options = TaskFormOptions(project.await().name, workspace.await().name, board.await(), members.await())
-                val latest = taskId?.let { options.board.findTask(it) ?: throw WorkspaceFailure("TASK_NOT_FOUND", 404) }
-                val initial = latest?.toInput() ?: TaskInput(
-                    options.board.columns.firstOrNull { it.id == initialColumn }?.id
-                        ?: options.board.columns.firstOrNull()?.id.orEmpty(),
-                    "", null, "MEDIUM", null, null,
-                )
-                original = latest
-                mutableState.update { current ->
-                    val draft = current.draft
-                    val baseline = current.baseline
-                    current.copy(
-                        options = options,
-                        baseline = initial,
-                        draft = if (draft != null && baseline != null) draft.rebase(baseline, initial) else initial,
-                        inputError = message,
-                    )
+            if (state.value.options == null) {
+                val snapshot = snapshots.cachedTaskBoard(workspaceId, projectId)
+                if (snapshot != null && (taskId == null || snapshot.board.findTask(taskId) != null)) {
+                    val members = snapshots.cachedMembers(workspaceId).orEmpty()
+                    if (snapshots.sessionId() != login) return
+                    publishOptions(snapshot, members, cached = true, message = message)
                 }
             }
+            if (snapshots.sessionId() != login) return
+            if (!connectivity.isConnected()) throw WorkspaceFailure("NETWORK_ERROR")
+            coroutineScope {
+                val members = async { snapshots.refreshMembers(workspaceId) }
+                val snapshot = snapshots.refreshTaskBoard(workspaceId, projectId)
+                val loadedMembers = members.await()
+                if (snapshots.sessionId() == login) publishOptions(snapshot, loadedMembers, cached = false, message = message)
+            }
         } catch (failure: WorkspaceFailure) {
-            mutableState.update { it.copy(loadFailure = failure) }
+            if (snapshots.sessionId() == login) recordLoadFailure(failure)
         } finally {
             loading = false
+        }
+    }
+
+    private fun publishOptions(snapshot: TaskBoardSnapshot, members: List<Member>, cached: Boolean, message: Int?) {
+        val options = TaskFormOptions(snapshot.project.name, snapshot.workspace.name, snapshot.board, members)
+        val latest = taskId?.let { options.board.findTask(it) ?: throw WorkspaceFailure("TASK_NOT_FOUND", 404) }
+        val initial = latest?.toInput() ?: TaskInput(
+            options.board.columns.firstOrNull { it.id == initialColumn }?.id
+                ?: options.board.columns.firstOrNull()?.id.orEmpty(),
+            "", null, "MEDIUM", null, null,
+        )
+        original = latest
+        mutableState.update { current ->
+            val draft = current.draft
+            val baseline = current.baseline
+            current.copy(
+                options = options,
+                baseline = initial,
+                draft = if (draft != null && baseline != null) draft.rebase(baseline, initial) else initial,
+                inputError = message,
+                loadFailure = null,
+                cached = cached,
+            )
+        }
+    }
+
+    private fun recordLoadFailure(failure: WorkspaceFailure) {
+        mutableState.update {
+            when {
+                failure.accessLost -> TaskFormState(loadFailure = failure, saving = it.saving)
+                else -> it.copy(loadFailure = failure, cached = it.options != null && failure.temporaryReadFailure)
+            }
         }
     }
 

@@ -5,6 +5,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sprintly.R
+import com.example.sprintly.offline.OfflineConnectivity
+import com.example.sprintly.offline.WorkspaceSnapshots
 import com.example.sprintly.tasks.Task
 import com.example.sprintly.tasks.TaskActivity
 import com.example.sprintly.tasks.TaskComment
@@ -12,12 +14,10 @@ import com.example.sprintly.tasks.TaskRepository
 import com.example.sprintly.ui.workspace.BoardMove
 import com.example.sprintly.ui.workspace.accessLost
 import com.example.sprintly.ui.workspace.displayMessage
+import com.example.sprintly.ui.workspace.temporaryReadFailure
 import com.example.sprintly.workspace.Board
 import com.example.sprintly.workspace.WorkspaceFailure
-import com.example.sprintly.workspace.WorkspaceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -41,6 +41,7 @@ internal data class DiscussionPage<T>(
 internal data class TaskDetailState(
     val details: TaskDetails? = null,
     val loadFailure: WorkspaceFailure? = null,
+    val cached: Boolean = false,
     val busy: Boolean = false,
     val deleted: Boolean = false,
     val comments: DiscussionPage<TaskComment> = DiscussionPage(),
@@ -50,13 +51,16 @@ internal data class TaskDetailState(
     val commentUncertain: Boolean = false,
     @param:StringRes val commentError: Int? = null,
     @param:StringRes val notice: Int? = null,
-)
+) {
+    val canUseServer get() = details != null && !cached && loadFailure == null
+}
 
 @HiltViewModel
 internal class TaskDetailViewModel @Inject constructor(
     savedState: SavedStateHandle,
     private val tasks: TaskRepository,
-    private val workspaces: WorkspaceRepository,
+    private val snapshots: WorkspaceSnapshots,
+    private val connectivity: OfflineConnectivity,
 ) : ViewModel() {
     val workspaceId = checkNotNull(savedState.get<String>("workspaceId"))
     val projectId = checkNotNull(savedState.get<String>("projectId"))
@@ -78,7 +82,7 @@ internal class TaskDetailViewModel @Inject constructor(
     }
 
     fun loadComments(fromStart: Boolean = false) {
-        if (state.value.sendingComment) return
+        if (!canUseServer() || state.value.sendingComment) return
         fetchPage(TaskDetailState::comments, { page ->
             tasks.listComments(taskId, page)
         }, TaskComment::id, fromStart) { current, page -> current.copy(comments = page) }
@@ -97,9 +101,9 @@ internal class TaskDetailViewModel @Inject constructor(
 
     fun sendComment() {
         val current = state.value
-        if (current.details == null || current.sendingComment || current.comments.loading ||
-            current.busy || current.loadFailure != null
+        if (!canUseServer() || current.sendingComment || current.comments.loading || current.busy
         ) return
+        val login = snapshots.sessionId() ?: return
         val body = pending?.payload ?: current.commentText.trim()
         if (!body.withinTaskLimit(2_000)) {
             mutableState.update { it.copy(commentError = R.string.task_comment_length) }
@@ -110,6 +114,7 @@ internal class TaskDetailViewModel @Inject constructor(
             val submission = pending ?: TaskSubmission(body).also { pending = it }
             try {
                 val comment = tasks.createComment(taskId, submission.payload, submission.key)
+                if (snapshots.sessionId() != login) return@launch
                 pending = null
                 mutableState.update {
                     it.copy(
@@ -122,6 +127,7 @@ internal class TaskDetailViewModel @Inject constructor(
                     )
                 }
             } catch (failure: WorkspaceFailure) {
+                if (snapshots.sessionId() != login) return@launch
                 val uncertain = failure.needsIdempotentRetry
                 if (!uncertain) pending = null
                 mutableState.update {
@@ -142,38 +148,45 @@ internal class TaskDetailViewModel @Inject constructor(
 
     fun move(columnId: String, index: Int) {
         val details = state.value.details ?: return
-        if (state.value.busy || state.value.sendingComment || loadingDetails || state.value.loadFailure != null) return
+        if (!canUseServer() || state.value.busy || state.value.sendingComment) return
         val move = BoardMove.prepare(details.board, taskId, columnId, index) ?: return
+        val login = snapshots.sessionId() ?: return
 
         mutableState.update { it.copy(busy = true) }
         viewModelScope.launch {
             val outcome = move.execute(
                 save = tasks::moveTask,
-                reload = { workspaces.getBoard(projectId) },
-                publish = { board -> publishBoard(details, board) },
+                reload = { snapshots.refreshBoard(workspaceId, projectId) },
+                publish = { board -> if (snapshots.sessionId() == login) publishBoard(details, board) },
                 onFailure = { failure ->
                     val message = when {
                         failure.needsIdempotentRetry -> R.string.board_move_unconfirmed
                         failure.status == 409 -> R.string.board_move_conflict
                         else -> R.string.task_move_failed
                     }
-                    mutableState.update { it.copy(notice = message) }
+                    if (snapshots.sessionId() == login) mutableState.update { it.copy(notice = message) }
                 },
             )
+            if (snapshots.sessionId() != login) return@launch
             publishBoard(details, outcome.board)
-            mutableState.update { it.copy(busy = false, loadFailure = outcome.syncError ?: it.loadFailure) }
+            outcome.syncError?.let(::recordReadFailure)
+            mutableState.update { it.copy(busy = false) }
             if (outcome.syncError == null) refreshActivity()
         }
     }
 
     fun delete() {
-        if (state.value.busy || state.value.sendingComment || state.value.loadFailure != null) return
+        if (!canUseServer() || state.value.busy || state.value.sendingComment) return
+        val login = snapshots.sessionId() ?: return
         mutableState.update { it.copy(busy = true) }
         viewModelScope.launch {
             try {
                 tasks.deleteTask(taskId)
-                mutableState.update { it.copy(deleted = true) }
+                if (snapshots.sessionId() != login) return@launch
+                snapshots.removeTask(workspaceId, projectId, taskId, session = login)
+                if (snapshots.sessionId() == login) mutableState.update { it.copy(deleted = true) }
             } catch (failure: WorkspaceFailure) {
+                if (snapshots.sessionId() != login) return@launch
                 if (failure.status == 404) loadDetails()
                 mutableState.update { it.copy(notice = failure.displayMessage()) }
             } finally {
@@ -187,24 +200,44 @@ internal class TaskDetailViewModel @Inject constructor(
     }
 
     private suspend fun loadDetails(): Boolean {
+        val login = snapshots.sessionId() ?: return false
         loadingDetails = true
         mutableState.update { it.copy(loadFailure = null) }
         return try {
-            coroutineScope {
-                val project = async { workspaces.getProject(projectId) }
-                val workspace = async { workspaces.getWorkspace(workspaceId) }
-                val board = async { workspaces.getBoard(projectId) }
-                val snapshot = board.await()
-                val task = snapshot.findTask(taskId) ?: throw WorkspaceFailure("TASK_NOT_FOUND", 404)
-                val details = TaskDetails(task, project.await().name, workspace.await().role, snapshot)
-                mutableState.update { it.copy(details = details) }
+            if (state.value.details == null) {
+                snapshots.cachedTaskBoard(workspaceId, projectId)?.let { snapshot ->
+                    if (snapshots.sessionId() != login) return false
+                    snapshot.board.findTask(taskId)?.let { task -> publishDetails(snapshot, task, cached = true) }
+                }
             }
+            if (snapshots.sessionId() != login) return false
+            if (!connectivity.isConnected()) throw WorkspaceFailure("NETWORK_ERROR")
+            val snapshot = snapshots.refreshTaskBoard(workspaceId, projectId)
+            if (snapshots.sessionId() != login) return false
+            val task = snapshot.board.findTask(taskId) ?: throw WorkspaceFailure("TASK_NOT_FOUND", 404)
+            publishDetails(snapshot, task, cached = false)
             true
         } catch (failure: WorkspaceFailure) {
-            mutableState.update { it.copy(loadFailure = failure) }
+            if (snapshots.sessionId() == login) recordReadFailure(failure)
             false
         } finally {
             loadingDetails = false
+        }
+    }
+
+    private fun canUseServer(): Boolean = state.value.canUseServer && !loadingDetails && connectivity.isConnected()
+
+    private fun publishDetails(snapshot: TaskBoardSnapshot, task: Task, cached: Boolean) {
+        val details = TaskDetails(task, snapshot.project.name, snapshot.workspace.role, snapshot.board)
+        mutableState.update { it.copy(details = details, cached = cached, loadFailure = null) }
+    }
+
+    private fun recordReadFailure(failure: WorkspaceFailure) {
+        mutableState.update {
+            when {
+                failure.accessLost -> TaskDetailState(loadFailure = failure, busy = it.busy)
+                else -> it.copy(loadFailure = failure, cached = it.details != null && failure.temporaryReadFailure)
+            }
         }
     }
 
@@ -225,6 +258,8 @@ internal class TaskDetailViewModel @Inject constructor(
         fromStart: Boolean,
         store: (TaskDetailState, DiscussionPage<T>) -> TaskDetailState,
     ) {
+        if (!canUseServer()) return
+        val login = snapshots.sessionId() ?: return
         val page = select(state.value)
         val next = if (fromStart) 1 else page.next ?: return
         if (page.loading) return
@@ -232,6 +267,7 @@ internal class TaskDetailViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val rows = load(next)
+                if (snapshots.sessionId() != login) return@launch
                 mutableState.update { current ->
                     val existing = if (next == 1) emptyList() else select(current).rows
                     store(
@@ -243,6 +279,11 @@ internal class TaskDetailViewModel @Inject constructor(
                     )
                 }
             } catch (failure: WorkspaceFailure) {
+                if (snapshots.sessionId() != login) return@launch
+                if (failure.accessLost) {
+                    recordReadFailure(failure)
+                    return@launch
+                }
                 mutableState.update { store(it, select(it).copy(loading = false, failure = failure)) }
             }
         }

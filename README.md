@@ -107,7 +107,13 @@ Open a project to create a task with a title, column and priority. You can add a
 
 Workspace members can create, edit, move and comment on tasks. A workspace Owner or the task creator can delete the task while they are still a member. Removing a member clears their assignments in that workspace and keeps their earlier comments and activity.
 
-Task moves validate the versions of the task and board. Android restores the previous order and reloads the board if the save fails. If task or comment creation cannot be confirmed, **Thử lại** sends the same payload and request key. Use the online API for Phase 3. Local offline read will be added in Phase 4. [Implementation specification](docs/Sprintly_Codex_Implementation_Spec.md#phase-3--task-crud--kanban)
+Task moves validate the versions of the task and board. Android restores the previous order and reloads the board if the save fails. If task or comment creation cannot be confirmed, **Thử lại** sends the same payload and request key. [Implementation specification](docs/Sprintly_Codex_Implementation_Spec.md#phase-3--task-crud--kanban)
+
+## Phase 4 offline reading
+
+Open a workspace, its project or member list, and a Kanban board while connected. Android saves each successful response in Room. The board snapshot includes its columns, tasks and version. Airplane mode still lets you open the saved workspace, project, board and task details. The banner indicates that the screen is showing saved data and editing is disabled. If a screen has no saved data, it shows a retry action. Comments and activity history load from the API.
+
+Android refreshes on return to a screen, when connectivity returns and when the user chooses **Thử lại**. A successful refresh replaces the saved data. Confirmed removal of workspace access clears the affected snapshots. Each login has a separate cache namespace that survives an app restart for that login. Signing out or receiving a definitive refresh rejection closes access to that namespace and clears its snapshots.
 
 ## Verify the end-to-end flows
 
@@ -129,6 +135,12 @@ Run the Kanban flow against a dedicated development database. The test creates i
 
 ```powershell
 .\gradlew.bat :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.sprintly.KanbanApiFlowTest -Pandroid.testInstrumentationRunnerArguments.sprintlyTaskE2e=true
+```
+
+Run the offline flow with the emulator signed out and connected. It creates two test accounts, verifies the saved board and task while in airplane mode, and checks that the second login cannot see the first account's workspace. The test restores the starting network settings.
+
+```powershell
+.\gradlew.bat :app:connectedDebugAndroidTest '-Pandroid.testInstrumentationRunnerArguments.class=com.example.sprintly.OfflineApiFlowTest' '-Pandroid.testInstrumentationRunnerArguments.sprintlyOfflineE2e=true'
 ```
 
 The phase gates, test results and acceptance criteria are recorded here. [Implementation specification](docs/Sprintly_Codex_Implementation_Spec.md) · [Phase 0 verification](docs/Sprintly_Phase_0_Verification.md) · [Handoff](docs/Sprintly_Handoff.md)

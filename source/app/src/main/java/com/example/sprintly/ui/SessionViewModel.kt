@@ -17,6 +17,8 @@ class SessionViewModel @Inject constructor(
     private val restoring = MutableStateFlow(false)
     val isRestoring = restoring.asStateFlow()
 
+    internal fun loginId(): String? = repository.cacheSessionId()
+
     init {
         restore()
     }

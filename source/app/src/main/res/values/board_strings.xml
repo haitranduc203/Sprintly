@@ -23,7 +23,6 @@
     <string name="board_move_failed">Chưa di chuyển được công việc.</string>
     <string name="board_move_unconfirmed">Chưa xác nhận di chuyển công việc.</string>
     <string name="board_move_in_progress">Đang di chuyển %1$s tới %2$s.</string>
-    <string name="board_sync_error">Chưa thể cập nhật bảng. Làm mới để tiếp tục chỉnh sửa.</string>
     <plurals name="board_task_count">
         <item quantity="other">%d công việc</item>
     </plurals>
