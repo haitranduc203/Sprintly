@@ -53,5 +53,28 @@
             <argument android:name="workspaceId" app:argType="string" />
             <argument android:name="projectId" app:argType="string" />
         </fragment>
+        <fragment
+            android:id="@id/task_detail_fragment"
+            android:name="com.example.sprintly.ui.tasks.TaskDetailFragment">
+            <argument android:name="workspaceId" app:argType="string" />
+            <argument android:name="projectId" app:argType="string" />
+            <argument android:name="taskId" app:argType="string" />
+        </fragment>
+        <fragment
+            android:id="@id/task_form_fragment"
+            android:name="com.example.sprintly.ui.tasks.TaskFormFragment">
+            <argument android:name="workspaceId" app:argType="string" />
+            <argument android:name="projectId" app:argType="string" />
+            <argument
+                android:name="columnId"
+                android:defaultValue="@null"
+                app:argType="string"
+                app:nullable="true" />
+            <argument
+                android:name="taskId"
+                android:defaultValue="@null"
+                app:argType="string"
+                app:nullable="true" />
+        </fragment>
     </navigation>
 </navigation>

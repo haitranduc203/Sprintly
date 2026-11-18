@@ -44,7 +44,7 @@ export function readName(body: unknown) {
   return name;
 }
 
-function readDescription(value: unknown): string | null | undefined {
+export function readDescription(value: unknown): string | null | undefined {
   if (value === undefined || value === null) return value;
   if (typeof value !== "string" || /[\u0000\p{Cs}]/u.test(value)) {
     throw invalidBody("Description must be text or null");

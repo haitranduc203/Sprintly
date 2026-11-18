@@ -1,71 +1,24 @@
 import { ApiError } from "./api-errors.js";
 import { publicUserFields } from "./auth.js";
-import { Prisma } from "./generated/prisma/client.js";
 import type { PrismaClient } from "./generated/prisma/client.js";
+import { taskActivity, taskData, taskFields, taskOrder } from "./task-data.js";
+import type { Task } from "./task-data.js";
+import {
+  lockProject, lockWorkspace, membershipFields, membershipKey, notFound, projectFields, projectInScope,
+  requireMembership, workspaceFields,
+} from "./workspace-access.js";
+import type { Transaction } from "./workspace-access.js";
 
-const workspaceFields = { id: true, name: true, description: true } as const;
-const membershipFields = { role: true, workspace: { select: workspaceFields } } as const;
-const projectFields = { id: true, workspaceId: true, name: true, description: true, boardVersion: true } as const;
-const columnFields = { id: true, name: true, position: true } as const;
+const columnFields = {
+  id: true, name: true, position: true, tasks: { select: taskFields, orderBy: taskOrder },
+} as const;
 export const defaultBoardColumns = ["To Do", "In Progress", "Done"].map((name, position) => ({ name, position }));
 
-type Transaction = Prisma.TransactionClient;
 type ResourceDetails = { name: string; description?: string | null };
-type BoardColumn = Prisma.BoardColumnGetPayload<{ select: typeof columnFields }>;
+type BoardColumn = { id: string; name: string; position: number; tasks: Task[] };
 
-function notFound(resource: string) {
-  return new ApiError(404, "NOT_FOUND", `${resource} not found`);
-}
-
-function membershipKey(workspaceId: string, userId: string) {
-  return { workspaceId_userId: { workspaceId, userId } };
-}
-
-async function requireMembership(tx: Transaction, workspaceId: string, userId: string, ownerOnly = false) {
-  const membership = await tx.workspaceMember.findUnique({
-    where: membershipKey(workspaceId, userId), select: membershipFields,
-  });
-  if (!membership) throw notFound("Workspace");
-  if (ownerOnly && membership.role !== "OWNER") throw new ApiError(403, "FORBIDDEN", "Workspace owner access is required");
-  return membership;
-}
-
-async function lockWorkspace(tx: Transaction, workspaceId: string, userId: string, mode: "manage" | "collaborate") {
-  const lock = mode === "manage" ? Prisma.sql`FOR UPDATE` : Prisma.sql`FOR SHARE`;
-  // Membership may change while waiting to acquire the lock, so callers recheck it after this statement.
-  const rows = await tx.$queryRaw<{ id: string }[]>`
-    SELECT w.id FROM workspaces w WHERE w.id = ${workspaceId}::uuid
-    AND EXISTS (
-      SELECT 1 FROM workspace_members m WHERE m.workspace_id = w.id AND m.user_id = ${userId}::uuid
-    ) ${lock}
-  `;
-  if (!rows.length) throw notFound("Workspace");
-}
-
-function projectScope(id: string, userId: string) {
-  return { id, workspace: { members: { some: { userId } } } };
-}
-
-async function projectInScope(tx: Transaction, id: string, userId: string) {
-  const project = await tx.project.findFirst({ where: projectScope(id, userId), select: projectFields });
-  if (!project) throw notFound("Project");
-  return project;
-}
-
-async function lockProject(tx: Transaction, { id, workspaceId }: { id: string; workspaceId: string }, userId: string, ownerOnly = false) {
-  // Use workspace-then-project lock order. Project writes can proceed in parallel across projects,
-  // while membership changes acquire the workspace lock exclusively.
-  await lockWorkspace(tx, workspaceId, userId, "collaborate");
-  await requireMembership(tx, workspaceId, userId, ownerOnly);
-  const rows = await tx.$queryRaw<{ id: string }[]>`
-    SELECT id FROM projects WHERE id = ${id}::uuid AND workspace_id = ${workspaceId}::uuid FOR UPDATE
-  `;
-  if (!rows.length) throw notFound("Project");
-}
-
-function boardColumn(column: BoardColumn) {
-  // Task storage and reassignment arrive in Phase 3.
-  return { ...column, tasks: [] };
+function boardColumn({ tasks, ...column }: BoardColumn) {
+  return { ...column, tasks: tasks.map((task) => taskData(task)) };
 }
 
 export function createWorkspaceService(database: PrismaClient) {
@@ -153,7 +106,16 @@ export function createWorkspaceService(database: PrismaClient) {
         });
         if (!anotherOwner) throw new ApiError(409, "LAST_WORKSPACE_OWNER", "The workspace must keep an owner");
       }
-      // Phase 3 will clear task assignments and write activity here under the same workspace lock.
+      const unassigned = await tx.task.updateManyAndReturn({
+        where: { assigneeId: removedUserId, project: { workspaceId } },
+        data: { assigneeId: null, version: { increment: 1 } },
+        select: { id: true },
+      });
+      if (unassigned.length) {
+        await tx.taskActivity.createMany({
+          data: unassigned.map(({ id }) => taskActivity(id, userId, "ASSIGNEE_CHANGED", { fromAssigneeId: removedUserId, toAssigneeId: null })),
+        });
+      }
       await tx.workspaceMember.delete({ where });
     }),
 

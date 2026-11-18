@@ -1,0 +1,6 @@
+<resources>
+    <item name="task_detail_fragment" type="id" />
+    <item name="task_form_fragment" type="id" />
+    <item name="task_edit" type="id" />
+    <item name="task_delete" type="id" />
+</resources>

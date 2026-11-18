@@ -99,7 +99,15 @@ Any signed-in user can create a workspace and becomes its Owner in the same tran
 | Look up an account by email, add or remove a member | Yes | |
 | Delete a project | Yes | |
 
-New projects start with To Do, In Progress and Done in that order. Phase 2 boards show the saved columns. Task creation, assignment and movement are part of Phase 3. [Implementation specification](docs/Sprintly_Codex_Implementation_Spec.md)
+New projects start with To Do, In Progress and Done in that order.
+
+## Phase 3 tasks and Kanban
+
+Open a project to create a task with a title, column and priority. You can add a description, due date or workspace assignee. Drag the handle on a card to reorder it or move it into another column. The **Di chuyển** action lets you choose a column and insertion position. Open a card to edit it, add comments and see its activity history.
+
+Workspace members can create, edit, move and comment on tasks. A workspace Owner or the task creator can delete the task while they are still a member. Removing a member clears their assignments in that workspace and keeps their earlier comments and activity.
+
+Task moves validate the versions of the task and board. Android restores the previous order and reloads the board if the save fails. If task or comment creation cannot be confirmed, **Thử lại** sends the same payload and request key. Use the online API for Phase 3. Local offline read will be added in Phase 4. [Implementation specification](docs/Sprintly_Codex_Implementation_Spec.md#phase-3--task-crud--kanban)
 
 ## Verify the end-to-end flows
 
@@ -115,6 +123,12 @@ Run the two-account workspace flow on a development database. The test creates t
 
 ```powershell
 .\gradlew.bat :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.sprintly.WorkspaceApiFlowTest -Pandroid.testInstrumentationRunnerArguments.sprintlyWorkspaceE2e=true
+```
+
+Run the Kanban flow against a dedicated development database. The test creates its own account and tasks, drags a card into an occupied column, verifies the order after refreshing, and checks that edits, a comment and move history survive reopening the task.
+
+```powershell
+.\gradlew.bat :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.sprintly.KanbanApiFlowTest -Pandroid.testInstrumentationRunnerArguments.sprintlyTaskE2e=true
 ```
 
 The phase gates, test results and acceptance criteria are recorded here. [Implementation specification](docs/Sprintly_Codex_Implementation_Spec.md) · [Phase 0 verification](docs/Sprintly_Phase_0_Verification.md) · [Handoff](docs/Sprintly_Handoff.md)

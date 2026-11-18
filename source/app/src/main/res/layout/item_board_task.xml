@@ -1,0 +1,68 @@
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/board_task_card"
+    style="@style/Widget.Sprintly.WorkspaceCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:clickable="true"
+    android:focusable="true">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="8dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical">
+            <TextView
+                android:id="@+id/board_task_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingVertical="6dp"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="@color/orbix_on_surface" />
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/board_task_drag"
+                style="@style/Widget.Sprintly.WorkspaceIconButton"
+                android:src="@drawable/ic_board_grip" />
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/board_task_actions"
+                style="@style/Widget.Sprintly.WorkspaceIconButton"
+                android:src="@drawable/ic_workspace_more" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="4dp">
+            <TextView
+                android:id="@+id/board_task_priority"
+                style="@style/Widget.Sprintly.WorkspaceRole"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <TextView
+                android:id="@+id/board_task_due"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="6dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textAppearance="?attr/textAppearanceLabelMedium"
+                android:textColor="@color/orbix_on_surface_variant" />
+            <TextView
+                android:id="@+id/board_task_assignee"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="28dp"
+                android:minHeight="28dp"
+                android:gravity="center"
+                android:textAppearance="?attr/textAppearanceLabelMedium"
+                android:textColor="@color/orbix_on_surface_variant" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

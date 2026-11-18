@@ -6,6 +6,12 @@
         <item name="android:background">@color/orbix_surface</item>
         <item name="titleTextColor">@color/orbix_on_surface</item>
     </style>
+    <style name="Widget.Sprintly.BoardLaneAddButton" parent="Widget.Sprintly.WorkspaceTextButton">
+        <item name="backgroundTint">@color/orbix_surface_lane</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="strokeColor">@color/orbix_outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
     <style name="Widget.Sprintly.WorkspaceCard" parent="Widget.Material3.CardView.Outlined">
         <item name="cardBackgroundColor">@color/orbix_surface</item>
         <item name="cardCornerRadius">16dp</item>

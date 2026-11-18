@@ -15,6 +15,22 @@ enum WorkspaceRole {
   @@map("workspace_role")
 }
 
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+
+  @@map("task_priority")
+}
+
+enum IdempotencyOperation {
+  CREATE_TASK
+  CREATE_COMMENT
+
+  @@map("idempotency_operation")
+}
+
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   email        String   @unique
@@ -26,6 +42,11 @@ model User {
   memberships       WorkspaceMember[]
   createdWorkspaces Workspace[]
   sessions          Session[]
+  createdTasks      Task[]               @relation("TaskCreator")
+  assignedTasks     Task[]               @relation("TaskAssignee")
+  comments          Comment[]
+  taskActivities    TaskActivity[]
+  idempotency       IdempotencyRequest[]
 
   @@map("users")
 }
@@ -83,8 +104,10 @@ model Project {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  columns   BoardColumn[]
+  workspace   Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  columns     BoardColumn[]
+  tasks       Task[]
+  idempotency IdempotencyRequest[]
 
   @@index([workspaceId])
   @@map("projects")
@@ -99,7 +122,91 @@ model BoardColumn {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks   Task[]
 
   @@unique([projectId, position])
+  @@unique([projectId, id])
   @@map("board_columns")
+}
+
+model Task {
+  id          String       @id @default(uuid()) @db.Uuid
+  projectId   String       @map("project_id") @db.Uuid
+  columnId    String       @map("column_id") @db.Uuid
+  title       String
+  description String?
+  priority    TaskPriority
+  assigneeId  String?      @map("assignee_id") @db.Uuid
+  dueAt       DateTime?    @map("due_at") @db.Timestamptz(3)
+  position    Int
+  version     Int          @default(1)
+  createdBy   String       @map("created_by") @db.Uuid
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  project     Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  column      BoardColumn          @relation(fields: [projectId, columnId], references: [projectId, id], onDelete: Cascade)
+  creator     User                 @relation("TaskCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  assignee    User?                @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: Restrict)
+  comments    Comment[]
+  activities  TaskActivity[]
+  idempotency IdempotencyRequest[]
+
+  @@unique([columnId, position])
+  @@index([projectId, columnId, position])
+  @@index([assigneeId, dueAt])
+  @@map("tasks")
+}
+
+model Comment {
+  id        String   @id @default(uuid()) @db.Uuid
+  taskId    String   @map("task_id") @db.Uuid
+  authorId  String   @map("author_id") @db.Uuid
+  body      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([taskId, createdAt, id])
+  @@map("comments")
+}
+
+model TaskActivity {
+  id        String   @id @default(uuid()) @db.Uuid
+  taskId    String   @map("task_id") @db.Uuid
+  actorId   String   @map("actor_id") @db.Uuid
+  action    String
+  payload   Json     @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  task  Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([taskId, createdAt, id])
+  @@map("task_activities")
+}
+
+model IdempotencyRequest {
+  id             String               @id @default(uuid()) @db.Uuid
+  accountId      String               @map("account_id") @db.Uuid
+  operation      IdempotencyOperation
+  projectId      String?              @map("project_id") @db.Uuid
+  taskId         String?              @map("task_id") @db.Uuid
+  idempotencyKey String               @map("idempotency_key") @db.Uuid
+  requestHash    String               @map("request_hash")
+  resultId       String               @map("result_id") @db.Uuid
+  responseStatus Int                  @map("response_status") @db.SmallInt
+  responseBody   Json?                @map("response_body") @db.JsonB
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  account User     @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task    Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, operation, projectId, idempotencyKey], map: "idempotency_requests_project_key")
+  @@unique([accountId, operation, taskId, idempotencyKey], map: "idempotency_requests_task_key")
+  @@index([projectId, resultId])
+  @@map("idempotency_requests")
 }

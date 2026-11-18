@@ -5,6 +5,7 @@ import { createAuth } from "./auth.js";
 import type { AuthOptions, PublicUser } from "./auth.js";
 import { invalidBody, readEmail, stringField } from "./validation.js";
 import { registerWorkspaceRoutes } from "./workspace-routes.js";
+import { registerTaskRoutes } from "./task-routes.js";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -73,4 +74,5 @@ export const registerAuthRoutes: FastifyPluginAsync<AuthOptions> = async (app, o
   };
   app.get("/users/me", { preHandler: requireAuth }, async (request) => ({ data: request.authUser }));
   await app.register(registerWorkspaceRoutes, { database: options.database, requireAuth });
+  await app.register(registerTaskRoutes, { database: options.database, requireAuth });
 };

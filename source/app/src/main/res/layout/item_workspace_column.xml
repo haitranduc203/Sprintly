@@ -1,9 +1,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/board_lane"
     android:layout_width="280dp"
     android:layout_height="match_parent"
     android:layout_marginEnd="12dp"
-    android:background="@drawable/bg_workspace_lane"
+    android:background="@drawable/bg_workspace_lane_target"
     android:orientation="vertical"
     android:padding="12dp">
     <LinearLayout
@@ -25,10 +26,9 @@
             android:textAppearance="?attr/textAppearanceTitleMedium"
             android:textColor="@color/orbix_on_surface" />
         <TextView
+            android:id="@+id/column_task_count"
             style="@style/Widget.Sprintly.WorkspaceRole"
             android:backgroundTint="@color/orbix_divider"
-            android:importantForAccessibility="no"
-            android:text="@string/workspace_column_empty_count"
             android:textColor="@color/orbix_on_surface_variant" />
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/column_more"
@@ -36,12 +36,33 @@
             android:contentDescription="@string/workspace_column_edit"
             android:src="@drawable/ic_workspace_more" />
     </LinearLayout>
-    <TextView
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/column_tasks"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingVertical="4dp"
+            android:scrollbars="vertical" />
+        <TextView
+            android:id="@+id/column_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:text="@string/workspace_column_empty"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="@color/orbix_on_surface_variant" />
+    </FrameLayout>
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/column_task_create"
+        style="@style/Widget.Sprintly.BoardLaneAddButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:gravity="center"
-        android:text="@string/workspace_column_empty"
-        android:textAppearance="?attr/textAppearanceBodyMedium"
-        android:textColor="@color/orbix_on_surface_variant" />
+        android:text="@string/board_task_add"
+        app:icon="@drawable/ic_workspace_add"
+        app:iconGravity="textStart" />
 </LinearLayout>

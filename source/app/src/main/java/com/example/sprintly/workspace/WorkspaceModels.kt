@@ -1,5 +1,7 @@
 package com.example.sprintly.workspace
 
+import com.example.sprintly.tasks.Task
+
 data class Workspace(
     val id: String,
     val name: String,
@@ -21,6 +23,11 @@ data class Project(
 
 data class Board(val boardVersion: Long, val columns: List<BoardColumn>)
 
-data class BoardColumn(val id: String, val name: String, val position: Int)
+data class BoardColumn(
+    val id: String,
+    val name: String,
+    val position: Int,
+    val tasks: List<Task> = emptyList(),
+)
 
 class WorkspaceFailure(val code: String, val status: Int? = null) : Exception(code)

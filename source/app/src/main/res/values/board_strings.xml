@@ -1,0 +1,30 @@
+<resources>
+    <string name="board_task_create">Tạo công việc</string>
+    <string name="board_task_add">Thêm công việc</string>
+    <string name="board_task_add_to">Thêm công việc vào %1$s</string>
+    <string name="board_task_actions">Thao tác công việc %1$s</string>
+    <string name="board_task_drag">Di chuyển công việc %1$s</string>
+    <string name="board_task_move">Di chuyển</string>
+    <string name="board_task_destination">Cột đích</string>
+    <string name="board_task_position">Vị trí</string>
+    <string name="board_task_first">Đầu cột</string>
+    <string name="board_task_last">Cuối cột</string>
+    <string name="board_task_before">Trước %1$s</string>
+    <string name="board_task_due">Hạn %1$s</string>
+    <string name="board_task_overdue">%1$s · Quá hạn</string>
+    <string name="board_task_assignee">Người phụ trách %1$s</string>
+    <string name="board_task_unassigned">Chưa giao</string>
+    <string name="board_task_low">Thấp</string>
+    <string name="board_task_medium">Trung bình</string>
+    <string name="board_task_high">Cao</string>
+    <string name="board_task_urgent">Khẩn cấp</string>
+    <string name="board_move_conflict">Bảng vừa thay đổi. Hãy chọn lại vị trí.</string>
+    <string name="board_move_invalid">Vị trí đã thay đổi.</string>
+    <string name="board_move_failed">Chưa di chuyển được công việc.</string>
+    <string name="board_move_unconfirmed">Chưa xác nhận di chuyển công việc.</string>
+    <string name="board_move_in_progress">Đang di chuyển %1$s tới %2$s.</string>
+    <string name="board_sync_error">Chưa thể cập nhật bảng. Làm mới để tiếp tục chỉnh sửa.</string>
+    <plurals name="board_task_count">
+        <item quantity="other">%d công việc</item>
+    </plurals>
+</resources>
