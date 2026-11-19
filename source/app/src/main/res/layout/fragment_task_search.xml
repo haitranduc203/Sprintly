@@ -29,7 +29,10 @@
             app:boxCornerRadiusBottomStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeColor="@color/orbix_field_stroke"
+            app:cursorColor="@color/orbix_selection"
             app:endIconMode="clear_text"
+            app:hintTextColor="@color/orbix_selection"
             app:startIconDrawable="@drawable/ic_task_search">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/search_keyword"
