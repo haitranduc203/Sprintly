@@ -14,7 +14,7 @@
 
 ## Quy ước Git
 
-- Đặt tên nhánh theo dạng `<loại>/<mô-tả>`. Các loại đã thống nhất gồm `feature/`, `fix/`, `hotfix/`, `refactor/`, `chore/`, `docs/`, `test/` và `release/`. Phase 1 dùng `feature/authentication`. Phase 2 dùng `feature/workspace-management`. Phase 3 dùng `feature/task-kanban`. Phase 4 dùng `feature/offline-cache`.
+- Đặt tên nhánh theo dạng `<loại>/<mô-tả>`. Các loại đã thống nhất gồm `feature/`, `fix/`, `hotfix/`, `refactor/`, `chore/`, `docs/`, `test/` và `release/`. Phase 1 dùng `feature/authentication`. Phase 2 dùng `feature/workspace-management`. Phase 3 dùng `feature/task-kanban`. Phase 4 dùng `feature/offline-cache`. Phase 5 dùng `feature/mvp-finish`.
 - Tiêu đề commit mô tả thay đổi, chẳng hạn `feat: add authentication`. Prefix `codex/` không dùng cho tên nhánh hoặc commit.
 - Commit từng phần đã hoàn thành và kiểm thử. Tách backend, lớp dữ liệu Android, giao diện và tài liệu thành các commit có thể rà soát riêng.
 
@@ -44,6 +44,23 @@
 - `assembleDebug`, `assembleDebugAndroidTest` và `testDebugUnitTest` đạt. Có 32 unit test. `lintDebug` báo 0 lỗi và 12 cảnh báo.
 - Kiểm tra Room trên Pixel 7 Pro API 34 xác nhận giữ đúng snapshot board, loại dữ liệu khi danh sách đầy đủ xác nhận mất quyền và cách ly từng lần đăng nhập.
 - Luồng offline trên Pixel 7 Pro API 34 dùng backend với PostgreSQL 17.12. App mở được board và task đã lưu, giữ nháp khi tái tạo Activity, khóa ghi khi mất mạng, tự làm mới khi kết nối lại và cách ly dữ liệu sau khi đăng xuất offline rồi đổi tài khoản. Các ca workspace và Kanban đạt khi chạy riêng với phiên kiểm thử mới. [Lệnh kiểm thử](../README.md#verify-the-end-to-end-flows)
+
+## Kiểm chứng Phase 5
+
+Tìm kiếm chạy trong dự án hiện tại và kết hợp từ khóa theo tiêu đề với cột, ưu tiên và người phụ trách. Khi trở lại từ chi tiết, kết quả làm mới theo tiêu chí đang giữ. Chi tiết task hiển thị trạng thái tải và thử lại riêng cho bình luận và lịch sử, kiểm tra nội dung bình luận tại ô nhập và cuộn đến bình luận sau khi máy chủ xác nhận.
+
+| Tiêu chí | Kết quả và bằng chứng |
+| --- | --- |
+| AC-01 · Phiên | PASS. `AuthApiFlowTest` đăng ký, tái tạo Activity, đăng xuất và đăng nhập lại. Kiểm thử backend và `AuthRepositoryTest` kiểm tra xoay token, lỗi refresh tạm thời, từ chối token bị thu hồi và phản hồi đến muộn sau khi đổi phiên. |
+| AC-02 · Workspace và dự án | PASS. `WorkspaceApiFlowTest` chạy hai vai trò, xác nhận cột mặc định và phân quyền quản lý. Kiểm thử PostgreSQL xác nhận tra email chính xác, từ chối truy cập ngoài phạm vi và gỡ người phụ trách khi xóa thành viên. |
+| AC-03 · Task và Kanban | PASS cho luồng chính. `KanbanApiFlowTest` kéo thả và tải lại thứ tự. `BoardMoveTest` kiểm tra hoàn tác và làm mới khi API lỗi hoặc có xung đột. Kiểm thử PostgreSQL xác nhận yêu cầu tạo lặp cùng khóa chỉ tạo một task và một bản ghi lịch sử. |
+| AC-04 · Bình luận và lịch sử | PASS cho luồng chính. `KanbanApiFlowTest` kiểm tra bình luận trống, gửi và mở lại, cùng lịch sử move và sửa tiêu đề. Kiểm thử PostgreSQL xác nhận nội dung gửi lại, thông tin tác nhân và xóa dây chuyền. |
+| AC-05 · Tìm kiếm và offline | PASS. `TaskSearchApiFlowTest` kiểm tra ba bộ lọc kết hợp, làm mới sau move, quay lại từ chi tiết, giữ tiêu chí khi tái tạo Activity, xóa lọc, đặt lại và về board đã lưu khi mất mạng. `OfflineApiFlowTest` và `OfflineCacheTest` kiểm tra board từ Room, khóa ghi, làm mới khi có mạng, dọn snapshot mất quyền và cách ly phiên. |
+
+- `npm run build` và `npm test` đạt, gồm 21 kiểm thử với PostgreSQL 17.12. Gradle `assembleDebug`, `assembleDebugAndroidTest`, `testDebugUnitTest` và `lintDebug` đạt, gồm 32 unit test, 0 lỗi lint và 11 cảnh báo.
+- 11 ca AndroidJUnitRunner đạt trên Pixel 7 Pro API 34 với các lớp kiểm thử chạy riêng trên cùng emulator. [Cách chạy lại](../README.md#verify-the-end-to-end-flows)
+- Kiểm tra thủ công đạt khi nhập sai mật khẩu, mở lại ứng dụng sau khi tiến trình bị dừng, mở board chưa có cache trong chế độ máy bay, tải board khi kết nối lại và dùng **Thử lại** để chạy tiếp truy vấn sau khi API phục hồi. Đã đối chiếu giao diện tìm kiếm, bộ lọc và chi tiết với Orbix trên emulator.
+- Mô phỏng mất phản hồi sau khi máy chủ đã tạo task hoặc bình luận là mục còn mở trên Android. Kiểm thử API đã xác nhận gửi lại cùng khóa và nội dung chỉ tạo một bản ghi.
 
 ## Thứ tự triển khai đề xuất
 

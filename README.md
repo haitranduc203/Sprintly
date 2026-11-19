@@ -143,4 +143,10 @@ Run the offline flow with the emulator signed out and connected. It creates two 
 .\gradlew.bat :app:connectedDebugAndroidTest '-Pandroid.testInstrumentationRunnerArguments.class=com.example.sprintly.OfflineApiFlowTest' '-Pandroid.testInstrumentationRunnerArguments.sprintlyOfflineE2e=true'
 ```
 
+Run the search flow on the emulator with Sprintly signed out and connected. It creates a dedicated project, checks title matching and all three filters together, moves a task from the results and verifies the updated list when returning. It also checks that Activity recreation keeps the criteria and clearing filters keeps the keyword. The test uses airplane mode to verify the return to the cached board and restores the initial network settings.
+
+```powershell
+.\gradlew.bat :app:connectedDebugAndroidTest '-Pandroid.testInstrumentationRunnerArguments.class=com.example.sprintly.TaskSearchApiFlowTest' '-Pandroid.testInstrumentationRunnerArguments.sprintlySearchE2e=true'
+```
+
 The phase gates, test results and acceptance criteria are recorded here. [Implementation specification](docs/Sprintly_Codex_Implementation_Spec.md) · [Phase 0 verification](docs/Sprintly_Phase_0_Verification.md) · [Handoff](docs/Sprintly_Handoff.md)
