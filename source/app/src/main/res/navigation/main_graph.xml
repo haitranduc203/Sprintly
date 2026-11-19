@@ -54,6 +54,14 @@
             <argument android:name="projectId" app:argType="string" />
         </fragment>
         <fragment
+            android:id="@+id/task_search_fragment"
+            android:name="com.example.sprintly.ui.tasks.TaskSearchFragment"
+            android:label="@string/task_search_title"
+            tools:layout="@layout/fragment_task_search">
+            <argument android:name="workspaceId" app:argType="string" />
+            <argument android:name="projectId" app:argType="string" />
+        </fragment>
+        <fragment
             android:id="@id/task_detail_fragment"
             android:name="com.example.sprintly.ui.tasks.TaskDetailFragment">
             <argument android:name="workspaceId" app:argType="string" />

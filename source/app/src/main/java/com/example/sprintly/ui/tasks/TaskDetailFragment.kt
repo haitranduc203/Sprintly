@@ -1,5 +1,7 @@
 package com.example.sprintly.ui.tasks
 
+import android.graphics.Rect
+import android.icu.text.ListFormatter
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -11,6 +13,9 @@ import androidx.activity.addCallback
 import androidx.annotation.StringRes
 import androidx.core.content.getSystemService
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
@@ -35,7 +40,6 @@ import com.example.sprintly.ui.workspace.showError
 import com.example.sprintly.ui.workspace.showLoading
 import com.example.sprintly.ui.workspace.showNotCached
 import com.example.sprintly.ui.workspace.temporaryReadFailure
-import com.example.sprintly.ui.workspace.tint
 import com.example.sprintly.workspace.BoardColumn
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -51,14 +55,19 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = FragmentTaskDetailBinding.bind(view)
-        var lastComments: List<TaskComment>? = null
+        val nav = findNavController()
+        var visibleComments = emptyList<TaskComment>()
         var lastActivity: List<TaskActivity>? = null
+        var lastColumnNames: Map<String, String>? = null
         var rendering = false
         val editItem = binding.taskToolbar.menu.add(Menu.NONE, R.id.task_edit, 0, R.string.task_edit)
+        editItem.setIcon(R.drawable.ic_task_edit)
         editItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
         editItem.setOnMenuItemClickListener {
-            if (!serverAvailable()) return@setOnMenuItemClickListener false
-            findNavController().navigate(
+            if (nav.currentDestination?.id != R.id.task_detail_fragment || !serverAvailable()) {
+                return@setOnMenuItemClickListener false
+            }
+            nav.navigate(
                 R.id.task_form_fragment,
                 Bundle().apply {
                     putString("workspaceId", model.workspaceId)
@@ -81,6 +90,12 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
         binding.taskDetailStatus.statusRetry.setOnClickListener { retry() }
         binding.taskCommentsMore.setOnClickListener { if (serverAvailable()) model.loadComments() }
         binding.taskActivityMore.setOnClickListener { if (serverAvailable()) model.loadActivity() }
+        binding.taskCommentAdd.setOnClickListener {
+            if (binding.taskCommentInput.requestFocus()) {
+                WindowCompat.getInsetsController(requireActivity().window, binding.taskCommentInput)
+                    .show(WindowInsetsCompat.Type.ime())
+            }
+        }
         binding.taskMove.setOnClickListener {
             if (serverAvailable()) model.state.value.details?.let(::chooseColumn)
         }
@@ -97,14 +112,17 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
 
         collectScreen(model.state.combine(connectivity.connected) { state, online -> state to online }) { (state, online) ->
             if (state.deleted) {
-                if (findNavController().currentDestination?.id == R.id.task_detail_fragment) {
-                    findNavController().popBackStack()
+                if (nav.currentDestination?.id == R.id.task_detail_fragment) {
+                    nav.popBackStack()
                 }
                 return@collectScreen
             }
             val failure = state.loadFailure
             if (failure?.accessLost == true) {
-                goBackAfterAccessLoss(R.id.workspace_board_fragment)
+                val search = nav.previousBackStackEntry?.destination?.id == R.id.task_search_fragment
+                val destination = if (search && failure.code == "TASK_NOT_FOUND") R.id.task_search_fragment
+                else R.id.workspace_board_fragment
+                goBackAfterAccessLoss(destination)
                 return@collectScreen
             }
             state.notice?.let {
@@ -116,7 +134,7 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
             val readOnly = !online || state.cached || needsRetry
             val showDetails = details != null && (failure == null || failure.temporaryReadFailure)
             binding.taskDetailScroll.isVisible = showDetails
-            binding.taskComposer.isVisible = showDetails && !readOnly
+            binding.taskComposer.isVisible = showDetails && (!readOnly || state.commentText.isNotEmpty())
             editItem.isVisible = showDetails && !readOnly
             deleteItem.isVisible = editItem.isVisible && details != null &&
                 (details.workspaceRole == "OWNER" || details.task.createdBy == currentAccount()?.user?.id)
@@ -124,7 +142,7 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
             binding.taskOfflineBanner.showCached(showDetails && showBanner, online, retry)
             when {
                 showDetails -> binding.taskDetailStatus.root.isVisible = false
-                !online || failure?.temporaryReadFailure == true -> binding.taskDetailStatus.showNotCached()
+                !online -> binding.taskDetailStatus.showNotCached()
                 failure != null -> binding.taskDetailStatus.showError(failure)
                 details == null -> binding.taskDetailStatus.showLoading()
                 else -> binding.taskDetailStatus.root.isVisible = false
@@ -138,13 +156,7 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
             binding.taskDetailProject.text = details.projectName
             binding.taskDetailTitle.text = task.title
             binding.taskDetailPriority.text = getString(R.string.task_priority_value, getString(taskPriorityLabel(task.priority)))
-            val (priorityText, priorityBackground) = when (task.priority) {
-                "URGENT" -> R.color.orbix_error to R.color.orbix_error_container
-                "HIGH" -> R.color.orbix_warning to R.color.orbix_warning_container
-                else -> R.color.orbix_on_surface_variant to R.color.orbix_divider
-            }
-            binding.taskDetailPriority.setTextColor(requireContext().getColor(priorityText))
-            binding.taskDetailPriority.backgroundTintList = requireContext().tint(priorityBackground)
+            binding.taskDetailPriority.applyTaskPriorityColors(task.priority)
             binding.taskDetailAssignee.text = getString(
                 R.string.task_assignee_summary, task.assignee?.displayName ?: getString(R.string.task_unassigned),
             )
@@ -156,20 +168,36 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
             binding.taskDetailColumn.text = columnName?.let { getString(R.string.task_column_summary, it) }
             binding.taskDetailDescription.text = task.description ?: getString(R.string.task_no_description)
 
-            if (state.comments.rows != lastComments) {
-                lastComments = state.comments.rows
+            val comments = state.comments.rows.sortedWith(compareBy(TaskComment::createdAt, TaskComment::id))
+            if (comments != visibleComments) {
+                visibleComments = comments
                 binding.taskCommentRows.removeAllViews()
-                state.comments.rows.sortedWith(compareBy(TaskComment::createdAt, TaskComment::id)).forEach {
+                visibleComments.forEach {
                     addRow(binding.taskCommentRows, it.author.displayName, it.body, it.createdAt)
                 }
             }
-            if (state.activity.rows != lastActivity) {
-                lastActivity = state.activity.rows
-                binding.taskActivityRows.removeAllViews()
-                state.activity.rows.forEach {
-                    addRow(binding.taskActivityRows, it.actor.displayName, activitySummary(it, details.board.columns), it.createdAt)
+            state.confirmedCommentId?.let { id ->
+                val position = visibleComments.indexOfFirst { it.id == id }
+                if (position >= 0) {
+                    val row = binding.taskCommentRows.getChildAt(position)
+                    row.doOnLayout {
+                        row.requestRectangleOnScreen(Rect(0, 0, row.width, row.height), false)
+                        model.commentShown(id)
+                    }
                 }
             }
+            val columnNames = details.board.columns.associate { it.id to it.name }
+            if (state.activity.rows != lastActivity || columnNames != lastColumnNames) {
+                lastActivity = state.activity.rows
+                lastColumnNames = columnNames
+                binding.taskActivityRows.removeAllViews()
+                state.activity.rows.forEach {
+                    addRow(binding.taskActivityRows, it.actor.displayName, activitySummary(it, columnNames), it.createdAt)
+                }
+            }
+            binding.taskCommentsHeading.text = if (state.comments.next == null && state.comments.rows.isNotEmpty()) {
+                getString(R.string.task_comments_count, state.comments.rows.size)
+            } else getString(R.string.task_comments)
             renderPage(state.comments, binding.taskCommentsStatus, binding.taskCommentsMore, R.string.task_no_comments, R.string.task_more_comments, readOnly)
             renderPage(state.activity, binding.taskActivityStatus, binding.taskActivityMore, R.string.task_no_activity, R.string.task_more_activity, readOnly)
 
@@ -179,7 +207,10 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
             }
             rendering = false
             binding.taskCommentInput.isEnabled = !readOnly && !state.sendingComment && !state.commentUncertain
-            binding.taskCommentSubmit.isEnabled = !readOnly && !state.busy && !state.sendingComment && !state.comments.loading
+            binding.taskCommentAdd.isVisible = !readOnly
+            binding.taskCommentAdd.isEnabled = canAct
+            binding.taskCommentSubmit.isEnabled = !readOnly && !state.busy && !state.sendingComment &&
+                !state.comments.loading && !state.comments.awaitingFirstPage
             binding.taskCommentSubmit.setText(
                 when {
                     state.sendingComment -> R.string.task_sending
@@ -187,8 +218,10 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
                     else -> R.string.task_send_comment
                 },
             )
-            binding.taskCommentError.isVisible = state.commentError != null
-            state.commentError?.let(binding.taskCommentError::setText)
+            val inputError = state.commentError == R.string.task_comment_length
+            binding.taskCommentLayout.error = if (inputError) getString(R.string.task_comment_length) else null
+            binding.taskCommentError.isVisible = state.commentError != null && !inputError
+            if (state.commentError != null && !inputError) binding.taskCommentError.setText(state.commentError)
         }
         refreshWithOfflineSession(view, connectivity, model::refresh)
     }
@@ -253,19 +286,38 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
             .show()
     }
 
-    private fun activitySummary(activity: TaskActivity, columns: List<BoardColumn>): String {
-        val label = when (activity.action) {
-            "CREATED" -> R.string.task_activity_created
-            "UPDATED" -> R.string.task_activity_updated
-            "MOVED" -> R.string.task_activity_moved
-            "ASSIGNEE_CHANGED" -> R.string.task_activity_assigned
-            else -> R.string.task_activity_other
+    private fun activitySummary(activity: TaskActivity, columnNames: Map<String, String>): String {
+        val payload = activity.payload.orEmpty()
+        return when (activity.action) {
+            "CREATED" -> getString(R.string.task_activity_created)
+            "UPDATED" -> {
+                val changes = payload["changes"] as? Map<*, *>
+                val fields = listOf(
+                    "title" to R.string.task_title,
+                    "description" to R.string.task_description,
+                    "priority" to R.string.task_priority,
+                    "dueAt" to R.string.task_due,
+                ).mapNotNull { (field, label) ->
+                    if (changes?.containsKey(field) == true) getString(label).replaceFirstChar { it.lowercase() }
+                    else null
+                }
+                if (fields.isEmpty()) getString(R.string.task_activity_updated)
+                else {
+                    val formatter = ListFormatter.getInstance(resources.configuration.locales[0])
+                    getString(R.string.task_activity_updated_fields, formatter.format(fields))
+                }
+            }
+            "MOVED" -> {
+                val columnName = (payload["toColumnId"] as? String)?.let(columnNames::get)
+                if (columnName == null) getString(R.string.task_activity_moved)
+                else getString(R.string.task_activity_moved_to, columnName)
+            }
+            "ASSIGNEE_CHANGED" -> getString(
+                if (payload.containsKey("toAssigneeId") && payload["toAssigneeId"] == null) R.string.task_activity_unassigned
+                else R.string.task_activity_assigned,
+            )
+            else -> getString(R.string.task_activity_other)
         }
-        if (activity.action == "MOVED") {
-            val column = columns.firstOrNull { it.id == activity.payload?.get("toColumnId") }
-            if (column != null) return getString(R.string.task_activity_moved_to, column.name)
-        }
-        return getString(label)
     }
 
     private fun addRow(container: LinearLayout, name: String, body: String, timestamp: String) {
@@ -287,12 +339,12 @@ class TaskDetailFragment : Fragment(R.layout.fragment_task_detail) {
         val message = when {
             readOnly && (page.next != null || page.failure != null) -> R.string.task_discussion_connect
             page.failure != null -> page.failure.displayMessage()
-            page.loading -> R.string.task_loading_discussion
+            page.loading || page.awaitingFirstPage -> R.string.task_loading_discussion
             page.rows.isEmpty() && page.next == null -> empty
             else -> null
         }
         status.isVisible = message != null
-        message?.let(status::setText)
+        message?.let { if (status.text != getString(it)) status.setText(it) }
         more.isVisible = !readOnly && !page.loading && page.next != null && (page.failure != null || page.rows.isNotEmpty())
         more.setText(if (page.failure != null) R.string.auth_retry else moreLabel)
     }

@@ -126,7 +126,7 @@ class WorkspaceBoardFragment : Fragment(R.layout.fragment_workspace_board) {
                 ScreenState.Loading -> binding.boardStatus.showLoading()
                 is ScreenState.Failed -> {
                     if (state.error.accessLost) goBackAfterAccessLoss(R.id.workspace_detail_fragment)
-                    else if (state.error.temporaryReadFailure) binding.boardStatus.showNotCached()
+                    else if (!online) binding.boardStatus.showNotCached()
                     else binding.boardStatus.showError(state.error)
                 }
                 is ScreenState.Ready -> {
@@ -181,6 +181,15 @@ class WorkspaceBoardFragment : Fragment(R.layout.fragment_workspace_board) {
     private fun bindBoard(binding: FragmentWorkspaceBoardBinding, data: WorkspaceBoard) {
         binding.boardToolbar.subtitle = data.workspace.name
         binding.boardProjectName.text = data.project.name
+        binding.boardTaskSearch.setOnClickListener {
+            val navigation = findNavController()
+            if (navigation.currentDestination?.id == R.id.workspace_board_fragment) {
+                navigation.navigate(
+                    R.id.task_search_fragment,
+                    bundleOf("workspaceId" to model.workspaceId, "projectId" to model.projectId),
+                )
+            }
+        }
         val canWrite = canWrite(data)
         binding.columnAdd.isEnabled = canWrite
         binding.boardTaskCreate.isEnabled = canWrite && data.board.columns.isNotEmpty()

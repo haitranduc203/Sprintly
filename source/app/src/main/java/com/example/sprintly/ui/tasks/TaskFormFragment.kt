@@ -2,6 +2,7 @@ package com.example.sprintly.ui.tasks
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.graphics.Rect
 import android.os.Bundle
 import android.text.format.DateFormat
 import android.view.View
@@ -11,6 +12,7 @@ import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import androidx.activity.addCallback
 import androidx.core.content.getSystemService
+import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
@@ -102,7 +104,7 @@ class TaskFormFragment : Fragment(R.layout.fragment_task_form) {
             binding.taskOfflineBanner.showCached(binding.taskFormScroll.isVisible && showBanner, online, retry)
             when {
                 binding.taskFormScroll.isVisible -> binding.taskFormStatus.root.isVisible = false
-                !online || loadFailure?.temporaryReadFailure == true -> binding.taskFormStatus.showNotCached()
+                !online -> binding.taskFormStatus.showNotCached()
                 loadFailure != null -> binding.taskFormStatus.showError(loadFailure)
                 options == null -> binding.taskFormStatus.showLoading()
                 else -> binding.taskFormStatus.root.isVisible = false
@@ -149,8 +151,13 @@ class TaskFormFragment : Fragment(R.layout.fragment_task_form) {
                     else -> R.string.task_create
                 },
             )
-            binding.taskTitleLayout.error = getString(R.string.task_title_length)
-                .takeIf { state.inputError == R.string.task_title_length }
+            val titleError = if (state.inputError == R.string.task_title_length) getString(R.string.task_title_length) else null
+            if (binding.taskTitleLayout.error != titleError) {
+                binding.taskTitleLayout.error = titleError
+                if (titleError != null) binding.taskTitleLayout.doOnLayout {
+                    it.requestRectangleOnScreen(Rect(0, 0, it.width, it.height), false)
+                }
+            }
             binding.taskFormError.isVisible = state.inputError != null && binding.taskTitleLayout.error == null
             state.inputError?.let(binding.taskFormError::setText)
             rendering = false

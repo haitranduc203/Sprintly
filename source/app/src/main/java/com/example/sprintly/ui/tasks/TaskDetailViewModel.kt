@@ -36,7 +36,9 @@ internal data class DiscussionPage<T>(
     val next: Int? = 1,
     val loading: Boolean = false,
     val failure: WorkspaceFailure? = null,
-)
+) {
+    val awaitingFirstPage get() = rows.isEmpty() && next == 1 && failure == null
+}
 
 internal data class TaskDetailState(
     val details: TaskDetails? = null,
@@ -49,6 +51,7 @@ internal data class TaskDetailState(
     val commentText: String = "",
     val sendingComment: Boolean = false,
     val commentUncertain: Boolean = false,
+    val confirmedCommentId: String? = null,
     @param:StringRes val commentError: Int? = null,
     @param:StringRes val notice: Int? = null,
 ) {
@@ -121,6 +124,7 @@ internal class TaskDetailViewModel @Inject constructor(
                         sendingComment = false,
                         commentUncertain = false,
                         commentText = "",
+                        confirmedCommentId = comment.id,
                         comments = it.comments.copy(
                             rows = (it.comments.rows + comment).distinctBy(TaskComment::id).sortedBy(TaskComment::createdAt),
                         ),
@@ -197,6 +201,10 @@ internal class TaskDetailViewModel @Inject constructor(
 
     fun clearNotice() {
         mutableState.update { it.copy(notice = null) }
+    }
+
+    fun commentShown(id: String) {
+        mutableState.update { if (it.confirmedCommentId == id) it.copy(confirmedCommentId = null) else it }
     }
 
     private suspend fun loadDetails(): Boolean {

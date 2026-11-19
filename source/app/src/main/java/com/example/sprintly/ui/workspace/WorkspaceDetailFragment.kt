@@ -100,7 +100,7 @@ class WorkspaceDetailFragment : Fragment(R.layout.fragment_workspace_detail) {
                 projects.submitList(emptyList())
                 members.submitList(emptyList())
                 if (state.error.accessLost) goBackAfterAccessLoss(R.id.workspace_list_fragment)
-                else if (state.error.temporaryReadFailure) binding.detailStatus.showNotCached()
+                else if (!online) binding.detailStatus.showNotCached()
                 else binding.detailStatus.showError(state.error)
             }
             is ScreenState.Ready -> {

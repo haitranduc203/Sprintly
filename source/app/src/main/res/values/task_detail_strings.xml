@@ -43,6 +43,8 @@
     <string name="task_delete_title">Xóa “%1$s”?</string>
     <string name="task_delete_message">Công việc cùng bình luận và lịch sử sẽ bị xóa vĩnh viễn.</string>
     <string name="task_comments">Bình luận</string>
+    <string name="task_comments_count">Bình luận · %1$d</string>
+    <string name="task_add_comment">Thêm bình luận</string>
     <string name="task_activity">Lịch sử</string>
     <string name="task_comment_hint">Viết bình luận…</string>
     <string name="task_send_comment">Gửi</string>
@@ -56,9 +58,11 @@
     <string name="task_more_activity">Tải thêm lịch sử</string>
     <string name="task_activity_created">Đã tạo công việc</string>
     <string name="task_activity_updated">Đã cập nhật công việc</string>
+    <string name="task_activity_updated_fields">Đã cập nhật %1$s</string>
     <string name="task_activity_moved">Đã di chuyển công việc</string>
     <string name="task_activity_moved_to">Đã di chuyển công việc sang %1$s</string>
     <string name="task_activity_assigned">Đã thay đổi người phụ trách</string>
+    <string name="task_activity_unassigned">Đã bỏ giao công việc</string>
     <string name="task_activity_other">Đã ghi một hoạt động</string>
     <string name="task_assignee_summary">Phụ trách · %1$s</string>
     <string name="task_due_summary">Hạn hoàn thành · %1$s</string>

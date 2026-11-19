@@ -50,7 +50,7 @@ class WorkspaceListFragment : Fragment(R.layout.fragment_workspace_list) {
                 ScreenState.Loading -> binding.workspaceStatus.showLoading()
                 is ScreenState.Failed -> {
                     rows.submitList(emptyList())
-                    if (state.error.temporaryReadFailure) binding.workspaceStatus.showNotCached()
+                    if (!online) binding.workspaceStatus.showNotCached()
                     else binding.workspaceStatus.showError(state.error)
                 }
                 is ScreenState.Ready -> {

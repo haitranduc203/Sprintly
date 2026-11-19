@@ -2,9 +2,11 @@ package com.example.sprintly.ui.tasks
 
 import android.content.Context
 import android.text.format.DateFormat
+import android.widget.TextView
 import androidx.annotation.StringRes
 import com.example.sprintly.R
 import com.example.sprintly.offline.WorkspaceSnapshots
+import com.example.sprintly.ui.workspace.tint
 import com.example.sprintly.workspace.Board
 import com.example.sprintly.workspace.Project
 import com.example.sprintly.workspace.Workspace
@@ -24,6 +26,16 @@ internal fun taskPriorityLabel(priority: String): Int = when (priority) {
     "HIGH" -> R.string.task_priority_high
     "URGENT" -> R.string.task_priority_urgent
     else -> R.string.task_priority_unknown
+}
+
+internal fun TextView.applyTaskPriorityColors(priority: String) {
+    val (text, background) = when (priority) {
+        "URGENT" -> R.color.orbix_error to R.color.orbix_error_container
+        "HIGH" -> R.color.orbix_warning to R.color.orbix_warning_container
+        else -> R.color.orbix_on_surface_variant to R.color.orbix_divider
+    }
+    setTextColor(context.getColor(text))
+    backgroundTintList = context.tint(background)
 }
 
 internal fun Context.taskDateTime(instant: String): String {

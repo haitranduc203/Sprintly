@@ -55,6 +55,16 @@
                 android:paddingBottom="8dp"
                 android:textAppearance="?attr/textAppearanceBodyMedium"
                 android:textColor="@color/orbix_on_surface_variant" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/board_task_search"
+                style="@style/Widget.Sprintly.TaskSearchEntry"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="4dp"
+                android:gravity="start|center_vertical"
+                android:text="@string/task_search_board_entry"
+                app:icon="@drawable/ic_task_search" />
             <HorizontalScrollView
                 android:id="@+id/column_chip_scroll"
                 android:layout_width="match_parent"

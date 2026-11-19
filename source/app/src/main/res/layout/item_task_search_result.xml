@@ -1,0 +1,34 @@
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.Sprintly.WorkspaceCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:minHeight="72dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+        <TextView
+            android:id="@+id/search_result_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?attr/textAppearanceTitleSmall"
+            android:textColor="@color/orbix_on_surface"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/search_result_metadata"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="@color/orbix_on_surface_variant" />
+        <TextView
+            android:id="@+id/search_result_priority"
+            style="@style/Widget.Sprintly.WorkspaceRole"
+            android:layout_marginTop="6dp" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
