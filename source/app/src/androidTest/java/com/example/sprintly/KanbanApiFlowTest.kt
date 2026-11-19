@@ -23,6 +23,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
 import androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isEnabled
+import androidx.test.espresso.matcher.ViewMatchers.isFocused
 import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withResourceName
@@ -83,7 +84,9 @@ class KanbanApiFlowTest {
 
             jumpTo("To Do")
             awaitDisplayed(allOf(title, isDescendantOfA(lane("To Do"))))
-            onView(allOf(withId(R.id.board_task_drag), isDescendantOfA(lane("To Do")))).perform(dragTo("In Progress"))
+            val dragHandle = allOf(withId(R.id.board_task_drag), isEnabled(), isDescendantOfA(lane("To Do")))
+            awaitDisplayed(dragHandle)
+            onView(dragHandle).perform(dragTo("In Progress"))
             jumpTo("In Progress")
             val movedTitle = allOf(title, isDescendantOfA(lane("In Progress")))
             awaitDisplayed(movedTitle)
@@ -107,10 +110,18 @@ class KanbanApiFlowTest {
 
             val commentInput = withId(R.id.task_comment_input)
             val savedComment = allOf(withText(comment), isDescendantOfA(withId(R.id.task_comment_rows)))
+            awaitScrolledTo(allOf(withId(R.id.task_comments_status), withText(R.string.task_no_comments)))
+            val addComment = withText("Thêm bình luận")
+            awaitScrolledTo(addComment)
+            tap(addComment)
+            awaitDisplayed(allOf(commentInput, isFocused()))
+            onView(commentInput).perform(replaceText(" "), closeSoftKeyboard())
+            tap(withId(R.id.task_comment_submit))
+            awaitDisplayed(withText(R.string.task_comment_length))
             awaitDisplayed(commentInput)
             onView(commentInput).perform(replaceText(comment), closeSoftKeyboard())
             tap(allOf(withId(R.id.task_comment_submit), isEnabled()))
-            awaitScrolledTo(savedComment)
+            awaitDisplayed(savedComment)
 
             tap(withId(R.id.task_edit))
             awaitDisplayed(allOf(withId(R.id.task_title_input), withText(task)))
@@ -123,6 +134,7 @@ class KanbanApiFlowTest {
             awaitDisplayed(editedDetailTitle)
             awaitScrolledTo(savedComment)
             awaitScrolledTo(moveActivity)
+            awaitScrolledTo(allOf(withText("Đã cập nhật tiêu đề"), isDescendantOfA(withId(R.id.task_activity_rows))))
 
             tap(withContentDescription("Quay lại"))
             tap(withContentDescription("Quay lại"))
@@ -137,7 +149,7 @@ class KanbanApiFlowTest {
     private fun dragTo(label: String): ViewAction = object : ViewAction {
         override fun getDescription() = "Drag the task handle into $label"
 
-        override fun getConstraints(): Matcher<View> = isDisplayed()
+        override fun getConstraints(): Matcher<View> = allOf(isDisplayed(), isEnabled())
 
         override fun perform(ui: UiController, handle: View) {
             val board = handle.rootView.findViewById<RecyclerView>(R.id.board_columns)
@@ -149,19 +161,27 @@ class KanbanApiFlowTest {
             val destination = Rect()
             val insertion = Rect()
             val boardBounds = Rect()
+            assertTrue(board.getGlobalVisibleRect(boardBounds))
+            assertTrue(target.getGlobalVisibleRect(destination))
+            val edge = 36 * board.resources.displayMetrics.density
+            val safeRight = boardBounds.right - edge - 2
+            // Expose part of the destination outside the board's auto-scroll region.
+            val offset = (destination.left + edge / 2 - safeRight).toInt()
+            if (offset > 0) {
+                board.scrollBy(offset, 0)
+                ui.loopMainThreadUntilIdle()
+            }
             assertTrue(handle.getGlobalVisibleRect(grip))
             assertTrue(target.getGlobalVisibleRect(destination))
             assertTrue(firstTask.getGlobalVisibleRect(insertion))
-            assertTrue(board.getGlobalVisibleRect(boardBounds))
             val rootLocation = IntArray(2).also(handle.rootView::getLocationOnScreen)
             val downTime = SystemClock.uptimeMillis()
             val startX = grip.exactCenterX() + rootLocation[0]
             val startY = grip.exactCenterY() + rootLocation[1]
-            val edge = 36 * board.resources.displayMetrics.density
-            val endX = min(destination.exactCenterX(), boardBounds.right - edge - 2)
-                .coerceAtLeast(destination.left + 2f) + rootLocation[0]
+            val targetX = min(destination.exactCenterX(), safeRight)
+            assertTrue("The target needs a drop point inside the viewport", targetX > destination.left)
+            val endX = targetX + rootLocation[0]
             val endY = insertion.top + insertion.height() / 4f + rootLocation[1]
-            val touchSlop = ViewConfiguration.get(handle.context).scaledTouchSlop
 
             fun inject(action: Int, x: Float, y: Float) {
                 val event = MotionEvent.obtain(downTime, SystemClock.uptimeMillis(), action, x, y, 0)
@@ -174,14 +194,16 @@ class KanbanApiFlowTest {
             }
 
             inject(MotionEvent.ACTION_DOWN, startX, startY)
-            inject(MotionEvent.ACTION_MOVE, startX + touchSlop + 2f, startY)
-            ui.loopMainThreadForAtLeast(130)
+            ui.loopMainThreadForAtLeast(ViewConfiguration.getLongPressTimeout().toLong() + 100)
             for (step in 1..8) {
                 val fraction = step / 8f
                 inject(MotionEvent.ACTION_MOVE, startX + fraction * (endX - startX), startY + fraction * (endY - startY))
                 ui.loopMainThreadForAtLeast(16)
             }
-            ui.loopMainThreadForAtLeast(80)
+            val hoverDeadline = SystemClock.uptimeMillis() + 2_000
+            while (!target.isActivated && SystemClock.uptimeMillis() < hoverDeadline) {
+                ui.loopMainThreadForAtLeast(16)
+            }
             val highlighted = target.isActivated
             inject(MotionEvent.ACTION_UP, endX, endY)
             ui.loopMainThreadForAtLeast(150)
@@ -201,8 +223,9 @@ class KanbanApiFlowTest {
     }
 
     private fun tap(matcher: Matcher<View>) {
-        awaitDisplayed(matcher)
-        onView(matcher).perform(click())
+        val enabled = allOf(matcher, isEnabled())
+        awaitDisplayed(enabled)
+        onView(enabled).perform(click())
     }
 
     private fun awaitScrolledTo(matcher: Matcher<View>) {

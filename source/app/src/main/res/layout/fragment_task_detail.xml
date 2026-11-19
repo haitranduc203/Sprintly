@@ -11,6 +11,10 @@
         app:navigationIcon="@drawable/ic_auth_back"
         app:title="@string/task_details" />
 
+    <include
+        android:id="@+id/task_offline_banner"
+        layout="@layout/view_workspace_offline_banner" />
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -104,13 +108,26 @@
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:layout_marginTop="6dp" />
 
-                <TextView
-                    android:id="@+id/task_comments_heading"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:text="@string/task_comments"
-                    android:layout_marginTop="20dp" />
+                    android:layout_marginTop="12dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:id="@+id/task_comments_heading"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textAppearance="?attr/textAppearanceTitleMedium"
+                        android:text="@string/task_comments" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/task_comment_add"
+                        style="@style/Widget.Sprintly.WorkspaceTextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/task_add_comment" />
+                </LinearLayout>
                 <LinearLayout
                     android:id="@+id/task_comment_rows"
                     android:layout_width="match_parent"
@@ -120,6 +137,7 @@
                     android:id="@+id/task_comments_status"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:accessibilityLiveRegion="polite"
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:layout_marginTop="6dp"
                     android:textColor="@color/orbix_on_surface_variant" />
@@ -146,6 +164,7 @@
                     android:id="@+id/task_activity_status"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:accessibilityLiveRegion="polite"
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:layout_marginTop="6dp"
                     android:textColor="@color/orbix_on_surface_variant" />
@@ -178,6 +197,7 @@
             android:gravity="bottom"
             android:orientation="horizontal">
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/task_comment_layout"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

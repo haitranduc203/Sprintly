@@ -29,8 +29,17 @@ jobs:
         run: >-
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           --install "platforms;android-37.0" "build-tools;36.0.0"
-      - name: Build debug APK, run unit tests and lint
-        run: bash ./gradlew --no-daemon :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+      - name: Build app and test APKs, run unit tests and lint
+        run: >-
+          bash ./gradlew --no-daemon
+          :app:assembleDebug :app:assembleDebugAndroidTest
+          :app:testDebugUnitTest :app:lintDebug
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: sprintly-debug-apk
+          path: source/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
 
   backend:
     name: Backend tests and PostgreSQL smoke test
@@ -67,12 +76,16 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - name: Install backend dependencies
         run: npm ci
-      - name: Apply migrations and seed demo users
+      - name: Apply migrations and verify schema
+        run: |
+          npm run db:migrate
+          npm exec -- prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+      - name: Seed demo data twice
         env:
           DEMO_OWNER_PASSWORD: owner-test-only-123
           DEMO_MEMBER_PASSWORD: member-test-only-123
         run: |
-          npm run db:migrate
+          npm run db:seed
           npm run db:seed
       - name: Run backend tests
         env:

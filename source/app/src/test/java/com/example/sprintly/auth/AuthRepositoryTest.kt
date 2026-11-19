@@ -68,12 +68,50 @@ class AuthRepositoryTest {
     @Test
     fun networkRefreshFailurePreservesOfflineSession() = runBlocking {
         storage.session = StoredSession(user, "refresh-original")
+        val cacheId = storage.session?.cacheId
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
 
         repository.restore()
 
         assertEquals(AuthState.SignedIn(user, needsRetry = true), repository.state.value)
         assertEquals("refresh-original", storage.session?.refreshToken)
+        assertEquals(cacheId, repository.cacheSessionId())
+    }
+
+    @Test
+    fun logoutClosesCacheBeforeCleanupAndSameAccountGetsANewNamespace() = runBlocking {
+        val cleared = CompletableDeferred<String>()
+        repository = AuthRepository(AuthRemote(server.url("/api/v1/").toString()), storage, scope) {
+            cleared.complete(it)
+        }
+        server.dispatcher = routing { request ->
+            when (request.path) {
+                "/api/v1/auth/login" -> login("access", "refresh")
+                "/api/v1/auth/logout" -> MockResponse().setResponseCode(204)
+                else -> error(500, "UNEXPECTED_REQUEST")
+            }
+        }
+        signIn()
+        val firstLogin = checkNotNull(repository.cacheSessionId())
+        val reading = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val oldRead = async {
+            repository.withSessionCache(firstLogin) {
+                reading.complete(Unit)
+                release.await()
+                "saved board"
+            }
+        }
+        withTimeout(5_000) { reading.await() }
+        repository.signOut()
+        assertNull(repository.cacheSessionId())
+        release.complete(Unit)
+        assertNull(oldRead.await())
+        assertEquals(firstLogin, withTimeout(5_000) { cleared.await() })
+
+        signIn()
+        assertEquals("visible", repository.withSessionCache(checkNotNull(repository.cacheSessionId())) { "visible" })
+        assertNull(repository.withSessionCache(firstLogin) { "previous login" })
     }
 
     @Test

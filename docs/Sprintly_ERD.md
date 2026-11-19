@@ -175,17 +175,15 @@ erDiagram
 
 ## 4. Room trên Android
 
-| Dữ liệu server | Room entity | Phạm vi |
+| Dữ liệu server | Snapshot Room | Phạm vi |
 |---|---|---|
-| `workspaces` | `CachedWorkspaceEntity` | Danh sách và chi tiết workspace đã đồng bộ. |
-| `workspace_members` và thông tin user hiển thị | `CachedMemberEntity` | Danh sách thành viên của workspace đã đồng bộ. |
-| `projects` | `CachedProjectEntity` | Project đã đồng bộ theo workspace. Giữ `boardVersion` tương ứng với snapshot board lưu trong Room. |
-| `board_columns` | `CachedColumnEntity` | Cột và thứ tự theo project. |
-| `tasks` | `CachedTaskEntity` | Cột, vị trí, phiên bản và trường hiển thị đã nhận từ server. |
-| `comments` | `CachedCommentEntity` | Tùy chọn theo lượng dữ liệu. |
+| `workspaces` | `workspaces`, `workspace` | Danh sách đầy đủ và chi tiết workspace đã đồng bộ. |
+| `workspace_members` và thông tin user hiển thị | `members` | Danh sách thành viên theo workspace. |
+| `projects` | `projects`, `project` | Danh sách theo workspace và chi tiết từng project. |
+| `board_columns` và `tasks` | `board` | Cột, task và `boardVersion` được lưu chung. Chi tiết task đọc từ snapshot board. |
 
 - Room cách ly cache theo tài khoản. UI có thể quan sát dữ liệu đã đồng bộ qua Flow. Cập nhật cache trong một giao dịch theo snapshot và phạm vi phản hồi. Dọn dữ liệu workspace bị mất quyền khi máy chủ xác nhận, kể cả khi workspace vắng mặt trong danh sách quyền đã tải đầy đủ.
 - Lỗi mạng, timeout hoặc phản hồi `5xx` khi refresh token giữ phiên cục bộ ở chế độ chỉ đọc cache của tài khoản hiện tại. Nếu máy chủ đã xoay token nhưng client không nhận được phản hồi, lần thử sau có thể bị từ chối với token cũ và yêu cầu đăng nhập lại.
 - Khi server xác nhận refresh token hết hạn, bị thu hồi hoặc không hợp lệ, hoặc khi người dùng đăng xuất, khóa quyền đọc cache ngay, xóa phiên cục bộ và dọn cache của tài khoản. Logout cục bộ hoàn tất cả khi offline. Chỉ xác nhận thu hồi trên máy chủ khi yêu cầu logout đã được máy chủ xử lý thành công.
 - Mã hóa refresh token bằng khóa Android Keystore. Chỉ ghi token hoặc cache từ phản hồi nếu lần đăng nhập đã khởi tạo yêu cầu vẫn đang hoạt động. Việc kiểm tra và ghi phải được đồng bộ với khóa phiên và dọn cache, kể cả khi người dùng đăng nhập lại cùng tài khoản.
-- **Đề xuất kỹ thuật.** Dùng một Room database có `accountId` trong khóa và mọi truy vấn cache. Khóa gợi ý là `(accountId, id)`, riêng member là `(accountId, workspaceId, userId)`. Nếu dùng khóa ngoại cục bộ, đưa `accountId` vào quan hệ cha–con.
+- Phase 4 dùng bảng Room `offline_snapshots` trong thư mục loại khỏi sao lưu. Khóa gồm ID lần đăng nhập, loại snapshot, workspace và project. ID lần đăng nhập đi cùng phiên trong kho mã hóa để đọc được dữ liệu sau khi mở lại ứng dụng. Đăng nhập lần mới tạo ID mới, kể cả với cùng tài khoản. Bình luận và lịch sử tải từ máy chủ.

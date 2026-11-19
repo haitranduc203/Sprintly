@@ -5,6 +5,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sprintly.R
+import com.example.sprintly.offline.OfflineConnectivity
+import com.example.sprintly.offline.WorkspaceSnapshots
 import com.example.sprintly.workspace.DirectoryUser
 import com.example.sprintly.workspace.WorkspaceFailure
 import com.example.sprintly.workspace.WorkspaceRepository
@@ -28,6 +30,8 @@ internal data class WorkspaceActionState(
 @HiltViewModel
 internal class WorkspaceActionViewModel @Inject constructor(
     private val repository: WorkspaceRepository,
+    private val snapshots: WorkspaceSnapshots,
+    private val connectivity: OfflineConnectivity,
     savedState: SavedStateHandle,
 ) : ViewModel() {
     private val action = WorkspaceAction.valueOf(checkNotNull(savedState[WorkspaceAction.KEY]))
@@ -47,7 +51,7 @@ internal class WorkspaceActionViewModel @Inject constructor(
     }
 
     fun lookup(email: String) {
-        if (mutableState.value.busy) return
+        if (mutableState.value.busy || !connectivity.isConnected()) return
         mutableState.value = WorkspaceActionState(busy = true)
         viewModelScope.launch {
             try {
@@ -64,9 +68,10 @@ internal class WorkspaceActionViewModel @Inject constructor(
 
     fun submit(name: String, description: String?) {
         val state = mutableState.value
-        if (state.busy || state.outcome != null) return
+        if (state.busy || state.outcome != null || !connectivity.isConnected()) return
         if (action == WorkspaceAction.AddMember && !state.candidateSelected) return
         mutableState.value = state.copy(busy = true, error = null)
+        val login = snapshots.sessionId()
         viewModelScope.launch {
             try {
                 val id = when (action) {
@@ -75,6 +80,7 @@ internal class WorkspaceActionViewModel @Inject constructor(
                         .updateWorkspace(checkNotNull(targetId), name, description).id
                     WorkspaceAction.DeleteWorkspace -> {
                         repository.deleteWorkspace(checkNotNull(targetId))
+                        snapshots.removeWorkspace(targetId, session = login)
                         null
                     }
                     WorkspaceAction.CreateProject -> repository
@@ -83,6 +89,7 @@ internal class WorkspaceActionViewModel @Inject constructor(
                         .updateProject(checkNotNull(targetId), name, description).id
                     WorkspaceAction.DeleteProject -> {
                         repository.deleteProject(checkNotNull(targetId))
+                        if (scopeId != null) snapshots.removeProject(scopeId, targetId, session = login)
                         null
                     }
                     WorkspaceAction.AddMember -> repository

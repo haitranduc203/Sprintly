@@ -384,6 +384,10 @@ P0 không cần xóa/reorder cột nếu ảnh hưởng đáng kể tới tiến
 | POST | `/tasks/:taskId/comments` | Tạo bình luận `{body}` với header `Idempotency-Key` |
 | GET | `/tasks/:taskId/activities` | Audit trail (paginated) |
 
+`GET /api/v1/projects/:projectId/tasks` kết hợp mọi bộ lọc được gửi. `q` khớp một phần tiêu đề, không phân biệt chữ hoa và chữ thường, tối đa 150 điểm mã Unicode sau khi cắt khoảng trắng hai đầu. Bỏ qua `q` hoặc gửi giá trị chỉ chứa khoảng trắng để tìm mọi tiêu đề. `columnId` và `assigneeId` dùng UUID. `priority` nhận `LOW`, `MEDIUM`, `HIGH` hoặc `URGENT`.
+
+Kết quả trả về `{ "data": [...], "meta": { "page": 1, "pageSize": 20, "total": 42 } }`. `total` là số task khớp trước khi phân trang. `page` bắt đầu từ 1. `pageSize` nhận từ 1 đến 100, mặc định là 20. Kết quả sắp theo thứ tự cột, vị trí task trong cột và ID task. Tham số sai định dạng trả `400 VALIDATION_ERROR`. Dự án ngoài phạm vi truy cập trả `404 NOT_FOUND`.
+
 Move example:
 
 ```json

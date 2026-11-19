@@ -1,5 +1,8 @@
 package com.example.sprintly.auth
 
+import android.database.sqlite.SQLiteException
+import com.example.sprintly.offline.OfflineCache
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -10,19 +13,40 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 @Singleton
-class AuthRepository @Inject internal constructor(
+class AuthRepository internal constructor(
     private val remote: AuthRemote,
     private val storage: SessionStorage,
-    @param:AuthScope private val scope: CoroutineScope,
+    private val scope: CoroutineScope,
+    private val clearCache: suspend (String) -> Unit = {},
 ) {
+    @Inject internal constructor(
+        remote: AuthRemote,
+        storage: SessionStorage,
+        @AuthScope scope: CoroutineScope,
+        cache: OfflineCache,
+    ) : this(remote, storage, scope, cache::clearSession)
+
     private val lock = Any()
+    private val cacheLock = Mutex()
     private val mutableState = MutableStateFlow<AuthState>(AuthState.Checking)
     private var session: ActiveSession? = null
     private var authAttempt = 0L
 
     val state: StateFlow<AuthState> = mutableState.asStateFlow()
+
+    internal fun cacheSessionId(): String? = synchronized(lock) {
+        session?.cacheId?.takeIf { mutableState.value is AuthState.SignedIn }
+    }
+
+    internal suspend fun <T> withSessionCache(id: String, action: suspend () -> T): T? = cacheLock.withLock {
+        if (cacheSessionId() != id) return@withLock null
+        val value = action()
+        value.takeIf { cacheSessionId() == id }
+    }
 
     suspend fun restore() {
         scope.async {
@@ -92,10 +116,11 @@ class AuthRepository @Inject internal constructor(
                     !persist(next) ->
                         AuthResult.Failure("STORAGE_ERROR") to next.tokens.refresh
                     else -> {
-                        val previous = session?.tokens?.refresh
+                        val previous = session
                         session = next
                         mutableState.value = AuthState.SignedIn(next.user)
-                        AuthResult.Success to previous
+                        previous?.let { discardCache(it.cacheId) }
+                        AuthResult.Success to previous?.tokens?.refresh
                     }
                 }
             }
@@ -115,7 +140,7 @@ class AuthRepository @Inject internal constructor(
             if (persisted == null) {
                 mutableState.value = AuthState.SignedOut()
             } else {
-                session = ActiveSession(persisted.user, SessionTokens(null, persisted.refreshToken))
+                session = ActiveSession(persisted.user, SessionTokens(null, persisted.refreshToken), persisted.cacheId)
             }
         }
         session?.let { it to it.tokens }
@@ -249,7 +274,7 @@ class AuthRepository @Inject internal constructor(
     }
 
     private fun persist(active: ActiveSession): Boolean = try {
-        storage.write(StoredSession(active.user, active.tokens.refresh))
+        storage.write(StoredSession(active.user, active.tokens.refresh, active.cacheId))
         active.persisted = true
         true
     } catch (_: SessionStorageException) {
@@ -257,7 +282,7 @@ class AuthRepository @Inject internal constructor(
     }
 
     private fun closeSession(expired: Boolean): String? {
-        val refreshToken = session?.tokens?.refresh
+        val previous = session
         session = null
         try {
             storage.clear()
@@ -265,7 +290,20 @@ class AuthRepository @Inject internal constructor(
             // Keep access closed even if the platform cannot remove its local record.
         }
         mutableState.value = AuthState.SignedOut(expired)
-        return refreshToken
+        previous?.let { discardCache(it.cacheId) }
+        return previous?.tokens?.refresh
+    }
+
+    private fun discardCache(id: String) {
+        scope.launch {
+            cacheLock.withLock {
+                try {
+                    clearCache(id)
+                } catch (_: SQLiteException) {
+                    // An ended login can no longer read or write its cache namespace.
+                }
+            }
+        }
     }
 
     private fun revoke(refreshToken: String) {
@@ -278,7 +316,7 @@ class AuthRepository @Inject internal constructor(
         }
     }
 
-    private class ActiveSession(var user: AuthUser, var tokens: SessionTokens) {
+    private class ActiveSession(var user: AuthUser, var tokens: SessionTokens, val cacheId: String = UUID.randomUUID().toString()) {
         var persisted = false
         var refresh: Refresh? = null
     }

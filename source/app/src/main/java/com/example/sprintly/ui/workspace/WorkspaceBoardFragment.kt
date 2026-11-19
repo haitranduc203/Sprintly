@@ -15,18 +15,22 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.sprintly.R
 import com.example.sprintly.databinding.FragmentWorkspaceBoardBinding
 import com.example.sprintly.databinding.ItemWorkspaceColumnChipBinding
+import com.example.sprintly.offline.OfflineConnectivity
 import com.example.sprintly.tasks.Task
 import com.example.sprintly.workspace.BoardColumn
 import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import kotlinx.coroutines.flow.combine
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @AndroidEntryPoint
 class WorkspaceBoardFragment : Fragment(R.layout.fragment_workspace_board) {
     private val model: WorkspaceBoardViewModel by viewModels()
+    @Inject internal lateinit var connectivity: OfflineConnectivity
     private var taskToReveal: Pair<String, String>? = null
     private var moveDialog: AlertDialog? = null
 
@@ -74,10 +78,12 @@ class WorkspaceBoardFragment : Fragment(R.layout.fragment_workspace_board) {
 
         ViewCompat.setAccessibilityHeading(binding.boardProjectName, true)
         binding.boardToolbar.setNavigationOnClickListener { findNavController().navigateUp() }
-        binding.boardRefresh.setOnClickListener { retryWorkspace(model::refresh) }
-        binding.boardStatus.statusRetry.setOnClickListener { retryWorkspace(model::refresh) }
+        val retry = { retryOfflineWorkspace(connectivity, model::refresh) }
+        binding.boardRefresh.setOnClickListener { retry() }
+        binding.boardStatus.statusRetry.setOnClickListener { retry() }
         binding.columnAdd.setOnClickListener {
-            openAction(WorkspaceAction.AddColumn, scopeId = model.projectId)
+            val data = (model.state.value as? ScreenState.Ready)?.data
+            if (data != null && canWrite(data)) openAction(WorkspaceAction.AddColumn, scopeId = model.projectId)
         }
         binding.boardTaskCreate.setOnClickListener { openTaskForm(model.selectedColumn) }
 
@@ -96,7 +102,7 @@ class WorkspaceBoardFragment : Fragment(R.layout.fragment_workspace_board) {
             val taskId = entry.remove<String>("boardCreatedTaskId")
             if (taskId != null && columnId != null) taskToReveal = columnId to taskId
         }
-        refreshWithSession(view, model::refresh)
+        refreshWithOfflineSession(view, connectivity, model::refresh)
         collectScreen(model.moveFailures) { failure ->
             val message = when (failure.status) {
                 409 -> R.string.board_move_conflict
@@ -104,11 +110,14 @@ class WorkspaceBoardFragment : Fragment(R.layout.fragment_workspace_board) {
                 else -> if (failure.code == "NETWORK_ERROR") R.string.board_move_unconfirmed else R.string.board_move_failed
             }
             Snackbar.make(view, message, Snackbar.LENGTH_LONG)
-                .setAction(R.string.auth_retry) { retryWorkspace(model::refresh) }
+                .setAction(R.string.auth_retry) { retry() }
                 .show()
         }
-        collectScreen(model.state) { state ->
-            val content = (state as? ScreenState.Ready)?.data
+        collectScreen(model.state.combine(connectivity.connected, ::Pair)) { (state, online) ->
+            val ready = state as? ScreenState.Ready
+            val content = ready?.data
+            val showBanner = !online || currentAccount()?.needsRetry != false || ready?.refreshFailed == true
+            binding.boardOfflineBanner.showCached(content != null && showBanner, online, retry)
             binding.boardContent.isVisible = content != null
             binding.boardStatus.root.isVisible = content == null
             binding.boardMore.isVisible = content != null && canWrite(content)
@@ -117,6 +126,7 @@ class WorkspaceBoardFragment : Fragment(R.layout.fragment_workspace_board) {
                 ScreenState.Loading -> binding.boardStatus.showLoading()
                 is ScreenState.Failed -> {
                     if (state.error.accessLost) goBackAfterAccessLoss(R.id.workspace_detail_fragment)
+                    else if (!online) binding.boardStatus.showNotCached()
                     else binding.boardStatus.showError(state.error)
                 }
                 is ScreenState.Ready -> {
@@ -171,12 +181,19 @@ class WorkspaceBoardFragment : Fragment(R.layout.fragment_workspace_board) {
     private fun bindBoard(binding: FragmentWorkspaceBoardBinding, data: WorkspaceBoard) {
         binding.boardToolbar.subtitle = data.workspace.name
         binding.boardProjectName.text = data.project.name
+        binding.boardTaskSearch.setOnClickListener {
+            val navigation = findNavController()
+            if (navigation.currentDestination?.id == R.id.workspace_board_fragment) {
+                navigation.navigate(
+                    R.id.task_search_fragment,
+                    bundleOf("workspaceId" to model.workspaceId, "projectId" to model.projectId),
+                )
+            }
+        }
         val canWrite = canWrite(data)
         binding.columnAdd.isEnabled = canWrite
         binding.boardTaskCreate.isEnabled = canWrite && data.board.columns.isNotEmpty()
-        binding.boardMore.setOnClickListener { showBoardActions(binding.boardMore, data) }
-        binding.boardSyncError.isVisible = data.syncError != null
-        binding.boardSyncError.setText(R.string.board_sync_error)
+        binding.boardMore.setOnClickListener { if (canWrite(data)) showBoardActions(binding.boardMore, data) }
         val count = data.board.columns.sumOf { it.tasks.size }
         binding.boardTaskCount.text = resources.getQuantityString(R.plurals.board_task_count, count, count)
     }
@@ -275,7 +292,8 @@ class WorkspaceBoardFragment : Fragment(R.layout.fragment_workspace_board) {
     }
 
     private fun canWrite(data: WorkspaceBoard): Boolean =
-        !data.busy && data.syncError == null && currentAccount()?.needsRetry == false
+        !data.busy && data.syncError == null && connectivity.isConnected() &&
+            (model.state.value as? ScreenState.Ready)?.cached == false && currentAccount()?.needsRetry == false
 
     private fun showBoardActions(anchor: View, data: WorkspaceBoard) {
         val actions = mutableListOf(
@@ -293,7 +311,12 @@ class WorkspaceBoardFragment : Fragment(R.layout.fragment_workspace_board) {
         )
         if (data.workspace.isOwner) {
             actions += R.string.workspace_project_delete to {
-                openAction(WorkspaceAction.DeleteProject, targetId = data.project.id, name = data.project.name)
+                openAction(
+                    WorkspaceAction.DeleteProject,
+                    scopeId = data.workspace.id,
+                    targetId = data.project.id,
+                    name = data.project.name,
+                )
             }
         }
         anchor.showActions(*actions.toTypedArray())

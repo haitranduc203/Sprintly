@@ -12,6 +12,7 @@ import java.io.IOException
 import java.security.GeneralSecurityException
 import java.security.KeyStore
 import java.security.ProviderException
+import java.util.UUID
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -21,7 +22,7 @@ import javax.inject.Singleton
 import org.json.JSONException
 import org.json.JSONObject
 
-internal class StoredSession(val user: AuthUser, val refreshToken: String)
+internal class StoredSession(val user: AuthUser, val refreshToken: String, val cacheId: String = UUID.randomUUID().toString())
 
 internal interface SessionStorage {
     fun read(): StoredSession?
@@ -57,6 +58,7 @@ internal class EncryptedSessionStorage @Inject constructor(
         StoredSession(
             AuthUser(payload.getString("id"), payload.getString("email"), payload.getString("displayName")),
             payload.getString("refreshToken"),
+            payload.optString("cacheId").ifBlank { UUID.randomUUID().toString() },
         )
     }
 
@@ -66,6 +68,7 @@ internal class EncryptedSessionStorage @Inject constructor(
             .put("email", session.user.email)
             .put("displayName", session.user.displayName)
             .put("refreshToken", session.refreshToken)
+            .put("cacheId", session.cacheId)
         val cipher = Cipher.getInstance(TRANSFORMATION).apply {
             init(Cipher.ENCRYPT_MODE, existingOrNewKey())
             updateAAD(environment)

@@ -107,7 +107,9 @@ Thanh công cụ có Up và menu **Di chuyển**, **Chỉnh sửa**, **Xóa côn
 
 P0 cho xem danh sách và tạo bình luận. Nút **Bình luận** mở ô nhập 1–2.000 ký tự và **Gửi**. Áp dụng trạng thái gửi và thử lại dành cho lần tạo ở phần [Gửi và thử lại](#gửi-và-thử-lại). Chỉ thêm bình luận vào danh sách sau xác nhận rồi cuộn đến khối bình luận. Khối **Lịch sử** phân trang từ server, hiển thị hành động, tác nhân và giờ địa phương. Hai khối tải hoặc thử lại độc lập. Các thuộc tính hiển thị ở dạng chỉ đọc khi offline.
 
-Offline mở trường task đã lưu, hiển thị bình luận nếu đã đồng bộ và dùng thông báo kết nối cho lịch sử hoặc dữ liệu chưa có cache. Lỗi 403/404 chuyển tới nơi người dùng còn quyền xem. Khi xóa thành công hoặc chọn Back, trả về board hoặc kết quả tìm kiếm tương ứng với nơi đã mở task. [UC-08, UC-10 và UC-12](Sprintly_Use_Cases.md)
+Offline mở trường task đã lưu. Bình luận và lịch sử đã tải trong màn hình hiện tại vẫn đọc được, còn phần chưa tải hiển thị thông báo kết nối. Lỗi 403/404 chuyển tới nơi người dùng còn quyền xem. Khi xóa thành công hoặc chọn Back, trả về board hoặc kết quả tìm kiếm tương ứng với nơi đã mở task. [UC-08, UC-10 và UC-12](Sprintly_Use_Cases.md)
+
+Bản Orbix cần bổ sung trạng thái đang tải, rỗng, lỗi và thử lại riêng cho **Bình luận** và **Lịch sử**. Trên Android, **Thêm bình luận** đưa con trỏ vào ô nhập dưới màn hình. Lỗi độ dài hiển thị tại ô nhập. Khi mất kết nối, bản nháp đang nhập vẫn hiển thị và nút **Gửi** bị khóa. Khi có mạng nhưng tải chi tiết không thành công và chưa có dữ liệu đã lưu, hiển thị lỗi và **Thử lại**.
 
 ### 9. Tạo hoặc sửa công việc · task-form
 
@@ -118,6 +120,8 @@ Thành công từ luồng tạo về board ở cột đích và đưa thẻ mớ
 ### 10. Tìm công việc · search
 
 Tiêu đề hoặc phụ đề mang tên dự án. Ô **Tìm theo tiêu đề**, nút xóa từ khóa, khu **Bộ lọc** và chip cho tiêu chí đang áp dụng. Truy vấn sau một khoảng ngắn dừng gõ, hủy kết quả cũ khi tiêu chí đổi. Kết quả phân trang theo thứ tự ổn định, hiển thị tiêu đề, cột, người phụ trách và ưu tiên. Khi rỗng, dùng “Không tìm thấy công việc phù hợp” và **Đặt lại** cho từ khóa cùng bộ lọc. Nếu mất mạng, hiển thị “Cần kết nối để tìm công việc” và **Về board** để tiếp tục xem cache. Back từ chi tiết khôi phục tiêu chí và vị trí kết quả. Back từ tìm kiếm khôi phục cột đang xem của board. [UC-11 và UC-12](Sprintly_Use_Cases.md)
+
+Bản Orbix cần bổ sung trạng thái không có kết quả, lỗi truy vấn và offline. Android hiển thị **Tải thêm** khi còn trang kết quả và cho thử lại tại chỗ nếu tải thêm thất bại. Khi quay lại từ chi tiết hoặc mở lại ứng dụng, Android làm mới các trang đã xem theo tiêu chí đang giữ.
 
 ### 11. Hồ sơ · profile
 
@@ -153,6 +157,8 @@ Khi tạo công việc hoặc gửi bình luận, hiển thị **Đang gửi** v
 5. TalkBack và bàn phím đi từ tiêu đề cột qua thẻ và menu có tên theo ngữ cảnh. Sau khi chọn vị trí, trả focus về thẻ đã di chuyển nếu đang hiển thị, đưa cột đích vào tầm nhìn và thông báo tên thẻ cùng cột đích. Khi lỗi, thông báo kết quả mà không cướp focus. [Nguyên tắc tiếp cận trong Android Views](https://developer.android.com/guide/topics/ui/accessibility/views/principles-views)
 
 Khi đã có cache và mất mạng, dùng banner **Đang xem dữ liệu đã lưu** cùng dòng “Kết nối mạng để thay đổi”. Khi chưa sync, dùng “Chưa có dữ liệu đã lưu” và **Thử lại**. Khi kết nối lại, làm mới lúc mở màn, resume hoặc người dùng yêu cầu. Timeout khi có cache giữ dữ liệu và báo “Chưa thể làm mới”. Khi quyền bị thu hồi, loại cache của phạm vi bị mất quyền và quay về cấp gần nhất còn được phép. Tách trạng thái thiếu quyền với lỗi kết nối tạm thời. [UC-12](Sprintly_Use_Cases.md#uc-12-xem-offline-và-làm-mới-khi-trở-lại-online)
+
+Bản xem trước Orbix cần thêm trạng thái offline cho danh sách workspace, chi tiết workspace, board và task. Android đặt banner ngay dưới thanh công cụ hoặc trong phần đầu màn hình, dùng màu cảnh báo và giữ các nội dung đã lưu ở vị trí cũ. Màn chi tiết task vẫn cho đọc thông tin đã lưu. Các khối bình luận và lịch sử hiện thông báo kết nối để tải từ máy chủ.
 
 ## Phạm vi sau P0
 

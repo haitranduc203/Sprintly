@@ -1,0 +1,113 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:focusableInTouchMode="true"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/search_toolbar"
+        style="@style/Widget.Sprintly.WorkspaceToolbar"
+        app:navigationContentDescription="@string/workspace_back"
+        app:navigationIcon="@drawable/ic_auth_back"
+        app:title="@string/task_search_title" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="top"
+        android:paddingHorizontal="16dp">
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/search_field"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/task_search_hint"
+            app:boxBackgroundColor="@color/orbix_auth_input_surface"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeColor="@color/orbix_field_stroke"
+            app:cursorColor="@color/orbix_selection"
+            app:endIconMode="clear_text"
+            app:hintTextColor="@color/orbix_selection"
+            app:startIconDrawable="@drawable/ic_task_search">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/search_keyword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:minHeight="48dp"
+                android:saveEnabled="false"
+                android:singleLine="true" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/search_open_filters"
+            style="@style/Widget.Sprintly.WorkspaceIconButton"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_task_search_filter"
+            android:contentDescription="@string/task_search_filters"
+            android:src="@drawable/ic_task_filter"
+            android:tint="@color/orbix_selection" />
+    </LinearLayout>
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/search_filter_chips"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:paddingHorizontal="16dp"
+        app:chipSpacingHorizontal="6dp"
+        app:chipSpacingVertical="0dp" />
+
+    <LinearLayout
+        android:id="@+id/search_results_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp">
+        <TextView
+            android:id="@+id/search_result_heading"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/task_search_results"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textColor="@color/orbix_on_surface"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/search_result_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:accessibilityLiveRegion="polite"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="@color/orbix_on_surface_variant" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/search_result_rows"
+            style="@style/Widget.Sprintly.WorkspaceList"
+            android:paddingTop="8dp" />
+        <include
+            android:id="@+id/search_status"
+            layout="@layout/view_workspace_status" />
+    </FrameLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/search_more"
+        style="@style/Widget.Sprintly.WorkspaceTextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="8dp"
+        android:text="@string/task_search_more"
+        android:visibility="gone" />
+</LinearLayout>

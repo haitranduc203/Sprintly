@@ -126,3 +126,15 @@ test("project task filters combine in scope and report stable pagination", withP
   assert.deepEqual(data(await request("GET", url + "&page=2&pageSize=1", member.accessToken)), []);
   error(await request("GET", project.tasks + "?page=0", owner.accessToken), 400, "VALIDATION_ERROR");
 });
+
+test("project task search accepts a whole title and rejects a longer query", withPostgres, async (t) => {
+  const { owner, request, createProject } = await taskFixture(t);
+  const project = await createProject();
+  const title = "🚀".repeat(150);
+  const matched = await project.create(title);
+  const find = (q: string) => request("GET", `${project.tasks}?q=${encodeURIComponent(q)}`, owner.accessToken);
+
+  assert.deepEqual(data<Task[]>(await find(`  ${title}  `)).map((task) => task.id), [matched.id]);
+  assert.deepEqual(data<Task[]>(await find("  ")).map((task) => task.id), [matched.id]);
+  error(await find(`${title}🚀`), 400, "VALIDATION_ERROR");
+});

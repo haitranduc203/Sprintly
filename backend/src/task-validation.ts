@@ -4,6 +4,7 @@ import { TaskPriority } from "./generated/prisma/enums.js";
 
 const priorities: readonly string[] = Object.values(TaskPriority);
 const maxInteger = 2_147_483_647;
+const maxTaskTitleLength = 150;
 
 export function readTaskText(value: unknown, field: string, maxLength: number) {
   if (typeof value !== "string" || /[\u0000\p{Cs}]/u.test(value)) {
@@ -58,7 +59,7 @@ export function readNewTask(body: unknown, key: unknown) {
   return {
     input: {
       columnId: readId(payload.columnId, "columnId"),
-      title: readTaskText(payload.title, "Title", 150),
+      title: readTaskText(payload.title, "Title", maxTaskTitleLength),
       description: readDescription(payload.description),
       priority: readPriority(payload.priority),
       assigneeId: readAssignee(payload.assigneeId),
@@ -72,7 +73,7 @@ export function readTaskPatch(body: unknown) {
   const payload = bodyObject(body);
   const changes = {
     columnId: payload.columnId === undefined ? undefined : readId(payload.columnId, "columnId"),
-    title: payload.title === undefined ? undefined : readTaskText(payload.title, "Title", 150),
+    title: payload.title === undefined ? undefined : readTaskText(payload.title, "Title", maxTaskTitleLength),
     description: readDescription(payload.description),
     priority: payload.priority === undefined ? undefined : readPriority(payload.priority),
     assigneeId: readAssignee(payload.assigneeId),
@@ -119,9 +120,13 @@ export function readTaskFilters(query: unknown) {
   if (payload.q !== undefined && (typeof payload.q !== "string" || /[\u0000\p{Cs}]/u.test(payload.q))) {
     throw invalidBody("q must be text");
   }
+  const q = payload.q?.trim();
+  if (q && Array.from(q).length > maxTaskTitleLength) {
+    throw invalidBody(`q must have at most ${maxTaskTitleLength} characters`);
+  }
   return {
     ...readPagination(query),
-    q: payload.q?.trim(),
+    q,
     columnId: payload.columnId === undefined ? undefined : readId(payload.columnId, "columnId"),
     assigneeId: payload.assigneeId === undefined ? undefined : readId(payload.assigneeId, "assigneeId"),
     priority: payload.priority === undefined ? undefined : readPriority(payload.priority),

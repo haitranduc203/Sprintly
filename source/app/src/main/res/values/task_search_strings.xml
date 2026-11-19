@@ -1,0 +1,25 @@
+<resources>
+    <string name="task_search_board_entry">Tìm và lọc công việc</string>
+    <string name="task_search_title">Tìm kiếm</string>
+    <string name="task_search_hint">Tìm theo tiêu đề</string>
+    <string name="task_search_filters">Bộ lọc công việc</string>
+    <string name="task_search_results">Kết quả tìm kiếm</string>
+    <string name="task_search_count">%1$d công việc</string>
+    <string name="task_search_column">Cột</string>
+    <string name="task_search_priority">Ưu tiên</string>
+    <string name="task_search_assignee">Người phụ trách</string>
+    <string name="task_search_any_column">Tất cả cột</string>
+    <string name="task_search_any_priority">Tất cả mức</string>
+    <string name="task_search_any_assignee">Tất cả thành viên</string>
+    <string name="task_search_apply">Áp dụng</string>
+    <string name="task_search_clear_filters">Xóa bộ lọc</string>
+    <string name="task_search_reset">Đặt lại</string>
+    <string name="task_search_empty">Không tìm thấy công việc phù hợp</string>
+    <string name="task_search_offline">Cần kết nối để tìm công việc</string>
+    <string name="task_search_back_to_board">Về board</string>
+    <string name="task_search_more">Tải thêm</string>
+    <string name="task_search_more_failed">Chưa tải được thêm kết quả</string>
+    <string name="task_search_too_long">Nhập tối đa 150 ký tự.</string>
+    <string name="task_search_result_meta">%1$s · %2$s</string>
+    <string name="task_search_filter_choice">%1$s · %2$s</string>
+</resources>

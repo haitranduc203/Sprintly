@@ -1,5 +1,8 @@
 package com.example.sprintly.tasks
 
+import androidx.annotation.Keep
+
+@Keep
 data class Task(
     val id: String,
     val projectId: String,
@@ -27,6 +30,7 @@ data class TaskInput(
     val dueAt: String?,
 )
 
+@Keep
 data class TaskPerson(val id: String, val displayName: String, val email: String)
 
 data class TaskComment(val id: String, val author: TaskPerson, val body: String, val createdAt: String)

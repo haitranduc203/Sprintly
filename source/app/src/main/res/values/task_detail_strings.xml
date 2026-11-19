@@ -14,6 +14,7 @@
     <string name="task_unassigned">Chưa giao</string>
     <string name="task_invalid_assignee">Hãy chọn một thành viên hiện tại hoặc bỏ giao việc.</string>
     <string name="task_assignee_removed">Thành viên đã rời workspace</string>
+    <string name="task_assignee_not_cached">Chưa có thông tin đã lưu</string>
     <string name="task_assignee_search">Tìm theo tên hoặc email</string>
     <string name="task_assignee_no_results">Không tìm thấy thành viên phù hợp.</string>
     <string name="task_due">Hạn hoàn thành</string>
@@ -42,6 +43,8 @@
     <string name="task_delete_title">Xóa “%1$s”?</string>
     <string name="task_delete_message">Công việc cùng bình luận và lịch sử sẽ bị xóa vĩnh viễn.</string>
     <string name="task_comments">Bình luận</string>
+    <string name="task_comments_count">Bình luận · %1$d</string>
+    <string name="task_add_comment">Thêm bình luận</string>
     <string name="task_activity">Lịch sử</string>
     <string name="task_comment_hint">Viết bình luận…</string>
     <string name="task_send_comment">Gửi</string>
@@ -50,13 +53,16 @@
     <string name="task_no_comments">Chưa có bình luận.</string>
     <string name="task_no_activity">Chưa có lịch sử.</string>
     <string name="task_loading_discussion">Đang tải…</string>
+    <string name="task_discussion_connect">Kết nối mạng để tải nội dung này.</string>
     <string name="task_more_comments">Tải thêm bình luận</string>
     <string name="task_more_activity">Tải thêm lịch sử</string>
     <string name="task_activity_created">Đã tạo công việc</string>
     <string name="task_activity_updated">Đã cập nhật công việc</string>
+    <string name="task_activity_updated_fields">Đã cập nhật %1$s</string>
     <string name="task_activity_moved">Đã di chuyển công việc</string>
     <string name="task_activity_moved_to">Đã di chuyển công việc sang %1$s</string>
     <string name="task_activity_assigned">Đã thay đổi người phụ trách</string>
+    <string name="task_activity_unassigned">Đã bỏ giao công việc</string>
     <string name="task_activity_other">Đã ghi một hoạt động</string>
     <string name="task_assignee_summary">Phụ trách · %1$s</string>
     <string name="task_due_summary">Hạn hoàn thành · %1$s</string>

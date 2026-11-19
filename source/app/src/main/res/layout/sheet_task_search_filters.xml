@@ -1,0 +1,50 @@
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+        <TextView
+            android:id="@+id/search_filters_heading"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/task_search_filters"
+            android:textAppearance="?attr/textAppearanceTitleLarge"
+            android:textColor="@color/orbix_on_surface"
+            android:textStyle="bold" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/search_pick_column"
+            style="@style/Widget.Sprintly.TaskSearchPicker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/search_pick_priority"
+            style="@style/Widget.Sprintly.TaskSearchPicker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/search_pick_assignee"
+            style="@style/Widget.Sprintly.TaskSearchPicker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/search_apply_filters"
+            style="@style/Widget.Sprintly.WorkspaceButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/task_search_apply" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/search_clear_filters"
+            style="@style/Widget.Sprintly.WorkspaceTextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/task_search_clear_filters" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

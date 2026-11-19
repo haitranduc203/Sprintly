@@ -29,11 +29,11 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private val session: SessionViewModel by viewModels()
-    private var routedUserId: String? = null
+    private var routedLoginId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        routedUserId = savedInstanceState?.getString(ROUTED_USER_KEY)
+        routedLoginId = savedInstanceState?.getString(ROUTED_LOGIN_KEY)
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
@@ -67,7 +67,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putString(ROUTED_USER_KEY, routedUserId)
+        outState.putString(ROUTED_LOGIN_KEY, routedLoginId)
     }
 
     private suspend fun showSession(
@@ -83,12 +83,17 @@ class MainActivity : AppCompatActivity() {
         val destination = when (state) {
             AuthState.Checking -> null
             is AuthState.SignedIn -> {
-                val keepDestination = inWorkspace && routedUserId == state.user.id
-                routedUserId = state.user.id
-                if (keepDestination) current else R.id.authenticated_graph
+                val login = session.loginId()
+                val keepDestination = login != null && inWorkspace && routedLoginId == login
+                routedLoginId = login
+                when {
+                    login == null -> null
+                    keepDestination -> current
+                    else -> R.id.authenticated_graph
+                }
             }
             is AuthState.SignedOut -> {
-                routedUserId = null
+                routedLoginId = null
                 if (current == R.id.register_fragment) current else R.id.login_fragment
             }
         }
@@ -119,6 +124,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private companion object {
-        const val ROUTED_USER_KEY = "routedUserId"
+        const val ROUTED_LOGIN_KEY = "routedLoginId"
     }
 }
