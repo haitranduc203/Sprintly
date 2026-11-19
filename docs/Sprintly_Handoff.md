@@ -14,7 +14,7 @@
 
 ## Quy ước Git
 
-- Đặt tên nhánh theo dạng `<loại>/<mô-tả>`. Các loại đã thống nhất gồm `feature/`, `fix/`, `hotfix/`, `refactor/`, `chore/`, `docs/`, `test/` và `release/`. Phase 1 dùng `feature/authentication`. Phase 2 dùng `feature/workspace-management`. Phase 3 dùng `feature/task-kanban`. Phase 4 dùng `feature/offline-cache`. Phase 5 dùng `feature/mvp-finish`.
+- Đặt tên nhánh theo dạng `<loại>/<mô-tả>`. Các loại đã thống nhất gồm `feature/`, `fix/`, `hotfix/`, `refactor/`, `chore/`, `docs/`, `test/` và `release/`. Phase 1 dùng `feature/authentication`. Phase 2 dùng `feature/workspace-management`. Phase 3 dùng `feature/task-kanban`. Phase 4 dùng `feature/offline-cache`. Phase 5 dùng `feature/mvp-finish`. Phase 6 dùng `release/mvp`.
 - Tiêu đề commit mô tả thay đổi, chẳng hạn `feat: add authentication`. Prefix `codex/` không dùng cho tên nhánh hoặc commit.
 - Commit từng phần đã hoàn thành và kiểm thử. Tách backend, lớp dữ liệu Android, giao diện và tài liệu thành các commit có thể rà soát riêng.
 
@@ -60,11 +60,22 @@ Tìm kiếm chạy trong dự án hiện tại và kết hợp từ khóa theo t
 - `npm run build` và `npm test` đạt, gồm 21 kiểm thử với PostgreSQL 17.12. Gradle `assembleDebug`, `assembleDebugAndroidTest`, `testDebugUnitTest` và `lintDebug` đạt, gồm 32 unit test, 0 lỗi lint và 11 cảnh báo.
 - 11 ca AndroidJUnitRunner đạt trên Pixel 7 Pro API 34 với các lớp kiểm thử chạy riêng trên cùng emulator. [Cách chạy lại](../README.md#verify-the-end-to-end-flows)
 - Kiểm tra thủ công đạt khi nhập sai mật khẩu, mở lại ứng dụng sau khi tiến trình bị dừng, mở board chưa có cache trong chế độ máy bay, tải board khi kết nối lại và dùng **Thử lại** để chạy tiếp truy vấn sau khi API phục hồi. Đã đối chiếu giao diện tìm kiếm, bộ lọc và chi tiết với Orbix trên emulator.
-- Mô phỏng mất phản hồi sau khi máy chủ đã tạo task hoặc bình luận là mục còn mở trên Android. Kiểm thử API đã xác nhận gửi lại cùng khóa và nội dung chỉ tạo một bản ghi.
+- Xác nhận bổ sung trên Android 14 khi kiểm thử lại commit `047328a`. Proxy ngắt kết nối sau khi nhận HTTP `201` từ máy chủ. App giữ nội dung đang soạn, hiển thị **Chưa xác nhận** và dùng lại khóa cùng payload khi chọn **Thử lại**. API trả cùng ID và xác nhận một task, một bình luận và một sự kiện `CREATED`.
 
-## Thứ tự triển khai đề xuất
+## Kiểm chứng Phase 6
 
-1. **Phase 0 · `chore/bootstrap`**. Dùng scaffold trong `source/`, chốt `minSdk` và `applicationId`, bật ViewBinding, dựng theme Orbix và điều hướng Fragment. Dựng PostgreSQL, migration ban đầu và `/health`. Thiết lập CI build và kiểm tra API cơ bản. Thử kéo task giữa hai cột trên emulator sớm.
-2. **Mốc demo đầu tiên**. Làm theo luồng hai tài khoản với backend thật. Đăng nhập, tạo workspace, thêm thành viên, tạo dự án, giao task, di chuyển task và tải lại để kiểm tra vị trí. Viết kiểm thử phiên, phân quyền và xung đột trước khi chốt từng luồng.
-3. **Phase 4 · Room và đọc offline**. Lưu workspace, project, board và task theo tài khoản. Kiểm tra mở lại dữ liệu từng tải khi tắt mạng và bảo đảm tài khoản khác không đọc được dữ liệu đã lưu.
-4. **Mốc hoàn tất MVP**. Bổ sung giao diện tìm/lọc và hoàn thiện trải nghiệm bình luận, lịch sử. Kiểm tra lại AC-01–AC-06 trước khi đóng gói. FR-12 yêu cầu CI và ít nhất một UI test để nghiệm thu MVP.
+| Kiểm tra ngày 19/11/2026 | Kết quả |
+| --- | --- |
+| Cài backend từ checkout sạch | `npm ci`, `npm run db:migrate`, `npm run db:seed` và `npm run build` đạt trên PostgreSQL 17.11. Prisma xác nhận đủ bốn migration và schema khớp. Chạy seed lần hai giữ mật khẩu và chỉnh sửa dự án demo. |
+| API và dữ liệu demo | `npm test` đạt 21 ca PostgreSQL. Backend biên dịch trả `200` ở `/health`. Cả Owner và Member đăng nhập được, có đúng vai trò và mở được dự án demo. |
+| Android từ checkout sạch | `assembleDebug` và `assembleDebugAndroidTest` đạt. `testDebugUnitTest` đạt 32 ca. `lintDebug` báo 0 lỗi và 8 cảnh báo. |
+| Cài APK và nghiệm thu trên Android 14 | APK debug cài được trên máy ảo, đăng nhập tài khoản demo, mở board và tìm đúng task. AndroidJUnitRunner đạt 11 ca khi chạy theo nhóm. Lệnh `connectedDebugAndroidTest` cho luồng tìm kiếm trong README đạt 1/1. Ca kiểm thử bị gián đoạn bởi lỗi UiAutomation được xác nhận ở lượt chạy riêng. |
+| Đóng gói | `apksigner verify` xác nhận chữ ký debug của APK. GitHub Actions biên dịch app và test APK, chạy unit test, lint, backend test và lưu `sprintly-debug-apk` khi job Android đạt. |
+
+[Cách chạy và cài APK](../README.md) · [Kịch bản demo](Sprintly_Demo.md) · [Tài liệu API](Sprintly_API.md)
+
+## Phạm vi sau MVP
+
+- P1 dành cho cập nhật realtime hoặc thông báo đẩy.
+- P2 dành cho ghi offline, lời mời chờ chấp nhận và đính kèm.
+- Tổng quan, lịch và phần trăm hoàn thành nằm sau P0. [Đặc tả dự án](Sprintly_Codex_Implementation_Spec.md)
