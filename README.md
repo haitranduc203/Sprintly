@@ -1,15 +1,49 @@
 # Sprintly
 
-Sprintly is an Android Kanban app for small teams. The app supports account authentication and management of workspaces, members, projects and Kanban columns through a PostgreSQL-backed REST API.
+Sprintly is an Android Kanban app for small teams. Create a workspace, share it with teammates, and manage projects with draggable task cards, assignments, comments, and activity history. Find tasks by title and filters, or reopen a previously loaded board without a connection.
+
+## Quick start
+
+1. Configure PostgreSQL and run the backend with demo data. [Backend setup](#run-the-backend)
+2. Build and install the debug APK and sign in with a seeded account. [Android setup](#run-android)
+3. Walk through the seeded project in about three minutes. [MVP demo](docs/Sprintly_Demo.md)
+
+[API reference](docs/Sprintly_API.md) · [Data model](docs/Sprintly_ERD.md) · [Orbix design](docs/Sprintly_Orbix_Design.html) · [Verification and handoff](docs/Sprintly_Handoff.md)
+
+## Screenshots
+
+| Kanban board | Task search |
+| --- | --- |
+| <img src="docs/screenshots/kanban.png" alt="Sprintly Kanban board displaying task cards and columns" width="260"> | <img src="docs/screenshots/search.png" alt="Task search displaying one matching result and filter controls" width="260"> |
 
 ## Repository layout
 
 | Path | Contents |
 | --- | --- |
-| `source/` | Single-module Kotlin Android app using XML Views, View Binding, Material Components and Fragment navigation. |
+| `source/` | Kotlin Android app using XML Views, View Binding, Material Components, Fragment navigation, Hilt, Retrofit and Room. |
 | `backend/` | TypeScript and Fastify service, Prisma schema, migrations, seed and API tests. |
-| `.github/workflows/` | Android and backend build and test jobs. |
+| `.github/workflows/` | Android build, tests, lint and debug APK packaging, plus the backend tests against PostgreSQL. |
 | `docs/` and `design-system/` | Approved MVP requirements, API contract, ERD and Orbix design. |
+
+## Architecture
+
+```mermaid
+flowchart LR
+    UI["Fragments and XML Views"] --> VM["ViewModels · state and use cases"]
+    VM --> Auth["AuthRepository"]
+    VM --> Snapshots["WorkspaceSnapshots"]
+    VM --> Tasks["TaskRepository"]
+    Snapshots --> Workspaces["WorkspaceRepository"]
+    Snapshots --> Room["Room · per-login snapshots"]
+    Auth --> Keystore["Android Keystore · session encryption"]
+    Auth --> HTTP["Retrofit and OkHttp"]
+    Tasks --> HTTP
+    Workspaces --> HTTP
+    HTTP --> API["Fastify REST API"]
+    API --> DB["Prisma and PostgreSQL"]
+```
+
+PostgreSQL provides the authoritative board order and permission checks. Android uses Room snapshots for offline reads and checks its login before applying a late response. Task moves carry both the task version and board version, and the client restores the previous board before fetching it again if a move fails.
 
 ## Run Android
 
@@ -19,11 +53,13 @@ From the repository root in PowerShell:
 
 ```powershell
 Set-Location source
-.\gradlew.bat :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
-.\gradlew.bat :app:connectedDebugAndroidTest
+.\gradlew.bat :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest :app:lintDebug
+adb install -r .\app\build\outputs\apk\debug\app-debug.apk
 ```
 
 Start the backend before signing in or creating an account. The debug app uses `http://10.0.2.2:3000/api/v1/`, which reaches the host from the Android emulator. Override the URL with `sprintlyApiBaseUrl` in `source/local.properties` or with the Gradle property `-PsprintlyApiBaseUrl`. Cleartext HTTP is limited to emulator and loopback addresses in debug builds. Release sign-in requires a configured HTTPS endpoint.
+
+The successful Android CI job also publishes `sprintly-debug-apk` under **Artifacts** on its workflow run. Extract the archive and install `app-debug.apk` on an emulator with the backend running on the host. This artifact uses Android's debug signing key. [Sprintly CI](.github/workflows/ci.yml)
 
 ## Run the backend
 
@@ -70,14 +106,12 @@ Invoke-RestMethod http://127.0.0.1:3000/health
 
 `GET /health` returns HTTP `200` with `{"data":{"status":"ok"}}` when PostgreSQL responds and HTTP `503` with `DATABASE_UNAVAILABLE` when it cannot be reached.
 
-Run backend checks from `backend/`:
+To run the compiled API, stop the development server and run the following commands in `backend/`.
 
 ```powershell
-npm.cmd test
 npm.cmd run build
+npm.cmd start
 ```
-
-After building, `npm.cmd start` runs the compiled service.
 
 The seed provisions `owner@sprintly.demo` and `member@sprintly.demo` in the Sprintly Demo workspace, with a Sprintly Launch project and three default columns. It sets passwords from the local environment on first creation. Subsequent runs preserve existing password hashes and edits to an existing demo project. Use the configured demo credentials to sign in or create your own account in the app.
 
@@ -115,9 +149,22 @@ Open a workspace, its project or member list, and a Kanban board while connected
 
 Android refreshes on return to a screen, when connectivity returns and when the user chooses **Thử lại**. A successful refresh replaces the saved data. Confirmed removal of workspace access clears the affected snapshots. Each login has a separate cache namespace that survives an app restart for that login. Signing out or receiving a definitive refresh rejection closes access to that namespace and clears its snapshots.
 
+## Phase 5 task search
+
+Open search from a project's board. Search matches titles, combines column, priority and assignee filters, and returns paginated results. Clearing filters keeps the keyword. When the connection is unavailable, return to the saved board.
+
 ## Verify the end-to-end flows
 
-For PostgreSQL integration tests, apply the migrations to a dedicated test database. Set `TEST_DATABASE_URL` to that database before running `npm.cmd test`. The PostgreSQL suite is skipped when the variable is absent. GitHub Actions points it to the test service.
+Create a separate PostgreSQL database for integration tests using the development setup above and the database name `sprintly_test`. Run the following commands in a separate PowerShell terminal in `backend/` with your local credentials.
+
+```powershell
+$env:TEST_DATABASE_URL = 'postgresql://sprintly:replace_me@127.0.0.1:5432/sprintly_test'
+$env:DATABASE_URL = $env:TEST_DATABASE_URL
+npm.cmd run db:migrate
+npm.cmd test
+```
+
+Running `npm.cmd test` without `TEST_DATABASE_URL` skips the cases that require PostgreSQL. GitHub Actions points it to the CI test service. Run the Android instrumentation commands below from `source/` with a single signed-out test emulator connected and the dev backend running.
 
 With the backend running on port `3000` and Sprintly signed out on the emulator, run the full authentication UI test from `source/`.
 
@@ -150,3 +197,9 @@ Run the search flow on the emulator with Sprintly signed out and connected. It c
 ```
 
 The phase gates, test results and acceptance criteria are recorded here. [Implementation specification](docs/Sprintly_Codex_Implementation_Spec.md) · [Phase 0 verification](docs/Sprintly_Phase_0_Verification.md) · [Handoff](docs/Sprintly_Handoff.md)
+
+## Roadmap
+
+- P1 covers realtime updates or push notifications.
+- P2 covers offline writes, pending invitations and attachments.
+- Overview, calendar and completion percentages are planned after the MVP.
