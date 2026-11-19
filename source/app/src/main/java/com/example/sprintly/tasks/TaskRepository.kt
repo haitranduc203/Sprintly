@@ -11,7 +11,7 @@ import javax.inject.Singleton
 class TaskRepository @Inject internal constructor(auth: AuthRepository, remote: AuthRemote) {
     private val requests = WorkspaceRequests(auth, remote, TaskApi::class.java)
 
-    suspend fun listTasks(
+    internal suspend fun listTasksPage(
         projectId: String,
         q: String? = null,
         columnId: String? = null,
@@ -19,8 +19,15 @@ class TaskRepository @Inject internal constructor(auth: AuthRepository, remote: 
         priority: String? = null,
         page: Int = 1,
         pageSize: Int = 20,
-    ): List<Task> = requests.data({ listTasks(it, projectId, q, columnId, assigneeId, priority, page, pageSize) }) { tasks ->
-        tasks.map { it.required().toModel() }
+    ): TaskSearchPage = requests.request({ listTasks(it, projectId, q, columnId, assigneeId, priority, page, pageSize) }) {
+        val response = it.required()
+        val meta = response.meta.required()
+        TaskSearchPage(
+            tasks = response.data.required().map { task -> task.required().toModel() },
+            page = meta.page.required(),
+            pageSize = meta.pageSize.required(),
+            total = meta.total.required(),
+        )
     }
 
     suspend fun createTask(projectId: String, input: TaskInput, idempotencyKey: String): Task {
@@ -59,4 +66,8 @@ class TaskRepository @Inject internal constructor(auth: AuthRepository, remote: 
 
     suspend fun listActivities(id: String, page: Int = 1): List<TaskActivity> =
         requests.data({ listActivities(it, id, page) }) { activities -> activities.map { it.required().toModel() } }
+}
+
+internal data class TaskSearchPage(val tasks: List<Task>, val page: Int, val pageSize: Int, val total: Int) {
+    val hasMore: Boolean get() = page.toLong() * pageSize < total
 }

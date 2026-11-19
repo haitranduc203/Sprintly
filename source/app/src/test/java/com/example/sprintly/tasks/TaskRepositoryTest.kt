@@ -19,6 +19,7 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -76,7 +77,9 @@ class TaskRepositoryTest {
     fun taskSearchEncodesFiltersAndPagination() = runBlocking {
         server.enqueue(json(200, """{"data":[$taskJson],"meta":{"page":2,"pageSize":10,"total":12}}"""))
 
-        assertEquals(listOf(task), repository.listTasks("p-1", "A+B checklist", "c-1", "u-1", "HIGH", 2, 10))
+        val page = repository.listTasksPage("p-1", "A+B checklist", "c-1", "u-1", "HIGH", 2, 10)
+        assertEquals(TaskSearchPage(listOf(task), page = 2, pageSize = 10, total = 12), page)
+        assertFalse(page.hasMore)
 
         val url = requireNotNull(request("GET", "/api/v1/projects/p-1/tasks").requestUrl)
         assertEquals("A+B checklist", url.queryParameter("q"))

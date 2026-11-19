@@ -161,7 +161,16 @@ private interface UserApi {
     suspend fun me(@Tag token: AccessToken): Response<Envelope<UserPayload>>
 }
 
-internal class Envelope<T>(@SerializedName("data") val data: T?)
+internal class Envelope<T>(
+    @SerializedName("data") val data: T?,
+    @SerializedName("meta") val meta: PageMetaPayload? = null,
+)
+
+internal class PageMetaPayload(
+    @SerializedName("page") val page: Int?,
+    @SerializedName("pageSize") val pageSize: Int?,
+    @SerializedName("total") val total: Int?,
+)
 
 private class LoginRequest(
     @SerializedName("email") val email: String,
